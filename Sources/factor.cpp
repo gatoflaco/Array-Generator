@@ -1,10 +1,9 @@
-/* LA-Checker by Isaac Jung
-Last updated 03/21/2022
+/* Array-Generator by Isaac Jung
+Last updated 04/18/2022
 
 |===========================================================================================================|
-|   This file contains just the deconstructor for the Factor class. The Interaction class, which is also    |
-| defined in factor.h, has no deconstructor, because it requires no extra heap memory when instantiated.    |
-|===========================================================================================================| 
+|   (to be written)                                                                                         |
+|===========================================================================================================|
 */
 
 #include "factor.h"

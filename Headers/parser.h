@@ -1,16 +1,9 @@
-/* LA-Checker by Isaac Jung
-Last updated 03/21/2022
+/* Array-Generator by Isaac Jung
+Last updated 04/18/2022
 
 |===========================================================================================================|
-|   This header contains a class used for processing input. Should the input format change, this class can  |
-| be updated accordingly. The way this class is used is to have the main code instantiate a single Parser   |
-| object, then call the process_input() method. This will handle basic syntax and semantic checking on the  |
-| input read from standard in (or, the process_input() method could be defined to read from a file). If no  |
-| errors are found, the process_input() method should also assign to the Parser's other public fields based |
-| on the input read. Most noteably, the Parser object stores the 2d array of ints itself - the array that   |
-| should eventually be checked for covering, locating, and detecting properties. The main program can then  |
-| decide what how it wishes to work with this array more easily.                                            |
-|===========================================================================================================| 
+|   (to be written)                                                                                         |
+|===========================================================================================================|
 */
 
 #pragma once

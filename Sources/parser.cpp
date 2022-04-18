@@ -1,10 +1,9 @@
-/* LA-Checker by Isaac Jung
-Last updated 03/30/2022
+/* Array-Generator by Isaac Jung
+Last updated 04/18/2022
 
 |===========================================================================================================|
-|   This file contains definitions for methods used to process input via an Parser class. Should the input  |
-| format change, these methods can be updated accordingly.                                                  |
-|===========================================================================================================| 
+|   (to be written)                                                                                         |
+|===========================================================================================================|
 */
 
 #include "parser.h"

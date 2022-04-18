@@ -1,15 +1,9 @@
-/* LA-Checker by Isaac Jung
-Last updated 03/30/2022
+/* Array-Generator by Isaac Jung
+Last updated 04/18/2022
 
 |===========================================================================================================|
-|   This header contains classes for managing the array in an automated fashion. The Row class is just a    |
-| helper used by the Array class and should not be instantiated by any source file other than the one       |
-| associated with this header. The Array class is the interface with which other source files should work.  |
-| It contains a constructor that builds all the internal data structures, thereby allowing the instantiator |
-| to immediately call other methods which carry out analyses on this data. See check.cpp for an example.    |
-| Please note this file is not intended to be highly integrable with other projects working with arrays. It |
-| supports the very specific purposes of the LA-Checker project and is not generalized for anything else.   |
-|===========================================================================================================| 
+|   (to be written)                                                                                         |
+|===========================================================================================================|
 */
 
 #include "parser.h"

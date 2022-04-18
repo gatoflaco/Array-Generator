@@ -1,22 +1,8 @@
-/* LA-Checker by Isaac Jung
-Last updated 03/30/2022
+/* Array-Generator by Isaac Jung
+Last updated 04/18/2022
 
 |===========================================================================================================|
-|   This file contains the main() method which reflects the high level flow of the program. It starts by    |
-| creating a Parser object which processes the command line arguments and flags in its constructor. It then |
-| calls the process_input() method on the Parser object, which reads in the actual array for analysis. It   |
-| uses the processed input to create an Array object, whose constructor organizes relationships among the   |
-| tests and factors represented by the array. From there, the main() method calls the appropriate Array     |
-| methods to check coverage, location, and detection as requested by the user.                              |
-|   Other classes used by this program are: Single, Factor, Interaction, T. The Single and Factor classes   |
-| can be found in the factor.h and factor.cpp files. The Interaction and T classes can be found in the      |
-| array.h and array.cpp files. Here is a general description of how the classes are intended to be used:    |
-| - Parser: parses input from the user to set flags and get info about the array to be analyzed             |
-| - Array: stores important traits of the array and serves as an interface for perfoming checks             |
-| - Single: simple struct-like class for use by the Array object, representing a (factor, value)            |
-| - Factor: another struct-like class that associates lists of Singles with their corresponding factors     |
-| - Interaction: struct-like class to group Singles together, needed for the coverage check                 |
-| - T: struct-like class to group Interactions together, needed for location and detection checks           |
+|   (to be written)                                                                                         |
 |===========================================================================================================|
 */
 
