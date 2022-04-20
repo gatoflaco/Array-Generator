@@ -40,27 +40,6 @@ Parser::Parser(int argc, char *argv[]) : Parser()
                     case 's':
                         o = silent;
                         break;
-                    case 'c':
-                        if (p == c_only || p == c_and_l || p == c_and_d) break; // does nothing
-                        if (p == all) p = c_only;
-                        else if (p == l_only) p = c_and_l;
-                        else if (p == d_only) p = c_and_d;
-                        else p = all;
-                        break;
-                    case 'l':
-                        if (p == l_only || p == c_and_l || p == l_and_d) break; // does nothing
-                        if (p == all) p = l_only;
-                        else if (p == c_only) p = c_and_l;
-                        else if (p == d_only) p = l_and_d;
-                        else p = all;
-                        break;
-                    case 'd':
-                        if (p == d_only || p == c_and_d || p == l_and_d) break; // does nothing
-                        if (p == all) p = d_only;
-                        else if (p == c_only) p = c_and_d;
-                        else if (p == l_only) p = l_and_d;
-                        else p = all;
-                        break;
                     default:
                         try {
                             long unsigned int param =
@@ -76,10 +55,17 @@ Parser::Parser(int argc, char *argv[]) : Parser()
         } else {    // command line arguments for specifying d, t, and δ
             try {
                 long unsigned int param = static_cast<long unsigned int>(std::stoi(arg));
-                if (num_params < 1) t = param;
-                else if (num_params < 2) { d = t; t = param; }
-                else if (num_params < 3) delta = param;
-                else {
+                if (num_params < 1) {
+                    t = param;
+                    p = c_only;
+                } else if (num_params < 2) {
+                    d = t;
+                    t = param;
+                    p = c_and_l;
+                } else if (num_params < 3) {
+                    delta = param;
+                    p = all;
+                } else {
                     printf("NOTE: too many int arguments given; ignored <%s>", arg.c_str());
                     printf(" (be sure to specify 3 at most)\n");
                 }
@@ -105,25 +91,12 @@ int Parser::process_input()
     if (o != silent) printf("Reading input....\n\n");
     int ret = 0;
     std::string cur_line;
-
-    // v2.0
-    std::getline(std::cin, cur_line);
-    try {
-        trim(cur_line);
-        if (cur_line.compare("v2.0") != 0) {    // must strictly match, else error
-            syntax_error(1, "v2.0", cur_line);
-            return -1;
-        }
-    } catch (...) {
-        other_error(1, cur_line);
-        return -1;
-    }
     
-    // R C
+    // C
     std::getline(std::cin, cur_line);
     try {
         std::istringstream iss(cur_line);
-        if (!(iss >> num_rows)) throw 0;    // error when rows not given or not int
+        num_rows = 0;                       // assume that we are generating an array from scratch
         if (!(iss >> num_cols)) throw 0;    // error when columns not given or not int
         if (num_rows < 1 || num_cols < 1) throw 0;  // error when values define impossible array
     } catch (...) {
@@ -145,45 +118,10 @@ int Parser::process_input()
         return -1;
     }
 
-    // 0's
-    for (long unsigned int i = 0; i <= num_cols; i++) {
-        std::getline(std::cin, cur_line);
-        try {
-            trim(cur_line);
-            if (cur_line.compare("0") != 0) {   // must strictly match, else error
-                syntax_error(i+4, "0", cur_line);
-                return -1;
-            }
-        } catch (...) {
-            other_error(i+4, cur_line);
-            return -1;
-        }
-    }
-
-    // array
-    long unsigned int *row;
-    for (long unsigned int i = 0; i < num_rows; i++) {
-        std::getline(std::cin, cur_line);
-        try {
-            std::istringstream iss(cur_line);
-            row = new long unsigned int[num_cols];
-            for (long unsigned int j = 0; j < num_cols; j++) {
-                if (!(iss >> row[j])) throw 0;
-                if (row[j] >= levels.at(j)) {  // error when array value out of range
-                    semantic_error(i+num_cols+5, i+1, j+1, levels.at(j), row[j], false);
-                    ret = 1;
-                }
-            }
-            array.push_back(row);
-        } catch (...) {
-            other_error(i+num_cols+5, cur_line);
-            return -1;
-        }
-    }
-
     return ret;
 }
 
+// ======================================================================================================= //
 /* HELPER METHOD: trim - chops off all leading and trailing whitespace characters from a string
  * 
  * parameters:
