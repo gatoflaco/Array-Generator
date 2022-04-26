@@ -10,6 +10,8 @@ Last updated 04/18/2022
 #include "array.h"
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <time.h>
 
 
 // ================================v=v=v== static global variables ==v=v=v================================ //
@@ -40,15 +42,19 @@ static void verbose_print(int d, int t, int delta);
 */
 int main(int argc, char *argv[])
 {
-    Parser p(argc, argv);               // create Parser object, immediately processes arguments and flags
-    vm = p.v; om = p.o; pm = p.p;       // update flags based on those processed by the Parser
+    srand(time(nullptr));           // seed rand() using current time
+    Parser p(argc, argv);           // create Parser object, immediately processes arguments and flags
+    vm = p.v; om = p.o; pm = p.p;   // update flags based on those processed by the Parser
     
 	int status = p.process_input(); // read in and process the array
     if (vm == v_on) verbose_print(p.d, p.t, p.delta);   // print status when verbose mode enabled
     if (status == -1) return 1;     // exit immediately if there is a basic syntactic or semantic error
     
-    //Array array(&p);    // create Array object that immediately builds appropriate data structures
-    // TODO: figure out what to do from here lol
+    Array array(&p);    // create Array object that immediately builds appropriate data structures
+    while (array.score != 0.0) {
+        array.add_row(static_cast<long unsigned int>(rand()));
+    }
+    array.print();
 }
 
 /* HELPER METHOD: verbose_print - prints the introductory status when verbose mode is enabled

@@ -79,7 +79,8 @@ T::T(std::vector<Interaction*> *temp)
 */
 Array::Array()
 {
-    d = 0; t = 0; delta = 0; true_delta = 0;
+    score = 0;
+    d = 0; t = 0; delta = 0;
     v = v_off; o = normal; p = all;
     num_tests = 0; num_factors = 0;
     factors = nullptr;
@@ -90,12 +91,12 @@ Array::Array()
 */
 Array::Array(Parser *in)
 {
+    score = 1;  // 1 means all Interactions and Ts do not satisfy the specified requirements
     d = in->d; t = in->t; delta = in->delta;
-    true_delta = INT32_MAX;  // use a ridiculously high value to represent non-initialized
     v = in->v; o = in->o; p = in->p;
     num_tests = in->num_rows;
     num_factors = in->num_cols;
-    if(d <= 0 || d > num_tests) {
+    if(d <= 0) {
         printf("NOTE: bad value for d, continuing with d = 1\n");
         d = 1;
     }
@@ -203,6 +204,29 @@ void Array::build_size_d_sets(long unsigned int start, long unsigned int d_cur,
     }
 }
 
+// dummy for now
+void Array::add_row(long unsigned int rand_num)
+{
+    if (score == 0) return; // nothing to do if the array already satisfies all properties
+    int *new_row = new int[num_factors];
+    for (long unsigned int i = 0; i < num_factors; i++)
+        new_row[i] = (rand_num / (i+1)) % factors[i]->level;
+    // TODO: some sort of loop to judge the choice and update it to achieve a better score
+    rows.push_back(new_row);
+    score -= 0.1;   // dummy
+    if (score < 0) score = 0;
+    num_tests++;
+}
+
+void Array::print()
+{
+    for (int *row : rows) {
+        for (long unsigned int i = 0; i < num_factors; i++)
+            printf("%d\t", row[i]);
+        printf("\n");
+    }
+}
+
 /* SUB METHOD: is_covering - performs the analysis for coverage
  * 
  * parameters:
@@ -284,7 +308,6 @@ bool Array::is_detecting(bool report)
                 print_failure(i, t_set, delta, &dif);
                 passed = false;
             }
-            else if (dif.size() < true_delta) true_delta = dif.size();
         }
     }
     if (report && o != silent) printf("DETECTION CHECK: %s\n\n", passed ? "PASSED" : "FAILED");
@@ -295,6 +318,7 @@ bool Array::is_detecting(bool report)
 */
 Array::~Array()
 {
+    for (long unsigned int i = 0; i < num_tests; i++) delete[] rows[i];
     for (long unsigned int i = 0; i < num_factors; i++) delete factors[i];
     delete[] factors;
     for (Interaction *i : interactions) delete i;

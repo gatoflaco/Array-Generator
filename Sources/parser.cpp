@@ -98,9 +98,9 @@ int Parser::process_input()
         std::istringstream iss(cur_line);
         num_rows = 0;                       // assume that we are generating an array from scratch
         if (!(iss >> num_cols)) throw 0;    // error when columns not given or not int
-        if (num_rows < 1 || num_cols < 1) throw 0;  // error when values define impossible array
+        if (num_cols < 1) throw 0;          // error when values define impossible array
     } catch (...) {
-        syntax_error(2, "R C", cur_line);
+        syntax_error(2, "C", cur_line);
         return -1;
     }
 

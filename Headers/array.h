@@ -47,10 +47,14 @@ class T
 class Array
 {
     public:
-        long unsigned int d;            // this is the size of the sets of t-way interactions
-        long unsigned int t;            // this is the strength of interest
-        long unsigned int delta;        // this is the desired separation of the array
-        long unsigned int true_delta;   // the true maximum separation is updated during a detection check
+        float score;                // this is a measure of how close the array is to complete
+        long unsigned int d;        // this is the size of the sets of t-way interactions
+        long unsigned int t;        // this is the strength of interest
+        long unsigned int delta;    // this is the desired separation of the array
+
+        void add_row(long unsigned int rand);   // adds another row to the array that improves the score
+
+        void print();               // prints all rows
 
         // checks whether the array is covering; this means that every interaction of strength t occurs in
         // the array at least 1 time (TODO: extend this to at least δ times for (t, δ)-coverage)
@@ -72,6 +76,7 @@ class Array
         verb_mode v;    // this makes the program print out the data structures when enabled
         out_mode o;     // this dictates how much output should be printed; see parser.h for typedef
         prop_mode p;    // this is used to avoid building sets if it won't be needed anyway
+        std::vector<int*> rows;         // list of the rows themselves, as a vector of int arrays
         long unsigned int num_tests;    // field to reference the upper bound on iterating through rows
         long unsigned int num_factors;  // field to reference the upper bound on iterating through columns
         Factor **factors;    // pointer to the start of an array of pointers to Factor objects
