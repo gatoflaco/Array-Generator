@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 04/18/2022
+Last updated 04/27/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -218,13 +218,15 @@ void Array::add_row(long unsigned int rand_num)
     num_tests++;
 }
 
-void Array::print()
+std::string Array::to_string()
 {
+    std::string ret = "";
     for (int *row : rows) {
         for (long unsigned int i = 0; i < num_factors; i++)
-            printf("%d\t", row[i]);
-        printf("\n");
+            ret += std::to_string(row[i]) + '\t';
+        ret += '\n';
     }
+    return ret;
 }
 
 /* SUB METHOD: is_covering - performs the analysis for coverage

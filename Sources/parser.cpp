@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 04/18/2022
+Last updated 04/27/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -53,7 +53,7 @@ Parser::Parser(int argc, char *argv[]) : Parser()
                 }
             }
         } else {    // command line arguments for specifying d, t, and δ
-            try {
+            try {   // see if it is an int
                 long unsigned int param = static_cast<long unsigned int>(std::stoi(arg));
                 if (num_params < 1) {
                     t = param;
@@ -70,8 +70,10 @@ Parser::Parser(int argc, char *argv[]) : Parser()
                     printf(" (be sure to specify 3 at most)\n");
                 }
                 num_params++;
-            } catch ( ... ) {
-                printf("NOTE: couldn't parse command line argument <%s> as int; ignored\n", arg.c_str());
+            } catch ( ... ) {   // assume it is a filename
+                if (in_filename.empty()) in_filename = arg;
+                else if (out_filename.empty()) out_filename = arg;
+                else printf("NOTE: couldn't parse command line argument <%s>; ignored\n", arg.c_str());
             }
         }
         itr++;
@@ -89,11 +91,18 @@ Parser::Parser(int argc, char *argv[]) : Parser()
 int Parser::process_input()
 {
     if (o != silent) printf("Reading input....\n\n");
-    int ret = 0;
+    try {
+        in.open(in_filename.c_str(), std::ifstream::in);
+    } catch ( ... ) {
+        printf("\t-- ERROR --\n\tUnable to open file with path name <%s>.\n", in_filename.c_str());
+        printf("\tFor usage details, please check the README.\n");
+        printf("\n");
+        return -1;
+    }
     std::string cur_line;
     
     // C
-    std::getline(std::cin, cur_line);
+    std::getline(in, cur_line);
     try {
         std::istringstream iss(cur_line);
         num_rows = 0;                       // assume that we are generating an array from scratch
@@ -101,11 +110,12 @@ int Parser::process_input()
         if (num_cols < 1) throw 0;          // error when values define impossible array
     } catch (...) {
         syntax_error(2, "C", cur_line);
+        in.close();
         return -1;
     }
 
     // levels
-    std::getline(std::cin, cur_line);
+    std::getline(in, cur_line);
     try {
         std::istringstream iss(cur_line);
         long unsigned int level;
@@ -115,10 +125,12 @@ int Parser::process_input()
         }
     } catch (...) {
         syntax_error(3, "L_1 L_2 ... L_C", cur_line);
+        in.close();
         return -1;
     }
 
-    return ret;
+    in.close();
+    return 0;
 }
 
 // ======================================================================================================= //

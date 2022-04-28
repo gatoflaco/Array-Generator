@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 04/18/2022
+Last updated 04/27/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -54,7 +54,23 @@ int main(int argc, char *argv[])
     while (array.score != 0.0) {
         array.add_row(static_cast<long unsigned int>(rand()));
     }
-    array.print();
+    if (p.out_filename.empty()) {
+        if (om != silent) printf("The finished array is: \n");
+        printf("%s\n", array.to_string().c_str());
+    } else {
+        try {
+            p.out.open(p.out_filename.c_str(), std::ofstream::out);
+        } catch ( ... ) {
+            printf("Error opening file for writing. Please manually copy-paste the array as needed:\n%s\n",
+                array.to_string().c_str());
+            return 0;
+        }
+        std::string str = array.to_string();
+        p.out.write(str.c_str(), static_cast<std::streamsize>(str.size()));
+        p.out.close();
+        if (om != silent) printf("Wrote array into file with path name <%s>.\n\n",p.out_filename.c_str());
+    }
+    return 0;
 }
 
 /* HELPER METHOD: verbose_print - prints the introductory status when verbose mode is enabled

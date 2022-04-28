@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 04/18/2022
+Last updated 04/27/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -12,6 +12,7 @@ Last updated 04/18/2022
 
 #include <string>
 #include <vector>
+#include <fstream>
 
 // typedef representing whether verbose mode is set
 // - v_off is normal
@@ -52,10 +53,12 @@ typedef enum {
 class Parser
 {
     public:
+        std::string out_filename;       // output filename
+        std::ofstream out;              // output file
         // arguments
-        long unsigned int d;  // magnitude of 𝒯 sets of t-way interactions
-        long unsigned int t;  // strength of interactions
-        long unsigned int delta;  // desired separation
+        long unsigned int d;        // magnitude of 𝒯 sets of t-way interactions
+        long unsigned int t;        // strength of interactions
+        long unsigned int delta;    // desired separation
 
         // flags
         verb_mode v;    // verbose mode, v_off by default
@@ -75,6 +78,8 @@ class Parser
         ~Parser();                      // deconstructor
 
     private:
+        std::string in_filename;        // input filename
+        std::ifstream in;               // input file
         void trim(std::string &s);
         void syntax_error(int lineno, std::string expected, std::string actual, bool verbose = true);
         void semantic_error(int lineno, int row, int col, int level, int value, bool verbose = true);

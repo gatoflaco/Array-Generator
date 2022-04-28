@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 04/18/2022
+Last updated 04/27/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -34,11 +34,8 @@ class T
         // each interaction in a given T set has its own version of this; the ρ associated with a T is simply
         std::set<int> rows;  // the union of the ρ's for each interaction in that T
 
-         // this helper bool is for remembering that this particular T is not locating; that is, it should be
-        bool is_locating;   // set true upon instantion, but false once determined to violate the property
-                            // once; it can be checked to cut down on computation time when false
-        
-        bool is_detecting;  // same as above
+        bool locatable;     // initally false
+        bool detectable;    // initally false
 
         T();    // default constructor, don't use this
         T(std::vector<Interaction*> *temp);    // constructor with a premade vector of Interaction pointers
@@ -54,7 +51,7 @@ class Array
 
         void add_row(long unsigned int rand);   // adds another row to the array that improves the score
 
-        void print();               // prints all rows
+        std::string to_string();                // returns a string representing all rows
 
         // checks whether the array is covering; this means that every interaction of strength t occurs in
         // the array at least 1 time (TODO: extend this to at least δ times for (t, δ)-coverage)
