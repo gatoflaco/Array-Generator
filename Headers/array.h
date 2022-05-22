@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 05/21/2022
+Last updated 05/22/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -59,7 +59,8 @@ class Array
         long unsigned int t;        // this is the strength of interest
         long unsigned int delta;    // this is the desired separation of the array
 
-        void add_row(long unsigned int rand);   // adds another row to the array that improves the score
+        void add_row();                         // adds a row to the array based on scoring
+        void add_row(long unsigned int rand);   // adds a random row to the array
 
         std::string to_string();                // returns a string representing all rows
 
@@ -80,7 +81,7 @@ class Array
         ~Array();   // deconstructor
 
     private:
-        long unsigned int total_issues; // the Array's score starts off as this value
+        long unsigned int total_issues; // the array's score starts off as this value
         verb_mode v;    // this makes the program print out the data structures when enabled
         out_mode o;     // this dictates how much output should be printed; see parser.h for typedef
         prop_mode p;    // this is used to avoid building sets if it won't be needed anyway
@@ -106,7 +107,10 @@ class Array
         void build_row_interactions(int *row, std::set<Interaction*> *row_interactions,
             long unsigned int start, long unsigned int t_cur, std::string key);
         
-        int tweak_row(int *row);
+        void tweak_row(int *row);   // called by add_row() to improve the decision
 
-        void update_array();    // should update data structures and the Array's overall score
+        // define more of these as needed; they are for deciding what needs changing
+        int heuristic_1_helper(std::set<Interaction*> row_interactions, int *problems);
+
+        void update_array(int *row);    // should update data structures and the array's overall score
 };

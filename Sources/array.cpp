@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 05/21/2022
+Last updated 05/22/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -141,17 +141,18 @@ Array::Array(Parser *in)
         build_t_way_interactions(0, t, &temp_singles);
         if (v == v_on) print_interactions(interactions);
         total_issues += coverage_issues.size();
+        score = total_issues;   // the array's score starts off here and is considered completed when 0
 
         // build all Ts
         if (p == c_only) return;    // no need to spend effort building Ts if they won't be used
         std::vector<Interaction*> temp_interactions;
         build_size_d_sets(0, d, &temp_interactions);
         if (v == v_on) print_sets(sets);
+        // TODO: incremenet total_issues and score
     } catch (const std::bad_alloc& e) {
         printf("ERROR: not enough memory to work with given array for given arguments\n");
         exit(1);
     }
-    score = total_issues;   // the Array's score starts off here and is considered completed when 0
 }
 
 /* HELPER METHOD: build_t_way_interactions - initializes the interactions vector recursively
@@ -166,7 +167,7 @@ Array::Array(Parser *in)
  * - singles_so_far: auxiliary vector of pointers used to track the current combination of Singles
  * 
  * returns:
- * - void, but after the method finishes, the Array's interactions vector will be initialized
+ * - void, but after the method finishes, the array's interactions vector will be initialized
 */
 void Array::build_t_way_interactions(long unsigned int start, long unsigned int t_cur,
     std::vector<Single*> *singles_so_far)
@@ -177,6 +178,10 @@ void Array::build_t_way_interactions(long unsigned int start, long unsigned int 
         interactions.push_back(new_interaction);
         interaction_map.insert({new_interaction->to_string(), new_interaction});    // for later accessing
         coverage_issues.insert(new_interaction);    // when generating an array from scratch, always true
+        for (Single *single : new_interaction->singles) {
+            single->c_issues++;
+            // TODO: maybe add logic for incrementing l_issues and d_issues if possible
+        }
         return;
     }
 
@@ -202,7 +207,7 @@ void Array::build_t_way_interactions(long unsigned int start, long unsigned int 
  * - interactions_so_far: auxiliary vector of pointers used to track the current combination of Interactions
  * 
  * returns:
- * - void, but after the method finishes, the Array's sets set will be initialized
+ * - void, but after the method finishes, the array's sets set will be initialized
 */
 void Array::build_size_d_sets(long unsigned int start, long unsigned int d_cur,
     std::vector<Interaction*> *interactions_so_far)
@@ -229,7 +234,7 @@ void Array::build_size_d_sets(long unsigned int start, long unsigned int d_cur,
  * - this method should be called for every unique row considered; note that this gets expensive
  * 
  * parameters:
- * - row: integer array representing a row up for consideration for appending to the Array
+ * - row: integer array representing a row up for consideration for appending to the array
  * - row_interactions: initially empty set to hold the Interactions as they are recovered
  * - start: left side of row at which to begin the for loop
  * - t_cur: distance from right side of row at which to end the for loop
@@ -252,19 +257,60 @@ void Array::build_row_interactions(int *row, std::set<Interaction*> *row_interac
     }
 }
 
-// dummy for now
+/* SUB METHOD: add_row - adds a new row to the array
+ * - overloaded: this version initializes a row with a greedy approach, then tweaks till good enough
+ * 
+ * returns:
+ * - void, but after the method finishes, the array will have a new row appended to its end
+*/
+void Array::add_row()
+{
+    if (score == 0) return; // nothing to do if the array already satisfies all properties
+    int *new_row = new int[num_factors];
+
+    // greedily select the values that appear to need the most attention
+    for (long unsigned int col = 0; col < num_factors; col++) {
+        int worst_val = 0;  // fencepost starting point; assume 0 is the worst to start
+        for (long unsigned int val = 1; val < factors[col]->level; val++) {   // check if any others are worse
+
+            if (factors[col]->singles[val]->c_issues > factors[col]->singles[worst_val]->c_issues)
+                worst_val = val;
+            else if (factors[col]->singles[val]->c_issues == factors[col]->singles[worst_val]->c_issues)
+                if (factors[col]->singles[val]->rows.size() < factors[col]->singles[worst_val]->rows.size())
+                    worst_val = val;    // break ties on which one has appeared less so far
+            
+            // TODO: think about more than just c_issues
+        }
+        new_row[col] = worst_val;
+    }   // entire row is now initialized based on the greedy approach
+    tweak_row(new_row); // next, go and score this decision, modifying values as needed to improve it
+
+    update_array(new_row);
+}
+
+/* SUB METHOD: add_row - adds a new row to the array
+ * - overloaded: this version simply adds a randomly generated row without scoring it
+ *   --> should only ever be called to initialize the first row of a brand new array from scratch
+ * 
+ * parameters:
+ * - rand_num: assumed to be obtained from a random seed
+ * 
+ * returns:
+ * - void, but after the method finishes, the array will have a new row appended to its end
+*/
 void Array::add_row(long unsigned int rand_num)
 {
     if (score == 0) return; // nothing to do if the array already satisfies all properties
     int *new_row = new int[num_factors];
+
+    // simply randomly generate each value
     for (long unsigned int i = 0; i < num_factors; i++)
         new_row[i] = (rand_num / (i+1)) % factors[i]->level;
-    tweak_row(new_row);
-    rows.push_back(new_row);
-    update_array();
+    
+    update_array(new_row);
 }
 
-int Array::tweak_row(int *row)
+void Array::tweak_row(int *row)
 {
     // TODO: turn this into a giant switch case function that chooses a heuristic function to call based on
     // the score:total_issues ratio
@@ -272,48 +318,104 @@ int Array::tweak_row(int *row)
     // after build_row_interactions is called, row_interactions will hold all interactions in this row
     std::set<Interaction*> row_interactions;
     build_row_interactions(row, &row_interactions, 0, t, "");
-    int problems[num_factors] = {0};    // for counting how many "problems" each factor has
-    int max_problems = 0;   // in case there is a tie for the most number of problems
-    int actual_max = 0;     // because max_problems can change
+    int *problems = new int[num_factors]{0};    // for counting how many "problems" each factor has
+    int max_problems;   // in case there is a tie for the most number of problems
+    int cur_max;    // for comparing to max_problems to see if there is an improvement
 
     // coverage only heuristic
-    while (true) {
-        //long unsigned int best_score = 0;
-        //long unsigned int cur_score = 0;
-        
-        for (Interaction *i : row_interactions) {
-            if (i->rows.size() != 0) {  // interaction is already covered
-                for (Single *s : i->singles) {  // increment the problems counter for each Single involved
-                    problems[s->factor]++;
-                    if (problems[s->factor] > max_problems) max_problems = problems[s->factor];
-                }
-            } else  // interaction not covered; decrement the problems counters instead
-                for (Single *s : i->singles) problems[s->factor]--;
-        }
-        if (max_problems == 0) return;  // row is as good as possible as is
-
-        actual_max = INT32_MIN; // set actual_max to a huge negative number to start
-        // try altering the values with the most "problems" - those that contribute the least
-        for (int col = 0; col < num_factors; col++) {
-            if (problems[col] == max_problems) {
-                std::set<Interaction*> temp = row_interactions; // deep copy because we are about to mutate
-                // TODO: update row_interactions
-                actual_max = max_problems;
-                break;
+    for (Interaction *i : row_interactions) {
+        if (i->rows.size() != 0) {  // interaction is already covered
+            for (Single *s : i->singles) {  // increment the problems counter for each Single involved
+                if (s->c_issues == 0) continue; // don't account for factors that were already completed
+                problems[s->factor]++;
             }
-            if (problems[col] > actual_max) actual_max = problems[col];
-        }
-        if (actual_max == max_problems) continue;
-        break;
+        } else  // interaction not covered; decrement the problems counters instead
+            for (Single *s : i->singles) problems[s->factor]--;
     }
-    return 0;
+
+    // find out what the worst score is among the factors
+    max_problems = INT32_MIN;   // set max to a huge negative number to start
+    for (long unsigned int col = 0; col < num_factors; col++)
+        if (problems[col] > max_problems) max_problems = problems[col];
+    if (max_problems <= 0) {    // row is good enough as is
+        delete[] problems;
+        return;
+    }
+    
+    // else, try altering the value(s) with the most problems (whatever is currently contributing the least)
+    cur_max = max_problems;
+    while (true) {
+        for (long unsigned int col = 0; col < num_factors; col++) { // go find any factors to change
+            if (problems[col] == max_problems) {    // found a factor to try altering
+
+                for (long unsigned int i = 1; i < factors[col]->level; i++) { // for every value it can have
+                    row[col] = (row[col] + 1) % static_cast<int>(factors[col]->level);  // try that value
+
+                    std::set<Interaction*> new_interactions;    // get the new Interactions
+                    build_row_interactions(row, &new_interactions, 0, t, "");
+                    for (Interaction *interaction : row_interactions)
+                        new_interactions.erase(interaction);    // ONLY include the new Interactions
+
+                    cur_max = heuristic_1_helper(new_interactions, problems);   // test this change
+                    if (cur_max < max_problems) {   // this change improved the score, keep it
+                        delete[] problems;
+                        return;
+                        // TODO: consider continuing to investigate for an even lower score
+                        // i.e., max_problems = cur_max and continue
+                    }
+                    cur_max = max_problems; // else this change was no good, reset and continue
+                }
+                row[col] = (row[col] + 1) % static_cast<int>(factors[col]->level);  // resets the row
+            }
+        }
+    }
 }
 
-void Array::update_array()
+int Array::heuristic_1_helper(std::set<Interaction*> row_interactions, int *prev_problems)
 {
-    score -= 1;     // dummy
-    if (score < 0) score = 0;
+    int *problems = new int[num_factors];   // deep copy problems[] because it will be mutated
+    for (long unsigned int idx = 0; idx < num_factors; idx++) problems[idx] = prev_problems[idx];
+
+    for (Interaction *i : row_interactions) {
+        if (i->rows.size() != 0) {  // interaction is already covered
+            for (Single *s : i->singles) {  // increment the problems counter for each Single involved
+                if (s->c_issues == 0) continue; // don't account for factors that were already completed
+                problems[s->factor]++;
+            }
+        } else  // interaction not covered; decrement the problems counters instead
+            for (Single *s : i->singles) problems[s->factor]--;
+    }
+
+    // find out what the worst score is among the factors
+    int max_problems = INT32_MIN;   // set max to a huge negative number to start
+    for (long unsigned int col = 0; col < num_factors; col++)
+        if (problems[col] > max_problems) max_problems = problems[col];
+    delete[] problems;
+    return max_problems;
+}
+
+void Array::update_array(int *row)
+{
+    rows.push_back(row);
     num_tests++;
+
+    std::set<Interaction*> row_interactions;
+    build_row_interactions(row, &row_interactions, 0, t, "");
+    
+    for (Interaction *i : row_interactions) {
+        i->rows.insert(num_tests);
+        if (coverage_issues.erase(i) == 1) score--; // if a coverage issue is solved, score improves
+        // TODO: look into location_issues and detection_issues
+
+        // update individual Singles; important for add_row()'s greedy selection algorithm
+        for (Single *s: i->singles) {
+            s->rows.insert(num_tests);
+            if (i->rows.size() == 1) s->c_issues--; // coverage issue just solved
+            // TODO: look into s->l_issues and s->d_issues
+        }
+    }
+    
+    // if (score < 0) score = 0;   // TODO: investigate whether this line is needed (it shouldn't be)
 }
 
 std::string Array::to_string()
