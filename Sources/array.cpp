@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 04/27/2022
+Last updated 05/21/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -11,6 +11,7 @@ Last updated 04/27/2022
 #include <algorithm>
 #include <sys/types.h>
 #include <unistd.h>
+#include <map>
 
 // method forward declarations
 static void print_failure(Interaction *interaction);
@@ -19,6 +20,11 @@ static void print_failure(Interaction *interaction, T *t_set, long unsigned int 
 static void print_singles(Factor **factors, int num_factors);
 static void print_interactions(std::vector<Interaction*> interactions);
 static void print_sets(std::vector<T*> sets);
+
+static std::map<std::string, Interaction*> interaction_map;
+static std::set<Interaction*> coverage_issues;
+static std::set<T*> location_issues;
+static std::set<Interaction*> detection_issues;
 
 /* CONSTRUCTOR - initializes the object
  * - overloaded: this is the default with no parameters, and should not be used
@@ -45,6 +51,13 @@ Interaction::Interaction(std::vector<Single*> *temp)
         temp->at(i)->rows.begin(), temp->at(i)->rows.end(), std::inserter(temp_set, temp_set.begin()));
       rows = temp_set;
     }
+}
+
+std::string Interaction::to_string()
+{
+    std::string ret = "";
+    for (Single *single : singles) ret += single->to_string();
+    return ret;
 }
 
 /* CONSTRUCTOR - initializes the object
@@ -79,7 +92,7 @@ T::T(std::vector<Interaction*> *temp)
 */
 Array::Array()
 {
-    score = 0;
+    total_issues = 0; score = 0;
     d = 0; t = 0; delta = 0;
     v = v_off; o = normal; p = all;
     num_tests = 0; num_factors = 0;
@@ -91,7 +104,7 @@ Array::Array()
 */
 Array::Array(Parser *in)
 {
-    score = 1;  // 1 means all Interactions and Ts do not satisfy the specified requirements
+    total_issues = 0;   // will be increased as Interactions and sets of Interactions are created
     d = in->d; t = in->t; delta = in->delta;
     v = in->v; o = in->o; p = in->p;
     num_tests = in->num_rows;
@@ -108,6 +121,7 @@ Array::Array(Parser *in)
         printf("NOTE: bad value for δ, continuing with δ = 1\n");
         delta = 1;
     }
+    if (o != silent) printf("Building internal data structures....");
 
     try {
         // build all Singles, associated with an array of Factors
@@ -126,6 +140,7 @@ Array::Array(Parser *in)
         std::vector<Single*> temp_singles;
         build_t_way_interactions(0, t, &temp_singles);
         if (v == v_on) print_interactions(interactions);
+        total_issues += coverage_issues.size();
 
         // build all Ts
         if (p == c_only) return;    // no need to spend effort building Ts if they won't be used
@@ -136,18 +151,19 @@ Array::Array(Parser *in)
         printf("ERROR: not enough memory to work with given array for given arguments\n");
         exit(1);
     }
+    score = total_issues;   // the Array's score starts off here and is considered completed when 0
 }
 
 /* HELPER METHOD: build_t_way_interactions - initializes the interactions vector recursively
  * - the factors array must be initialized before calling this method
- * - top down recursive; auxilary caller should use 0, t, and an empty vector as initial parameters
+ * - top down recursive; auxiliary caller should use 0, t, and an empty vector as initial parameters
  *   --> do not use the interactions vector itself as the parameter
  * - this method should not be called more than once
  * 
  * parameters:
  * - start: left side of factors array at which to begin the outer for loop
  * - t: desired strength of interactions
- * - singles_so_far: auxilary vector of pointers used to track the current combination of Singles
+ * - singles_so_far: auxiliary vector of pointers used to track the current combination of Singles
  * 
  * returns:
  * - void, but after the method finishes, the Array's interactions vector will be initialized
@@ -159,6 +175,8 @@ void Array::build_t_way_interactions(long unsigned int start, long unsigned int 
     if (t_cur == 0) {
         Interaction *new_interaction = new Interaction(singles_so_far);
         interactions.push_back(new_interaction);
+        interaction_map.insert({new_interaction->to_string(), new_interaction});    // for later accessing
+        coverage_issues.insert(new_interaction);    // when generating an array from scratch, always true
         return;
     }
 
@@ -174,14 +192,14 @@ void Array::build_t_way_interactions(long unsigned int start, long unsigned int 
 
 /* HELPER METHOD: build_size_d_sets - initializes the sets set recursively (a set of sets of interactions)
  * - the interactions vector must be initialized before calling this method
- * - top down recursive; auxilary caller should use 0, d, and an empty set as initial parameters
+ * - top down recursive; auxiliary caller should use 0, d, and an empty set as initial parameters
  *   --> do not use the sets set itself as the parameter
  * - this method should not be called more than once
  * 
  * parameters:
  * - start: left side of interactions vector at which to begin the for loop
  * - d: desired magnitude of sets
- * - interactions_so_far: auxilary vector of pointers used to track the current combination of Interactions
+ * - interactions_so_far: auxiliary vector of pointers used to track the current combination of Interactions
  * 
  * returns:
  * - void, but after the method finishes, the Array's sets set will be initialized
@@ -193,6 +211,8 @@ void Array::build_size_d_sets(long unsigned int start, long unsigned int d_cur,
     if (d_cur == 0) {
         T *new_set = new T(interactions_so_far);
         sets.push_back(new_set);
+        for (Interaction *interaction : *interactions_so_far)   // all involved interactions get a reference
+            interaction->sets.insert(new_set);
         return;
     }
 
@@ -204,6 +224,34 @@ void Array::build_size_d_sets(long unsigned int start, long unsigned int d_cur,
     }
 }
 
+/* HELPER METHOD: build_row_interactions - recovers the Interaction objects based on the given row
+ * - top down recursive; auxiliary caller should use 0, t, and an empty string as initial parameters
+ * - this method should be called for every unique row considered; note that this gets expensive
+ * 
+ * parameters:
+ * - row: integer array representing a row up for consideration for appending to the Array
+ * - row_interactions: initially empty set to hold the Interactions as they are recovered
+ * - start: left side of row at which to begin the for loop
+ * - t_cur: distance from right side of row at which to end the for loop
+ * - key: auxiliary vector of pointers used to track the current combination of Singles
+ * 
+ * returns:
+ * - void, but after the method finishes, the row_interactions set will hold all the interactions in the row
+*/
+void Array::build_row_interactions(int *row, std::set<Interaction*> *row_interactions,
+    long unsigned int start, long unsigned int t_cur, std::string key)
+{
+    if (t_cur == 0) {
+        row_interactions->insert(interaction_map.at(key));
+        return;
+    }
+
+    for (long unsigned int col = start; col < num_factors - t_cur + 1; col++) {
+        std::string cur = key + "f" + std::to_string(col) + "," + std::to_string(row[col]);
+        build_row_interactions(row, row_interactions, col+1, t_cur-1, cur);
+    }
+}
+
 // dummy for now
 void Array::add_row(long unsigned int rand_num)
 {
@@ -211,9 +259,59 @@ void Array::add_row(long unsigned int rand_num)
     int *new_row = new int[num_factors];
     for (long unsigned int i = 0; i < num_factors; i++)
         new_row[i] = (rand_num / (i+1)) % factors[i]->level;
-    // TODO: some sort of loop to judge the choice and update it to achieve a better score
+    tweak_row(new_row);
     rows.push_back(new_row);
-    score -= 0.1;   // dummy
+    update_array();
+}
+
+int Array::tweak_row(int *row)
+{
+    // TODO: turn this into a giant switch case function that chooses a heuristic function to call based on
+    // the score:total_issues ratio
+
+    // after build_row_interactions is called, row_interactions will hold all interactions in this row
+    std::set<Interaction*> row_interactions;
+    build_row_interactions(row, &row_interactions, 0, t, "");
+    int problems[num_factors] = {0};    // for counting how many "problems" each factor has
+    int max_problems = 0;   // in case there is a tie for the most number of problems
+    int actual_max = 0;     // because max_problems can change
+
+    // coverage only heuristic
+    while (true) {
+        //long unsigned int best_score = 0;
+        //long unsigned int cur_score = 0;
+        
+        for (Interaction *i : row_interactions) {
+            if (i->rows.size() != 0) {  // interaction is already covered
+                for (Single *s : i->singles) {  // increment the problems counter for each Single involved
+                    problems[s->factor]++;
+                    if (problems[s->factor] > max_problems) max_problems = problems[s->factor];
+                }
+            } else  // interaction not covered; decrement the problems counters instead
+                for (Single *s : i->singles) problems[s->factor]--;
+        }
+        if (max_problems == 0) return;  // row is as good as possible as is
+
+        actual_max = INT32_MIN; // set actual_max to a huge negative number to start
+        // try altering the values with the most "problems" - those that contribute the least
+        for (int col = 0; col < num_factors; col++) {
+            if (problems[col] == max_problems) {
+                std::set<Interaction*> temp = row_interactions; // deep copy because we are about to mutate
+                // TODO: update row_interactions
+                actual_max = max_problems;
+                break;
+            }
+            if (problems[col] > actual_max) actual_max = problems[col];
+        }
+        if (actual_max == max_problems) continue;
+        break;
+    }
+    return 0;
+}
+
+void Array::update_array()
+{
+    score -= 1;     // dummy
     if (score < 0) score = 0;
     num_tests++;
 }

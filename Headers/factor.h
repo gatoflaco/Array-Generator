@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 04/18/2022
+Last updated 05/21/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -17,10 +17,14 @@ Last updated 04/18/2022
 class Single
 {
     public:
-        long unsigned int factor; // represents the factor, or column of the array
-        long unsigned int value;  // represents the actual value of the factor
-        std::set<int> rows;    // tracks the set of rows in which this (factor, value) occurs
-        Single();   // default constructor, don't use this
+        long unsigned int c_issues; // in how many coverage issues does this Single appear
+        long unsigned int l_issues; // in how many location issues does this Single appear
+        long unsigned int d_issues; // in how many detection issues does this Single appear
+        long unsigned int factor;   // represents the factor, or column of the array
+        long unsigned int value;    // represents the actual value of the factor
+        std::set<int> rows;         // tracks the set of rows in which this (factor, value) occurs
+        std::string to_string();    // returns a string representing the (factor, value)
+        Single();                                           // default constructor, don't use this
         Single(long unsigned int f, long unsigned int v);   // constructor that takes the (factor, value)
 };
 

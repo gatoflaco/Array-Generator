@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 04/27/2022
+Last updated 05/21/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -9,15 +9,22 @@ Last updated 04/27/2022
 #include "parser.h"
 #include "factor.h"
 
+class T;    // forward declaration because Interaction and T have circular references
+
 class Interaction
 {
     public:
         int id; // used only in verbose mode, to have some id associated with the interaction
-        //int strength;   // the interaction strength t is the number of (factor, value) tuples involved
+
         std::set<Single*> singles;   // the actual list of (factor, value) tuples
 
         // this tracks the set of tests (represented as row numbers) in which this interaction occurs;
         std::set<int> rows; // this row coverage is vital to analyzing the locating and detecting properties
+
+        // this tracks all the T sets in which this interaction occurs; using this, one can obtain all the
+        std::set<T*> sets;  // relevant sets when a new row with this interaction is added
+
+        std::string to_string();    // returns a string representing all Singles in the interaction
 
         Interaction();   // default constructor, don't use this
         Interaction(std::vector<Single*> *temp);   // constructor with a premade vector of Single pointers
@@ -34,8 +41,11 @@ class T
         // each interaction in a given T set has its own version of this; the ρ associated with a T is simply
         std::set<int> rows;  // the union of the ρ's for each interaction in that T
 
-        bool locatable;     // initally false
-        bool detectable;    // initally false
+        // this tracks all the T sets which occur in the same set of rows as this instance; when adding a
+        // row to the array, each T set occurring in the row must be compared to every other T set to see
+        // if their sets of rows are disjoint yet; if so, there is no longer a conflict; when the size of
+        // "location_conflicts" becomes 0 while the above set, "rows", is greater than 0, this T becomes
+        std::set<T*> location_conflicts;    // locatable within the array
 
         T();    // default constructor, don't use this
         T(std::vector<Interaction*> *temp);    // constructor with a premade vector of Interaction pointers
@@ -44,7 +54,7 @@ class T
 class Array
 {
     public:
-        float score;                // this is a measure of how close the array is to complete
+        long unsigned int score;    // this is a measure of how close the array is to complete; 0 is complete
         long unsigned int d;        // this is the size of the sets of t-way interactions
         long unsigned int t;        // this is the strength of interest
         long unsigned int delta;    // this is the desired separation of the array
@@ -70,6 +80,7 @@ class Array
         ~Array();   // deconstructor
 
     private:
+        long unsigned int total_issues; // the Array's score starts off as this value
         verb_mode v;    // this makes the program print out the data structures when enabled
         out_mode o;     // this dictates how much output should be printed; see parser.h for typedef
         prop_mode p;    // this is used to avoid building sets if it won't be needed anyway
@@ -89,4 +100,13 @@ class Array
         // almost certainly needs to be recursive in order to handle arbitrary values of d
         void build_size_d_sets(long unsigned int start, long unsigned int d_cur,
             std::vector<Interaction*> *interactions_so_far);
+
+        // this utility method closely mimics the build_t_way_interactions() method, but uses the information
+        // from a given row to fill out a set of interactions representing those that appear in the row
+        void build_row_interactions(int *row, std::set<Interaction*> *row_interactions,
+            long unsigned int start, long unsigned int t_cur, std::string key);
+        
+        int tweak_row(int *row);
+
+        void update_array();    // should update data structures and the Array's overall score
 };

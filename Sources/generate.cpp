@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 04/27/2022
+Last updated 05/21/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -51,9 +51,13 @@ int main(int argc, char *argv[])
     if (status == -1) return 1;     // exit immediately if there is a basic syntactic or semantic error
     
     Array array(&p);    // create Array object that immediately builds appropriate data structures
-    while (array.score != 0.0) {
+    long unsigned int row_count = 0;    // for user's information
+    while (array.score > 0) {
+        if (om != silent) printf("Array score is currently %lu, adding row %lu.", array.score, ++row_count);
         array.add_row(static_cast<long unsigned int>(rand()));
     }
+    if (om != silent) printf("Completed array with %lu rows.", row_count);
+
     if (p.out_filename.empty()) {
         if (om != silent) printf("The finished array is: \n");
         printf("%s\n", array.to_string().c_str());

@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 04/18/2022
+Last updated 05/21/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -14,6 +14,7 @@ Last updated 04/18/2022
 */
 Single::Single()
 {
+    c_issues = 0; l_issues = 0; d_issues = 0;
     factor = 0;
     value = 0;
 }
@@ -23,9 +24,15 @@ Single::Single()
 */
 Single::Single(long unsigned int f, long unsigned int v)
 {
+    c_issues = 0; l_issues = 0; d_issues = 0;   // to be incremented later
     factor = f;
     value = v;
     // rows will be built later
+}
+
+std::string Single::to_string()
+{
+    return "f" + std::to_string(factor) + "," + std::to_string(value);
 }
 
 /* CONSTRUCTOR - initializes the object
