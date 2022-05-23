@@ -438,8 +438,6 @@ void Array::update_array(int *row)
             // TODO: look into s->l_issues and s->d_issues
         }
     }
-    
-    // if (score < 0) score = 0;   // TODO: investigate whether this line is needed (it shouldn't be)
 }
 
 std::string Array::to_string()
