@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 05/22/2022
+Last updated 05/23/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -121,7 +121,7 @@ Array::Array(Parser *in)
         printf("NOTE: bad value for δ, continuing with δ = 1\n");
         delta = 1;
     }
-    if (o != silent) printf("Building internal data structures....");
+    if (o != silent) printf("Building internal data structures....\n\n");
 
     try {
         // build all Singles, associated with an array of Factors
@@ -315,81 +315,99 @@ void Array::tweak_row(int *row)
     // TODO: turn this into a giant switch case function that chooses a heuristic function to call based on
     // the score:total_issues ratio
 
-    // after build_row_interactions is called, row_interactions will hold all interactions in this row
+    // right now it is performing a coverage-only heuristic
+
     std::set<Interaction*> row_interactions;
     build_row_interactions(row, &row_interactions, 0, t, "");
     int *problems = new int[num_factors]{0};    // for counting how many "problems" each factor has
-    int max_problems;   // in case there is a tie for the most number of problems
+    int max_problems;   // largest value among all in the problems[] array created above
     int cur_max;    // for comparing to max_problems to see if there is an improvement
 
-    // coverage only heuristic
     for (Interaction *i : row_interactions) {
-        if (i->rows.size() != 0) {  // interaction is already covered
-            for (Single *s : i->singles) {  // increment the problems counter for each Single involved
-                if (s->c_issues == 0) continue; // don't account for factors that were already completed
+        if (i->rows.size() != 0) {  // Interaction is already covered
+            bool can_skip = false;  // don't account for Interactions involving already-completed factors
+            for (Single *s : i->singles)
+                if (s->c_issues == 0) { // one of the Singles involved in the Interaction is completed
+                    // TODO: make this check more than just c_issues?
+                    can_skip = true;
+                    break;
+                }
+            if (can_skip) continue;
+            for (Single *s : i->singles) // increment the problems counter for each Single involved
                 problems[s->factor]++;
-            }
-        } else  // interaction not covered; decrement the problems counters instead
+        } else {    // Interaction not covered; decrement the problems counters instead
             for (Single *s : i->singles) problems[s->factor]--;
+        }
     }
 
     // find out what the worst score is among the factors
-    max_problems = INT32_MIN;   // set max to a huge negative number to start
-    for (long unsigned int col = 0; col < num_factors; col++)
+    max_problems = 0;
+    for (long unsigned int col = 0; col < num_factors; col++) {
+        //if (factors[col]->singles[row[col]]->c_issues == 0) continue;   // already completed factor
         if (problems[col] > max_problems) max_problems = problems[col];
-    if (max_problems <= 0) {    // row is good enough as is
+    }
+    if (max_problems == 0) {    // row is good enough as is
         delete[] problems;
         return;
     }
     
     // else, try altering the value(s) with the most problems (whatever is currently contributing the least)
     cur_max = max_problems;
-    while (true) {
-        for (long unsigned int col = 0; col < num_factors; col++) { // go find any factors to change
-            if (problems[col] == max_problems) {    // found a factor to try altering
+    for (long unsigned int col = 0; col < num_factors; col++) { // go find any factors to change
+        //if (factors[col]->singles[row[col]]->c_issues == 0) continue;   // already completed factor
+        if (problems[col] == max_problems) {    // found a factor to try altering
 
-                for (long unsigned int i = 1; i < factors[col]->level; i++) { // for every value it can have
-                    row[col] = (row[col] + 1) % static_cast<int>(factors[col]->level);  // try that value
+            for (long unsigned int i = 1; i < factors[col]->level; i++) { // for every value it can have
+                row[col] = (row[col] + 1) % static_cast<int>(factors[col]->level);  // try that value
 
-                    std::set<Interaction*> new_interactions;    // get the new Interactions
-                    build_row_interactions(row, &new_interactions, 0, t, "");
-                    for (Interaction *interaction : row_interactions)
-                        new_interactions.erase(interaction);    // ONLY include the new Interactions
+                std::set<Interaction*> new_interactions;    // get the new Interactions
+                build_row_interactions(row, &new_interactions, 0, t, "");
+                for (Interaction *interaction : row_interactions)
+                    new_interactions.erase(interaction);    // ONLY include the new Interactions
 
-                    cur_max = heuristic_1_helper(new_interactions, problems);   // test this change
-                    if (cur_max < max_problems) {   // this change improved the score, keep it
-                        delete[] problems;
-                        return;
-                        // TODO: consider continuing to investigate for an even lower score
-                        // i.e., max_problems = cur_max and continue
-                    }
-                    cur_max = max_problems; // else this change was no good, reset and continue
+                cur_max = heuristic_1_helper(row, new_interactions, problems);  // test this change
+                if (cur_max < max_problems) {   // this change improved the score, keep it
+                    delete[] problems;
+                    return;
+                    // TODO: consider continuing to investigate for an even lower score
+                    // i.e., max_problems = cur_max and continue
                 }
-                row[col] = (row[col] + 1) % static_cast<int>(factors[col]->level);  // resets the row
+                cur_max = max_problems; // else this change was no good, reset and continue
             }
+            row[col] = (row[col] + 1) % static_cast<int>(factors[col]->level);  // resets the row
         }
     }
+    // row cannot be improved?
 }
 
-int Array::heuristic_1_helper(std::set<Interaction*> row_interactions, int *prev_problems)
+int Array::heuristic_1_helper(int *row, std::set<Interaction*> row_interactions, int *prev_problems)
 {
     int *problems = new int[num_factors];   // deep copy problems[] because it will be mutated
     for (long unsigned int idx = 0; idx < num_factors; idx++) problems[idx] = prev_problems[idx];
 
     for (Interaction *i : row_interactions) {
-        if (i->rows.size() != 0) {  // interaction is already covered
-            for (Single *s : i->singles) {  // increment the problems counter for each Single involved
-                if (s->c_issues == 0) continue; // don't account for factors that were already completed
+        if (i->rows.size() != 0) {  // Interaction is already covered
+            bool can_skip = false;  // don't account for Interactions involving already-completed factors
+            for (Single *s : i->singles)
+                if (s->c_issues == 0) { // one of the Singles involved in the Interaction is completed
+                    // TODO: make this check more than just c_issues?
+                    can_skip = true;
+                    break;
+                }
+            if (can_skip) continue;
+            for (Single *s : i->singles) // increment the problems counter for each Single involved
                 problems[s->factor]++;
-            }
-        } else  // interaction not covered; decrement the problems counters instead
+        } else {    // Interaction not covered; decrement the problems counters instead
             for (Single *s : i->singles) problems[s->factor]--;
+        }
     }
 
     // find out what the worst score is among the factors
     int max_problems = INT32_MIN;   // set max to a huge negative number to start
-    for (long unsigned int col = 0; col < num_factors; col++)
+    for (long unsigned int col = 0; col < num_factors; col++) {
+        if (factors[col]->singles[row[col]]->c_issues == 0) continue;   // already completed factor
         if (problems[col] > max_problems) max_problems = problems[col];
+    }
     delete[] problems;
     return max_problems;
 }
@@ -397,6 +415,12 @@ int Array::heuristic_1_helper(std::set<Interaction*> row_interactions, int *prev
 void Array::update_array(int *row)
 {
     rows.push_back(row);
+    if (v == v_on) {
+        printf(">Pushed row:\t");
+        for (long unsigned int i = 0; i < num_factors; i++)
+            printf("%d\t", row[i]);
+        printf("\n");
+    }
     num_tests++;
 
     std::set<Interaction*> row_interactions;

@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 04/27/2022
+Last updated 05/23/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -26,6 +26,7 @@ Parser::Parser()
 Parser::Parser(int argc, char *argv[]) : Parser()
 {
     int itr = 1, num_params = 0;
+    p = c_only;
     while (itr < argc) {
         std::string arg(argv[itr]);    // cast to std::string
         if (arg.at(0) == '-') { // flags
@@ -57,7 +58,6 @@ Parser::Parser(int argc, char *argv[]) : Parser()
                 long unsigned int param = static_cast<long unsigned int>(std::stoi(arg));
                 if (num_params < 1) {
                     t = param;
-                    p = c_only;
                 } else if (num_params < 2) {
                     d = t;
                     t = param;

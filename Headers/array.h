@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 05/22/2022
+Last updated 05/23/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -110,7 +110,7 @@ class Array
         void tweak_row(int *row);   // called by add_row() to improve the decision
 
         // define more of these as needed; they are for deciding what needs changing
-        int heuristic_1_helper(std::set<Interaction*> row_interactions, int *problems);
+        int heuristic_1_helper(int *row, std::set<Interaction*> row_interactions, int *problems);
 
         void update_array(int *row);    // should update data structures and the array's overall score
 };
