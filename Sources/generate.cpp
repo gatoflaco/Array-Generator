@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 05/23/2022
+Last updated 05/29/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -58,10 +58,11 @@ int main(int argc, char *argv[])
 
     long unsigned int row_count = 0;    // for user's information
     if (om != silent) printf("Array score is currently %lu, adding row %lu.\n", array.score, ++row_count);
-    array.add_row(static_cast<long unsigned int>(rand()));
+    array.add_random_row(static_cast<long unsigned int>(rand()));
+    //array.add_row_debug(0); // TODO: GET RID OF THIS EVENTUALLY
     while (array.score > 0) {   // add rows until the array is complete
         if (om != silent) printf("Array score is currently %lu, adding row %lu.\n", array.score, ++row_count);
-        array.add_row();
+        array.add_row(static_cast<long unsigned int>(rand()));
     }
     if (om != silent) printf("Completed array with %lu rows.\n\n", row_count);
 

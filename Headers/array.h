@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 05/23/2022
+Last updated 05/29/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -59,8 +59,9 @@ class Array
         long unsigned int t;        // this is the strength of interest
         long unsigned int delta;    // this is the desired separation of the array
 
-        void add_row();                         // adds a row to the array based on scoring
-        void add_row(long unsigned int rand);   // adds a random row to the array
+        void add_row(long unsigned int rand);           // adds a row to the array based on scoring
+        void add_random_row(long unsigned int rand);    // adds a random row to the array
+        void add_row_debug(int val);
 
         std::string to_string();                // returns a string representing all rows
 
@@ -107,7 +108,7 @@ class Array
         void build_row_interactions(int *row, std::set<Interaction*> *row_interactions,
             long unsigned int start, long unsigned int t_cur, std::string key);
         
-        void tweak_row(int *row);   // called by add_row() to improve the decision
+        void tweak_row(int *row, bool *dont_cares); // called by add_row() to improve the decision
 
         // define more of these as needed; they are for deciding what needs changing
         int heuristic_1_helper(int *row, std::set<Interaction*> row_interactions, int *problems);
