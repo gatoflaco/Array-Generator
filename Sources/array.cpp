@@ -22,22 +22,24 @@ static void print_interactions(std::vector<Interaction*> interactions);
 static void print_sets(std::vector<T*> sets);
 
 static std::map<std::string, Interaction*> interaction_map;
-static std::set<Interaction*> coverage_issues;
-static std::set<T*> location_issues;
-static std::set<Interaction*> detection_issues;
+//static std::set<Interaction*> coverage_issues;
+//static std::set<T*> location_issues;
+//static std::set<Interaction*> detection_issues;
 
 /* CONSTRUCTOR - initializes the object
  * - overloaded: this is the default with no parameters, and should not be used
 */
 Interaction::Interaction()
 {
-    // nothing to do
+    id = -1;
+    is_covered = false;
+    is_detectable = false;
 }
 
 /* CONSTRUCTOR - initializes the object
  * - overloaded: this version can set its fields based on a premade vector of Single pointers
 */
-Interaction::Interaction(std::vector<Single*> *temp)
+Interaction::Interaction(std::vector<Single*> *temp) : Interaction::Interaction()
 {
     // fencepost start: let the Interaction be the strength 1 interaction involving just the 0th Single in temp
     singles.insert(temp->at(0));
@@ -65,13 +67,13 @@ std::string Interaction::to_string()
 */
 T::T()
 {
-    // nothing to do
+    is_locatable = false;
 }
 
 /* CONSTRUCTOR - initializes the object
  * - overloaded: this version can set its fields based on a premade vector of Interaction pointers
 */
-T::T(std::vector<Interaction*> *temp)
+T::T(std::vector<Interaction*> *temp) : T::T()
 {
     // fencepost start: let the Interaction be the strength 1 interaction involving just the 0th Single in s
     interactions.insert(temp->at(0));
@@ -131,24 +133,34 @@ Array::Array(Parser *in)
             for (long unsigned int j = 0; j < factors[i]->level; j++)
                 factors[i]->singles[j] = new Single(i, j);
         }
-        for (long unsigned int row = 0; row < in->num_rows; row++)
-            for (long unsigned int col = 0; col < in->num_cols; col++)
-                factors[col]->singles[in->array.at(row)[col]]->rows.insert(row + 1);
         if (v == v_on) print_singles(factors, num_factors);
 
         // build all Interactions
         std::vector<Single*> temp_singles;
         build_t_way_interactions(0, t, &temp_singles);
         if (v == v_on) print_interactions(interactions);
-        total_issues += coverage_issues.size();
+        total_issues += interactions.size();    // to account for all the coverage issues
         score = total_issues;   // the array's score starts off here and is considered completed when 0
+        if (p == c_only) return;    // no need to spend effort building Ts if they won't be used
 
         // build all Ts
-        if (p == c_only) return;    // no need to spend effort building Ts if they won't be used
         std::vector<Interaction*> temp_interactions;
         build_size_d_sets(0, d, &temp_interactions);
         if (v == v_on) print_sets(sets);
-        // TODO: incremenet total_issues and score
+        total_issues += sets.size();    // to account for all the location issues
+        score = total_issues;   // need to update this
+        if (p != all) return;   // can skip the following stuff if not doing detection
+
+        // build all Interactions' maps of detection issues to their deltas (row difference magnitudes)
+        for (Interaction *i : interactions) // for all Interactions in the array
+            for (T *t_set : sets)   // for every T set this Interaction is NOT part of
+                if (i->sets.find(t_set) == i->sets.end()) {
+                    i->row_diffs.insert({t_set, 0});
+                    for (Single *s: i->singles) s->d_issues++;
+                }
+        total_issues += interactions.size();    // to account for all the detection issues
+        score = total_issues;   // need to update this one last time
+
     } catch (const std::bad_alloc& e) {
         printf("ERROR: not enough memory to work with given array for given arguments\n");
         exit(1);
@@ -177,7 +189,7 @@ void Array::build_t_way_interactions(long unsigned int start, long unsigned int 
         Interaction *new_interaction = new Interaction(singles_so_far);
         interactions.push_back(new_interaction);
         interaction_map.insert({new_interaction->to_string(), new_interaction});    // for later accessing
-        coverage_issues.insert(new_interaction);    // when generating an array from scratch, always true
+        //coverage_issues.insert(new_interaction);    // when generating an array from scratch, always true // TODO: delete this entirely if not needed
         for (Single *single : new_interaction->singles) {
             single->c_issues++;
             // TODO: maybe add logic for incrementing l_issues and d_issues if possible
@@ -444,7 +456,6 @@ int Array::heuristic_1_helper(int *row, std::set<Interaction*> row_interactions,
 
 void Array::update_array(int *row)
 {
-    long unsigned int prev_score = score;
     rows.push_back(row);
     if (v == v_on) {
         printf(">Pushed row:\t");
@@ -456,21 +467,72 @@ void Array::update_array(int *row)
 
     std::set<Interaction*> row_interactions;
     build_row_interactions(row, &row_interactions, 0, t, "");
+
+    std::set<T*> row_sets;  // all T sets that occur in this row
+    for (Interaction *i : row_interactions)
+        for (T *t_set : i->sets) {
+            t_set->rows.insert(num_tests);
+            row_sets.insert(t_set);
+        }
     
-    for (Interaction *i : row_interactions) {
-        i->rows.insert(num_tests);
-        if (coverage_issues.erase(i) == 1) score--; // if a coverage issue is solved, score improves
+    for (Interaction *i1 : row_interactions) {
+        for (Single *s: i1->singles) s->rows.insert(num_tests);
+        i1->rows.insert(num_tests);
+
+        if (!i1->is_covered) {  // if true, this Interaction just became covered
+            i1->is_covered = true;
+            score--;    // array score improves for the solved coverage problem
+            for (Single *s: i1->singles) s->c_issues--;
+
+            if (p != c_only)    // the following is only done if we care about location
+                // generating location issues for T sets this Interaction is part of:
+                for (T *t1 : i1->sets)  // for every T set this Interaction is part of,
+                    for (Interaction *i2 : row_interactions) {  // for all other Interactions in this row,
+                        if (i1 == i2) continue; // (skip self)
+                        for (T *t2 : i2->sets) {    // for every T set the other Interaction is part of,
+                            t1->location_conflicts.insert(t2);  // can assume there is a location conflict
+                            for (Single *s: i1->singles) s->l_issues += t1->location_conflicts.size();
+                        }
+                    }
+        }
+        
+        else if (p != c_only) { // coverage issue not solved, updating location issues next
+            for (T *t1 : i1->sets) {    // for every T set this Interaction is part of,
+                if (t1->is_locatable) continue; // can skip all this checking if already locatable, else
+                std::set<T*> temp = t1->location_conflicts; // make a deep copy (for mutating), and
+                for (T *t2 : t1->location_conflicts)    // for every T set in the current location conflicts,
+                    if (row_sets.find(t2) == row_sets.end()) {  // if the conflicting set is not present,
+                        temp.erase(t2); // it must be true that it is no longer a locating issue for this T
+                        for (Interaction *i2 : t1->interactions)    // next, for all Interactions involved
+                            for (Single *s: i2->singles) s->l_issues--; // update the Singles' l_issues
+                    }
+                t1->location_conflicts = temp;  // mutating completed, can update original now
+                if (t1->location_conflicts.size() == 0) {   // if true, this T just became locatable
+                    t1->is_locatable = true;
+                    score--;    // array score improves for the solved location problem
+                }
+            }
+        }
         // TODO: look into location_issues and detection_issues
 
-        // update individual Singles; important for add_row()'s greedy selection algorithm
-        for (Single *s: i->singles) {
-            s->rows.insert(num_tests);
-            if (i->rows.size() == 1) s->c_issues--; // coverage issue just solved
-            // TODO: look into s->l_issues and s->d_issues
+        if (p == all) { // the following is only done if we care about detection
+            if (i1->is_detectable) continue;    // can skip all this checking if already detectable
+            i1->is_detectable = true;   // about to set it back to false if anything is unsatisfied still
+            // updating detection issues for this Interaction:
+            std::set<T*> other_sets = row_sets; // this will hold all T sets this Interaction is NOT part of
+            for (T *t_set : i1->sets) other_sets.erase(t_set);
+            for (T *t_set : other_sets) // for every other T set in this row,
+                i1->row_diffs.at(t_set)--;  // to balance out all row_diffs getting ++ after this
+            for (auto& kv : i1->row_diffs) {    // for all row_diffs,
+                kv.second++;    // increase their separation; offset by the -- earlier for T sets in this row
+                if (kv.second < delta) i1->is_detectable = false;   // separation still not high enough
+                else if (kv.second == delta)    // detection issue just solved for all Singles involved
+                    for (Single *s: i1->singles) s->d_issues--;
+            }
+            if (i1->is_detectable)  // if true, this Interaction just became detectable
+                score--;    // array score improves for the solved detection problem
         }
     }
-    if (prev_score == score)
-        return; // TODO: delete; this is just for debugging
 }
 
 std::string Array::to_string()

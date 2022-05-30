@@ -8,6 +8,7 @@ Last updated 05/29/2022
 
 #include "parser.h"
 #include "factor.h"
+#include <map>
 
 class T;    // forward declaration because Interaction and T have circular references
 
@@ -19,10 +20,16 @@ class Interaction
         std::set<Single*> singles;   // the actual list of (factor, value) tuples
 
         // this tracks the set of tests (represented as row numbers) in which this interaction occurs;
-        std::set<int> rows; // this row coverage is vital to analyzing the locating and detecting properties
+        std::set<int> rows; // this row coverage is vital to analyzing the array's properties
+        bool is_covered;    // easy lookup bool to cut down on redundant checks
 
         // this tracks all the T sets in which this interaction occurs; using this, one can obtain all the
         std::set<T*> sets;  // relevant sets when a new row with this interaction is added
+
+        // this tracks the set differences between the set of rows in which this Interaction occurs and the
+        // sets of rows in which relevant T sets this Interaction is not part of occur; that is, this is
+        std::map<T*, long unsigned int> row_diffs;  // a field to map detection issues to their delta values
+        bool is_detectable; // easy lookup bool to cut down on redundant checks
 
         std::string to_string();    // returns a string representing all Singles in the interaction
 
@@ -46,6 +53,7 @@ class T
         // if their sets of rows are disjoint yet; if so, there is no longer a conflict; when the size of
         // "location_conflicts" becomes 0 while the above set, "rows", is greater than 0, this T becomes
         std::set<T*> location_conflicts;    // locatable within the array
+        bool is_locatable;  // easy lookup bool to cut down on redundant checks
 
         T();    // default constructor, don't use this
         T(std::vector<Interaction*> *temp);    // constructor with a premade vector of Interaction pointers
