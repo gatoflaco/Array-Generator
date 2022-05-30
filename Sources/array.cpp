@@ -148,7 +148,7 @@ Array::Array(Parser *in)
         build_size_d_sets(0, d, &temp_interactions);
         if (v == v_on) print_sets(sets);
         total_issues += sets.size();    // to account for all the location issues
-        score = total_issues;   // need to update this
+        //score = total_issues;   // need to update this
         if (p != all) return;   // can skip the following stuff if not doing detection
 
         // build all Interactions' maps of detection issues to their deltas (row difference magnitudes)
@@ -159,7 +159,7 @@ Array::Array(Parser *in)
                     for (Single *s: i->singles) s->d_issues++;
                 }
         total_issues += interactions.size();    // to account for all the detection issues
-        score = total_issues;   // need to update this one last time
+        //score = total_issues;   // need to update this one last time
 
     } catch (const std::bad_alloc& e) {
         printf("ERROR: not enough memory to work with given array for given arguments\n");
@@ -509,11 +509,10 @@ void Array::update_array(int *row)
                 t1->location_conflicts = temp;  // mutating completed, can update original now
                 if (t1->location_conflicts.size() == 0) {   // if true, this T just became locatable
                     t1->is_locatable = true;
-                    score--;    // array score improves for the solved location problem
+                    //score--;    // array score improves for the solved location problem
                 }
             }
         }
-        // TODO: look into location_issues and detection_issues
 
         if (p == all) { // the following is only done if we care about detection
             if (i1->is_detectable) continue;    // can skip all this checking if already detectable
@@ -529,8 +528,8 @@ void Array::update_array(int *row)
                 else if (kv.second == delta)    // detection issue just solved for all Singles involved
                     for (Single *s: i1->singles) s->d_issues--;
             }
-            if (i1->is_detectable)  // if true, this Interaction just became detectable
-                score--;    // array score improves for the solved detection problem
+            /*if (i1->is_detectable)  // if true, this Interaction just became detectable
+                score--;    // array score improves for the solved detection problem*/
         }
     }
 }
@@ -543,6 +542,24 @@ std::string Array::to_string()
             ret += std::to_string(row[i]) + '\t';
         ret += '\n';
     }
+
+    // TODO: get rid of this next block, it is only for debugging
+    for (Interaction *i : interactions) {
+        for (T* t1 : i->sets) {
+            for (T *t2 : t1->location_conflicts) {
+                print_failure(t1, t2);
+                t1->location_conflicts.erase(t2);
+            }
+        for (const auto& kv : i->row_diffs)
+            if (kv.second < delta) {
+                std::set<int> dif;
+                std::set_difference(i->rows.begin(), i->rows.end(), kv.first->rows.begin(),
+                    kv.first->rows.end(), std::inserter(dif, dif.begin()));
+                print_failure(i, kv.first, delta, &dif);
+            }
+    }
+    //*/
+
     return ret;
 }
 
