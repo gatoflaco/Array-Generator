@@ -469,15 +469,16 @@ void Array::update_array(int *row)
     build_row_interactions(row, &row_interactions, 0, t, "");
 
     std::set<T*> row_sets;  // all T sets that occur in this row
-    for (Interaction *i : row_interactions)
+    for (Interaction *i : row_interactions) {
+        for (Single *s: i->singles) s->rows.insert(num_tests); // add the row to Singles in this Interaction
+        i->rows.insert(num_tests); // add the row to this Interaction itself
         for (T *t_set : i->sets) {
-            t_set->rows.insert(num_tests);
-            row_sets.insert(t_set);
+            t_set->rows.insert(num_tests);  // add the row to all T sets this Interaction is part of
+            row_sets.insert(t_set); // also add the T set to row_sets
         }
+    }
     
     for (Interaction *i1 : row_interactions) {
-        for (Single *s: i1->singles) s->rows.insert(num_tests);
-        i1->rows.insert(num_tests);
 
         if (!i1->is_covered) {  // if true, this Interaction just became covered
             i1->is_covered = true;
@@ -489,6 +490,8 @@ void Array::update_array(int *row)
                 for (T *t1 : i1->sets)  // for every T set this Interaction is part of,
                     for (Interaction *i2 : row_interactions) {  // for all other Interactions in this row,
                         if (i1 == i2) continue; // (skip self)
+                        // excluding an Interaction that occurs in other rows already,
+                        if (i2->rows.size() - i2->rows.count(num_tests)) continue;
                         for (T *t2 : i2->sets) {    // for every T set the other Interaction is part of,
                             t1->location_conflicts.insert(t2);  // can assume there is a location conflict
                             for (Single *s: i1->singles) s->l_issues += t1->location_conflicts.size();
@@ -505,6 +508,9 @@ void Array::update_array(int *row)
                         temp.erase(t2); // it must be true that it is no longer a locating issue for this T
                         for (Interaction *i2 : t1->interactions)    // next, for all Interactions involved
                             for (Single *s: i2->singles) s->l_issues--; // update the Singles' l_issues
+                        t2->location_conflicts.erase(t1);   // also true
+                        for (Interaction *i2 : t2->interactions)
+                            for (Single *s : i2->singles) s->l_issues--;
                     }
                 t1->location_conflicts = temp;  // mutating completed, can update original now
                 if (t1->location_conflicts.size() == 0) {   // if true, this T just became locatable
@@ -544,20 +550,29 @@ std::string Array::to_string()
     }
 
     // TODO: get rid of this next block, it is only for debugging
+    int count = 0;
     for (Interaction *i : interactions) {
-        for (T* t1 : i->sets) {
+        for (T* t1 : i->sets)
             for (T *t2 : t1->location_conflicts) {
                 print_failure(t1, t2);
                 t1->location_conflicts.erase(t2);
+                t2->location_conflicts.erase(t1);
+                count++;
             }
+    }
+    ret += "\ntotal location problems: " + std::to_string(count);
+    count = 0;
+    for (Interaction *i : interactions) {
         for (const auto& kv : i->row_diffs)
             if (kv.second < delta) {
                 std::set<int> dif;
                 std::set_difference(i->rows.begin(), i->rows.end(), kv.first->rows.begin(),
                     kv.first->rows.end(), std::inserter(dif, dif.begin()));
                 print_failure(i, kv.first, delta, &dif);
+                count++;
             }
     }
+    ret += "\ntotal detection problems: " + std::to_string(count) + "\n";
     //*/
 
     return ret;
