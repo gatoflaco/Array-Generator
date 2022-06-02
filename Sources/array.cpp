@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 05/29/2022
+Last updated 06/01/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -12,6 +12,7 @@ Last updated 05/29/2022
 #include <sys/types.h>
 #include <unistd.h>
 #include <map>
+#include <time.h>
 
 // method forward declarations
 static void print_failure(Interaction *interaction);
@@ -106,11 +107,16 @@ Array::Array()
 */
 Array::Array(Parser *in)
 {
+    srand(time(nullptr));   // seed rand() using current time
     total_issues = 0;   // will be increased as Interactions and sets of Interactions are created
     d = in->d; t = in->t; delta = in->delta;
     v = in->v; o = in->o; p = in->p;
     num_tests = in->num_rows;
     num_factors = in->num_cols;
+    dont_cares = new bool[num_factors]{false};  // all factors are not "don't cares" at first
+    permutation = new int[num_factors];
+    for (long unsigned int col = 0; col < num_factors; col++) permutation[col] = col;
+
     if(d <= 0) {
         printf("NOTE: bad value for d, continuing with d = 1\n");
         d = 1;
@@ -272,61 +278,61 @@ void Array::build_row_interactions(int *row, std::set<Interaction*> *row_interac
 /* SUB METHOD: add_row - adds a new row to the array using some predictive and scoring logic
  * - initializes a row with a greedy approach, then tweaks till good enough
  * 
- * parameters:
- * - rand_num: assumed to be obtained from a random seed
- * 
  * returns:
  * - void, but after the method finishes, the array will have a new row appended to its end
 */
-void Array::add_row(long unsigned int rand_num)
+void Array::add_row()
 {
     if (score == 0) return; // nothing to do if the array already satisfies all properties
     int *new_row = new int[num_factors]{0};
-    bool *dont_cares = new bool[num_factors]{false};
+    for (long unsigned int size = num_factors; size > 0; size--) {
+        int rand_idx = rand() % static_cast<int>(size);
+        int temp = permutation[size - 1];
+        permutation[size - 1] = permutation[rand_idx];
+        permutation[rand_idx] = temp;
+    }   // at this point, permutation should be shuffled
 
     // greedily select the values that appear to need the most attention
     for (long unsigned int col = 0; col < num_factors; col++) {
-        int worst_val = 0;  // fencepost starting point; assume 0 is the worst to start
-        for (long unsigned int val = 1; val < factors[col]->level; val++) { // check if any others are worse
+        int worst_val = 0;  // assume 0 is the worst to start, then check if any others are worse
+        for (long unsigned int val = 1; val < factors[permutation[col]]->level; val++) {
 
-            if (factors[col]->singles[val]->c_issues > factors[col]->singles[worst_val]->c_issues)
+            if (factors[permutation[col]]->singles[val]->c_issues >
+            factors[permutation[col]]->singles[worst_val]->c_issues)
                 worst_val = val;
-            else if (factors[col]->singles[val]->c_issues == factors[col]->singles[worst_val]->c_issues)
-                if (factors[col]->singles[val]->rows.size() < factors[col]->singles[worst_val]->rows.size())
-                    worst_val = val;    // break ties on which one has appeared less so far
+            else if (factors[permutation[col]]->singles[val]->c_issues ==
+            factors[permutation[col]]->singles[worst_val]->c_issues)
+                if (rand() % 2 == 0) worst_val = val;    // break ties randomly
             
             // TODO: think about more than just c_issues
         }
-        new_row[col] = worst_val;
-        if (factors[col]->singles[worst_val]->c_issues == 0) {
-            new_row[col] = (rand_num / (col+1)) % factors[col]->level;
-            dont_cares[col] = true;
+        new_row[permutation[col]] = worst_val;
+        if (factors[permutation[col]]->singles[worst_val]->c_issues == 0) {
+            new_row[permutation[col]] = (static_cast<long unsigned int>(rand()) / (col+1)) %
+                factors[permutation[col]]->level;
+            dont_cares[permutation[col]] = true;
         }
         // TODO: think about more than just c_issues!!! (for dont_cares as well)
     }   // entire row is now initialized based on the greedy approach
-    tweak_row(new_row, dont_cares); // next, go and score this decision, modifying values as needed
+    tweak_row(new_row); // next, go and score this decision, modifying values as needed
 
-    delete[] dont_cares;
     update_array(new_row);
 }
 
 /* SUB METHOD: add_random_row - adds a randomly generated row to the array without scoring it
  * - should only ever be called to initialize the first row of a brand new array from scratch
  * 
- * parameters:
- * - rand_num: assumed to be obtained from a random seed
- * 
  * returns:
  * - void, but after the method finishes, the array will have a new row appended to its end
 */
-void Array::add_random_row(long unsigned int rand_num)
+void Array::add_random_row()
 {
     if (score == 0) return; // nothing to do if the array already satisfies all properties
     int *new_row = new int[num_factors];
 
     // simply randomly generate each value
     for (long unsigned int i = 0; i < num_factors; i++)
-        new_row[i] = (rand_num / (i+1)) % factors[i]->level;
+        new_row[i] = (static_cast<long unsigned int>(rand()) / (i+1)) % factors[i]->level;
     
     update_array(new_row);
 }
@@ -340,7 +346,7 @@ void Array::add_row_debug(int val)
     update_array(new_row);
 }
 
-void Array::tweak_row(int *row, bool *dont_cares)
+void Array::tweak_row(int *row)
 {
     // TODO: turn this into a giant switch case function that chooses a heuristic function to call based on
     // the score:total_issues ratio
@@ -357,9 +363,7 @@ void Array::tweak_row(int *row, bool *dont_cares)
         if (i->rows.size() != 0) {  // Interaction is already covered
             bool can_skip = false;  // don't account for Interactions involving already-completed factors
             for (Single *s : i->singles)
-                if (s->c_issues == 0) { // one of the Singles involved in the Interaction is completed
-                    // TODO: make this check more than just c_issues?
-                    dont_cares[s->factor] = true;   // useful later
+                if (dont_cares[s->factor]) {
                     can_skip = true;
                     break;
                 }
@@ -383,11 +387,12 @@ void Array::tweak_row(int *row, bool *dont_cares)
     // else, try altering the value(s) with the most problems (whatever is currently contributing the least)
     cur_max = max_problems;
     for (long unsigned int col = 0; col < num_factors; col++) { // go find any factors to change
-        if (problems[col] == max_problems) {    // found a factor to try altering
+        if (problems[permutation[col]] == max_problems) {   // found a factor to try altering
             int *temp_problems = new int[num_factors]{0};   // deep copy problems[] because it will be mutated
 
-            for (long unsigned int i = 1; i < factors[col]->level; i++) {   // for every other value
-                row[col] = (row[col] + 1) % static_cast<int>(factors[col]->level);  // try that value
+            for (long unsigned int i = 1; i < factors[permutation[col]]->level; i++) {  // for every value
+                row[permutation[col]] = (row[permutation[col]] + 1) %
+                    static_cast<int>(factors[permutation[col]]->level); // try that value
                 std::set<Interaction*> new_interactions;    // get the new Interactions
                 build_row_interactions(row, &new_interactions, 0, t, "");
 
@@ -396,22 +401,22 @@ void Array::tweak_row(int *row, bool *dont_cares)
                     delete[] problems;
                     delete[] temp_problems;
                     return;
-                    // TODO: consider continuing to investigate for an even lower score
-                    // i.e., max_problems = cur_max and continue
                 }
                 cur_max = max_problems; // else this change was no good, reset and continue
             }
             delete[] temp_problems;
-            row[col] = (row[col] + 1) % static_cast<int>(factors[col]->level);  // row is reset
+            row[permutation[col]] = (row[permutation[col]] + 1) % static_cast<int>(factors[col]->level);
         }
     }
-    // row cannot be improved?
 
     // last resort, start looking for *anything* that is missing
+    int *dont_cares_c = new int[num_factors];   // local copy of the don't cares
+    for (long unsigned int col = 0; col < num_factors; col++) dont_cares_c[col] = dont_cares[col];
     for (long unsigned int col = 0; col < num_factors; col++) { // for all factors
-        if (dont_cares[col]) continue;  // no need to check for factors that are "don't cares"
-        for (long unsigned int i = 1; i < factors[col]->level; i++) {   // for every other value
-            row[col] = (row[col] + 1) % static_cast<int>(factors[col]->level);  // try that value
+        if (dont_cares_c[permutation[col]]) continue;   // no need to check factors that are "don't cares"
+        for (long unsigned int i = 1; i < factors[permutation[col]]->level; i++) {  // for every value
+            row[permutation[col]] = (row[permutation[col]] + 1) %
+                static_cast<int>(factors[permutation[col]]->level); // try that value
             std::set<Interaction*> new_interactions;    // get the new Interactions
             build_row_interactions(row, &new_interactions, 0, t, "");
 
@@ -424,6 +429,8 @@ void Array::tweak_row(int *row, bool *dont_cares)
             if (improved) break;    // keep this factor as this value
         }
     }
+    delete[] dont_cares_c;
+    delete[] problems;
 }
 
 int Array::heuristic_1_helper(int *row, std::set<Interaction*> row_interactions, int *problems)
@@ -674,6 +681,8 @@ Array::~Array()
     delete[] factors;
     for (Interaction *i : interactions) delete i;
     for (T *t_set : sets) delete t_set;
+    delete[] dont_cares;
+    delete[] permutation;
 }
 
 

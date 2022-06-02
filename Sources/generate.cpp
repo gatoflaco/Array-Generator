@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 05/29/2022
+Last updated 06/01/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -11,7 +11,6 @@ Last updated 05/29/2022
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <time.h>
 
 
 // ================================v=v=v== static global variables ==v=v=v================================ //
@@ -42,7 +41,6 @@ static void verbose_print(int d, int t, int delta);
 */
 int main(int argc, char *argv[])
 {
-    srand(time(nullptr));           // seed rand() using current time
     Parser p(argc, argv);           // create Parser object, immediately processes arguments and flags
     vm = p.v; om = p.o; pm = p.p;   // update flags based on those processed by the Parser
     
@@ -58,11 +56,11 @@ int main(int argc, char *argv[])
 
     long unsigned int row_count = 0;    // for user's information
     if (om != silent) printf("Array score is currently %lu, adding row %lu.\n", array.score, ++row_count);
-    array.add_random_row(static_cast<long unsigned int>(rand()));
+    array.add_random_row();
     //array.add_row_debug(0); // TODO: GET RID OF THIS EVENTUALLY
     while (array.score > 0) {   // add rows until the array is complete
         if (om != silent) printf("Array score is currently %lu, adding row %lu.\n", array.score, ++row_count);
-        array.add_row(static_cast<long unsigned int>(rand()));
+        array.add_row();
     }
     if (om != silent) printf("Completed array with %lu rows.\n\n", row_count);
 
