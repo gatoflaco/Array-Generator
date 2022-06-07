@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 06/01/2022
+Last updated 06/06/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -11,7 +11,6 @@ Last updated 06/01/2022
 #include <algorithm>
 #include <sys/types.h>
 #include <unistd.h>
-#include <map>
 #include <time.h>
 
 // method forward declarations
@@ -22,10 +21,7 @@ static void print_singles(Factor **factors, int num_factors);
 static void print_interactions(std::vector<Interaction*> interactions);
 static void print_sets(std::vector<T*> sets);
 
-static std::map<std::string, Interaction*> interaction_map;
-//static std::set<Interaction*> coverage_issues;
-//static std::set<T*> location_issues;
-//static std::set<Interaction*> detection_issues;
+
 
 /* CONSTRUCTOR - initializes the object
  * - overloaded: this is the default with no parameters, and should not be used
@@ -95,7 +91,9 @@ T::T(std::vector<Interaction*> *temp) : T::T()
 */
 Array::Array()
 {
-    total_issues = 0; score = 0;
+    total_issues = 0;
+    coverage_problems = 0; location_problems = 0; detection_problems = 0;
+    score = 0;
     d = 0; t = 0; delta = 0;
     v = v_off; o = normal; p = all;
     num_tests = 0; num_factors = 0;
@@ -105,10 +103,9 @@ Array::Array()
 /* CONSTRUCTOR - initializes the object
  * - overloaded: this version can set its fields based on a pointer to a Parser object
 */
-Array::Array(Parser *in)
+Array::Array(Parser *in) : Array::Array()
 {
     srand(time(nullptr));   // seed rand() using current time
-    total_issues = 0;   // will be increased as Interactions and sets of Interactions are created
     d = in->d; t = in->t; delta = in->delta;
     v = in->v; o = in->o; p = in->p;
     num_tests = in->num_rows;
@@ -146,6 +143,7 @@ Array::Array(Parser *in)
         build_t_way_interactions(0, t, &temp_singles);
         if (v == v_on) print_interactions(interactions);
         total_issues += interactions.size();    // to account for all the coverage issues
+        coverage_problems += interactions.size();
         score = total_issues;   // the array's score starts off here and is considered completed when 0
         if (p == c_only) return;    // no need to spend effort building Ts if they won't be used
 
@@ -154,7 +152,8 @@ Array::Array(Parser *in)
         build_size_d_sets(0, d, &temp_interactions);
         if (v == v_on) print_sets(sets);
         total_issues += sets.size();    // to account for all the location issues
-        //score = total_issues;   // need to update this
+        location_problems += sets.size();
+        score = total_issues;   // need to update this
         if (p != all) return;   // can skip the following stuff if not doing detection
 
         // build all Interactions' maps of detection issues to their deltas (row difference magnitudes)
@@ -165,7 +164,8 @@ Array::Array(Parser *in)
                     for (Single *s: i->singles) s->d_issues++;
                 }
         total_issues += interactions.size();    // to account for all the detection issues
-        //score = total_issues;   // need to update this one last time
+        detection_problems += interactions.size();
+        score = total_issues;   // need to update this one last time
 
     } catch (const std::bad_alloc& e) {
         printf("ERROR: not enough memory to work with given array for given arguments\n");
@@ -198,7 +198,6 @@ void Array::build_t_way_interactions(long unsigned int start, long unsigned int 
         //coverage_issues.insert(new_interaction);    // when generating an array from scratch, always true // TODO: delete this entirely if not needed
         for (Single *single : new_interaction->singles) {
             single->c_issues++;
-            // TODO: maybe add logic for incrementing l_issues and d_issues if possible
         }
         return;
     }
@@ -314,9 +313,12 @@ void Array::add_row()
         }
         // TODO: think about more than just c_issues!!! (for dont_cares as well)
     }   // entire row is now initialized based on the greedy approach
-    tweak_row(new_row); // next, go and score this decision, modifying values as needed
-
-    update_array(new_row);
+    
+    std::set<Interaction*> row_interactions;
+    build_row_interactions(new_row, &row_interactions, 0, t, "");
+    tweak_row(new_row, &row_interactions);  // next, go and score this decision, modifying values as needed
+    row_interactions.clear(); build_row_interactions(new_row, &row_interactions, 0, t, ""); // rebuild
+    update_array(new_row, &row_interactions);
 }
 
 /* SUB METHOD: add_random_row - adds a randomly generated row to the array without scoring it
@@ -334,7 +336,9 @@ void Array::add_random_row()
     for (long unsigned int i = 0; i < num_factors; i++)
         new_row[i] = (static_cast<long unsigned int>(rand()) / (i+1)) % factors[i]->level;
     
-    update_array(new_row);
+    std::set<Interaction*> row_interactions;
+    build_row_interactions(new_row, &row_interactions, 0, t, "");
+    update_array(new_row, &row_interactions);
 }
 
 void Array::add_row_debug(int val)
@@ -343,128 +347,15 @@ void Array::add_row_debug(int val)
     for (long unsigned int i = 0; i < num_factors; i++)
         new_row[i] = val;
     
-    update_array(new_row);
-}
-
-void Array::tweak_row(int *row)
-{
-    // TODO: turn this into a giant switch case function that chooses a heuristic function to call based on
-    // the score:total_issues ratio
-
-    // right now it is performing a coverage-only heuristic
-
     std::set<Interaction*> row_interactions;
-    build_row_interactions(row, &row_interactions, 0, t, "");
-    int *problems = new int[num_factors]{0};    // for counting how many "problems" each factor has
-    int max_problems;   // largest value among all in the problems[] array created above
-    int cur_max;    // for comparing to max_problems to see if there is an improvement
-
-    for (Interaction *i : row_interactions) {
-        if (i->rows.size() != 0) {  // Interaction is already covered
-            bool can_skip = false;  // don't account for Interactions involving already-completed factors
-            for (Single *s : i->singles)
-                if (dont_cares[s->factor]) {
-                    can_skip = true;
-                    break;
-                }
-            if (can_skip) continue;
-            for (Single *s : i->singles) // increment the problems counter for each Single involved
-                problems[s->factor]++;
-        } else {    // Interaction not covered; decrement the problems counters instead
-            for (Single *s : i->singles) problems[s->factor]--;
-        }
-    }
-
-    // find out what the worst score is among the factors
-    max_problems = 0;
-    for (long unsigned int col = 0; col < num_factors; col++)
-        if (problems[col] > max_problems) max_problems = problems[col];
-    if (max_problems == 0) {    // row is good enough as is
-        delete[] problems;
-        return;
-    }
-    
-    // else, try altering the value(s) with the most problems (whatever is currently contributing the least)
-    cur_max = max_problems;
-    for (long unsigned int col = 0; col < num_factors; col++) { // go find any factors to change
-        if (problems[permutation[col]] == max_problems) {   // found a factor to try altering
-            int *temp_problems = new int[num_factors]{0};   // deep copy problems[] because it will be mutated
-
-            for (long unsigned int i = 1; i < factors[permutation[col]]->level; i++) {  // for every value
-                row[permutation[col]] = (row[permutation[col]] + 1) %
-                    static_cast<int>(factors[permutation[col]]->level); // try that value
-                std::set<Interaction*> new_interactions;    // get the new Interactions
-                build_row_interactions(row, &new_interactions, 0, t, "");
-
-                cur_max = heuristic_1_helper(row, new_interactions, temp_problems); // test this change
-                if (cur_max < max_problems) {   // this change improved the score, keep it
-                    delete[] problems;
-                    delete[] temp_problems;
-                    return;
-                }
-                cur_max = max_problems; // else this change was no good, reset and continue
-            }
-            delete[] temp_problems;
-            row[permutation[col]] = (row[permutation[col]] + 1) % static_cast<int>(factors[col]->level);
-        }
-    }
-
-    // last resort, start looking for *anything* that is missing
-    int *dont_cares_c = new int[num_factors];   // local copy of the don't cares
-    for (long unsigned int col = 0; col < num_factors; col++) dont_cares_c[col] = dont_cares[col];
-    for (long unsigned int col = 0; col < num_factors; col++) { // for all factors
-        if (dont_cares_c[permutation[col]]) continue;   // no need to check factors that are "don't cares"
-        for (long unsigned int i = 1; i < factors[permutation[col]]->level; i++) {  // for every value
-            row[permutation[col]] = (row[permutation[col]] + 1) %
-                static_cast<int>(factors[permutation[col]]->level); // try that value
-            std::set<Interaction*> new_interactions;    // get the new Interactions
-            build_row_interactions(row, &new_interactions, 0, t, "");
-
-            bool improved = false;  // see if the change helped
-            for (Interaction *interaction : new_interactions)
-                if (interaction->rows.size() == 0) {
-                    for (Single *s : interaction->singles) dont_cares[s->factor] = true;
-                    improved = true;
-                }
-            if (improved) break;    // keep this factor as this value
-        }
-    }
-    delete[] dont_cares_c;
-    delete[] problems;
+    build_row_interactions(new_row, &row_interactions, 0, t, "");
+    update_array(new_row, &row_interactions);
 }
 
-int Array::heuristic_1_helper(int *row, std::set<Interaction*> row_interactions, int *problems)
-{
-    for (Interaction *i : row_interactions) {
-        if (i->rows.size() != 0) {  // Interaction is already covered
-            bool can_skip = false;  // don't account for Interactions involving already-completed factors
-            for (Single *s : i->singles)
-                if (s->c_issues == 0) { // one of the Singles involved in the Interaction is completed
-                    // TODO: make this check more than just c_issues?
-                    can_skip = true;
-                    break;
-                }
-            if (can_skip) continue;
-            for (Single *s : i->singles) // increment the problems counter for each Single involved
-                problems[s->factor]++;
-        } else {    // Interaction not covered; decrement the problems counters instead
-            for (Single *s : i->singles) problems[s->factor]--;
-        }
-    }
-
-    // find out what the worst score is among the factors
-    int max_problems = INT32_MIN;   // set max to a huge negative number to start
-    for (long unsigned int col = 0; col < num_factors; col++) {
-        if (factors[col]->singles[row[col]]->c_issues == 0) continue;   // already completed factor
-        if (problems[col] > max_problems) max_problems = problems[col];
-    }
-    return max_problems;
-}
-
-void Array::update_array(int *row)
+void Array::update_array(int *row, std::set<Interaction*> *row_interactions, bool keep)
 {
     rows.push_back(row);
-    if (v == v_on) {
+    if (v == v_on && keep) {
         printf(">Pushed row:\t");
         for (long unsigned int i = 0; i < num_factors; i++)
             printf("%d\t", row[i]);
@@ -472,11 +363,8 @@ void Array::update_array(int *row)
     }
     num_tests++;
 
-    std::set<Interaction*> row_interactions;
-    build_row_interactions(row, &row_interactions, 0, t, "");
-
     std::set<T*> row_sets;  // all T sets that occur in this row
-    for (Interaction *i : row_interactions) {
+    for (Interaction *i : *row_interactions) {
         for (Single *s: i->singles) s->rows.insert(num_tests); // add the row to Singles in this Interaction
         i->rows.insert(num_tests); // add the row to this Interaction itself
         for (T *t_set : i->sets) {
@@ -485,17 +373,18 @@ void Array::update_array(int *row)
         }
     }
     
-    for (Interaction *i1 : row_interactions) {
+    for (Interaction *i1 : *row_interactions) {
 
         if (!i1->is_covered) {  // if true, this Interaction just became covered
             i1->is_covered = true;
             score--;    // array score improves for the solved coverage problem
-            for (Single *s: i1->singles) s->c_issues--;
+            coverage_problems--;
+            if (keep) for (Single *s: i1->singles) s->c_issues--;
 
             if (p != c_only)    // the following is only done if we care about location
                 // generating location issues for T sets this Interaction is part of:
                 for (T *t1 : i1->sets)  // for every T set this Interaction is part of,
-                    for (Interaction *i2 : row_interactions) {  // for all other Interactions in this row,
+                    for (Interaction *i2 : *row_interactions) { // for all other Interactions in this row,
                         if (i1 == i2) continue; // (skip self)
                         // excluding an Interaction that occurs in other rows already,
                         if (i2->rows.size() - i2->rows.count(num_tests)) continue;
@@ -522,7 +411,8 @@ void Array::update_array(int *row)
                 t1->location_conflicts = temp;  // mutating completed, can update original now
                 if (t1->location_conflicts.size() == 0) {   // if true, this T just became locatable
                     t1->is_locatable = true;
-                    //score--;    // array score improves for the solved location problem
+                    score--;    // array score improves for the solved location problem
+                    location_problems--;
                 }
             }
         }
@@ -541,9 +431,23 @@ void Array::update_array(int *row)
                 else if (kv.second == delta)    // detection issue just solved for all Singles involved
                     for (Single *s: i1->singles) s->d_issues--;
             }
-            /*if (i1->is_detectable)  // if true, this Interaction just became detectable
-                score--;    // array score improves for the solved detection problem*/
+            if (i1->is_detectable) {    // if true, this Interaction just became detectable
+                score--;    // array score improves for the solved detection problem
+                detection_problems--;
+            }
         }
+    }
+    // note: if keep == false, then caller must store previous score and coverage, location, and detection
+    // issue counts for array and individual Singles; after this method completes, caller should restore them
+    if (!keep) {
+        for (Interaction *i : *row_interactions) {
+            for (Single *s: i->singles) s->rows.erase(num_tests);
+            i->rows.erase(num_tests);
+            for (T *t_set : i->sets)
+                t_set->rows.erase(num_tests);
+        }
+        num_tests--; // restore the original value
+        rows.pop_back();
     }
 }
 

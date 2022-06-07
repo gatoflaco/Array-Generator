@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 06/01/2022
+Last updated 06/06/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -91,6 +91,10 @@ class Array
 
     private:
         long unsigned int total_issues; // the array's score starts off as this value
+        long unsigned int coverage_problems;  // subset of total_issues representing just coverage
+        long unsigned int location_problems;  // subset of total_issues representing just location
+        long unsigned int detection_problems; // subset of total_issues representing just detection
+        std::map<std::string, Interaction*> interaction_map;    // used by build_row_interactions()
         verb_mode v;    // this makes the program print out the data structures when enabled
         out_mode o;     // this dictates how much output should be printed; see parser.h for typedef
         prop_mode p;    // this is used to avoid building sets if it won't be needed anyway
@@ -119,10 +123,16 @@ class Array
         void build_row_interactions(int *row, std::set<Interaction*> *row_interactions,
             long unsigned int start, long unsigned int t_cur, std::string key);
         
-        void tweak_row(int *row);   // called by add_row() to improve the decision
+        void tweak_row(int *row, std::set<Interaction*> *row_interactions); // improves a decision for a row
 
         // define more of these as needed; they are for deciding what needs changing
-        int heuristic_1_helper(int *row, std::set<Interaction*> row_interactions, int *problems);
+        void heuristic_c_only(int *row, std::set<Interaction*> *row_interactions);
+        int heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions, int *problems);
+        // TODO: make a somewhere-in-the-middle heuristic
+        void heuristic_optimal_row(int *row);
+        void heuristic_optimal_helper(int *row, long unsigned int cur_col, std::vector<int*> *best_rows,
+            long unsigned int *best_score);
 
-        void update_array(int *row);    // should update data structures and the array's overall score
+        // updates the internal data structures - counts, scores, rows, etc. - based on the row being added
+        void update_array(int *row, std::set<Interaction*> *row_interactions, bool keep = true);
 };
