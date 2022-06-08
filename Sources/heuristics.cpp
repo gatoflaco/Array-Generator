@@ -14,17 +14,15 @@ Last updated 06/06/2022
 class Prev_S_Data
 {
     public:
+        long unsigned int c_issues;
+        long unsigned int l_issues;
+        long unsigned int d_issues;
         Prev_S_Data(long unsigned int c, long unsigned int l, long unsigned int d) {
             c_issues = c; l_issues = l; d_issues = d;
         }
         void restore(Single *s) {   // replace fields of s with those stored in this object
             s->c_issues = c_issues; s->l_issues = l_issues; s->d_issues = d_issues;
         }
-    
-    private:
-        long unsigned int c_issues;
-        long unsigned int l_issues;
-        long unsigned int d_issues;
 };
 
 // class used by heuristic_optimal_row()
@@ -63,19 +61,19 @@ class Prev_T_Data
 void Array::tweak_row(int *row, std::set<Interaction*> *row_interactions)
 {
     // TODO: turn this into a giant switch case function that chooses a heuristic function to call based on
-    // the score:total_issues ratio
-    float ratio = static_cast<float>(score)/total_issues;
+    // the score:total_problems ratio
+    float ratio = static_cast<float>(score)/total_problems;
     bool satisfied = false; // used repeatedly to decide whether it is time to switch heuristics
 
     // first up, should we use the most in-depth scoring function:
     if (p == c_only) {
-        if (total_issues < 500) satisfied = true;   // arbitrary choice
+        if (total_problems < 500) satisfied = true; // arbitrary choice
         else if (ratio < 0.60) satisfied = true;    // arbitrary choice
     } else if (p == c_and_l) {
-        if (total_issues < 450) satisfied = true;   // arbitrary choice
+        if (total_problems < 450) satisfied = true; // arbitrary choice
         else if (ratio < 0.50) satisfied = true;    // arbitrary choice
     } else {    // p == all
-        if (total_issues < 400) satisfied = true;   // arbitrary choice
+        if (total_problems < 400) satisfied = true; // arbitrary choice
         else if (ratio < 0.40) satisfied = true;    // arbitrary choice
     }//
     if (satisfied) {
@@ -208,6 +206,8 @@ int Array::heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions
  * 
  * returns:
  * - none, but the row will be altered such that it is subjectively as optimal as possible
+ *  --> note that this does not mean that running this for the whole array will guarantee the smallest array;
+ *      this is still a greedy algorithm for the current row, without any lookahead to future rows
 */
 void Array::heuristic_optimal_row(int *row)
 {
@@ -257,18 +257,25 @@ void Array::heuristic_optimal_helper(int *row, long unsigned int cur_col, std::v
         update_array(row, &row_interactions, false);    // see how all scores, etc., would change
 
         // define the row score to be the combination of net changes below, weighted by importance
-        long unsigned int row_score = 2*(prev_score - score) + (prev_c - coverage_problems) +
-            3*(prev_l - location_problems) + 4*(prev_d - detection_problems);
-        int *new_row = new int[num_factors];
-        for (unsigned long int col = 0; col < num_factors; col++) new_row[col] = row[col];
-        if (row_score < *best_score) delete[] new_row;  // it wasn't better, so toss it
-        else {  // it was better or it tied; either way, keep track of this row
+        long unsigned int row_score = 2*(prev_score - score);
+        for (Single *s : row_singles) { // improve the score based on individual Single improvement
+            long unsigned int weight = (factors[s->factor]->level); // higher level factors hold more weight
+            Prev_S_Data *x = prev_singles.at(s);
+            row_score += weight*(x->c_issues - s->c_issues);
+            if (s->l_issues < x->l_issues) row_score += weight*(x->l_issues - s->l_issues);
+            row_score += 3*weight*(x->d_issues - s->d_issues);  // working towards detection is worth most
+        }
+        
+        // decide what to do with this row based on its score compared to best_score
+        if (row_score >= *best_score) { // it was better or it tied; either way, keep track of this row
             if (row_score > *best_score) {  // for an even better choice, can stop tracking the previous best
+                *best_score = row_score;
                 for (int *r : *best_rows) delete[] r;   // free memory; about to clear best_rows
                 best_rows->clear();
-                *best_score = row_score;
             }   // or, if it tied, continue to track the previous best row(s) it is tied with
-            best_rows->push_back(new_row);
+            int *new_row = new int[num_factors];
+            for (unsigned long int col = 0; col < num_factors; col++) new_row[col] = row[col];
+            best_rows->push_back(new_row);  // happens whether row_score > or =
         }
         
         // restore the original state of the array and data structures, and free memory

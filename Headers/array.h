@@ -90,10 +90,10 @@ class Array
         ~Array();   // deconstructor
 
     private:
-        long unsigned int total_issues; // the array's score starts off as this value
-        long unsigned int coverage_problems;  // subset of total_issues representing just coverage
-        long unsigned int location_problems;  // subset of total_issues representing just location
-        long unsigned int detection_problems; // subset of total_issues representing just detection
+        long unsigned int total_problems;       // the array's score starts off as this value
+        long unsigned int coverage_problems;    // subset of total_issues representing just coverage
+        long unsigned int location_problems;    // subset of total_issues representing just location
+        long unsigned int detection_problems;   // subset of total_issues representing just detection
         std::map<std::string, Interaction*> interaction_map;    // used by build_row_interactions()
         verb_mode v;    // this makes the program print out the data structures when enabled
         out_mode o;     // this dictates how much output should be printed; see parser.h for typedef

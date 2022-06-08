@@ -91,7 +91,7 @@ T::T(std::vector<Interaction*> *temp) : T::T()
 */
 Array::Array()
 {
-    total_issues = 0;
+    total_problems = 0;
     coverage_problems = 0; location_problems = 0; detection_problems = 0;
     score = 0;
     d = 0; t = 0; delta = 0;
@@ -142,18 +142,18 @@ Array::Array(Parser *in) : Array::Array()
         std::vector<Single*> temp_singles;
         build_t_way_interactions(0, t, &temp_singles);
         if (v == v_on) print_interactions(interactions);
-        total_issues += interactions.size();    // to account for all the coverage issues
+        total_problems += interactions.size();  // to account for all the coverage issues
         coverage_problems += interactions.size();
-        score = total_issues;   // the array's score starts off here and is considered completed when 0
+        score = total_problems; // the array's score starts off here and is considered completed when 0
         if (p == c_only) return;    // no need to spend effort building Ts if they won't be used
 
         // build all Ts
         std::vector<Interaction*> temp_interactions;
         build_size_d_sets(0, d, &temp_interactions);
         if (v == v_on) print_sets(sets);
-        total_issues += sets.size();    // to account for all the location issues
+        total_problems += sets.size();  // to account for all the location issues
         location_problems += sets.size();
-        score = total_issues;   // need to update this
+        score = total_problems; // need to update this
         if (p != all) return;   // can skip the following stuff if not doing detection
 
         // build all Interactions' maps of detection issues to their deltas (row difference magnitudes)
@@ -161,11 +161,11 @@ Array::Array(Parser *in) : Array::Array()
             for (T *t_set : sets)   // for every T set this Interaction is NOT part of
                 if (i->sets.find(t_set) == i->sets.end()) {
                     i->row_diffs.insert({t_set, 0});
-                    for (Single *s: i->singles) s->d_issues++;
+                    for (Single *s: i->singles) s->d_issues += delta;
                 }
-        total_issues += interactions.size();    // to account for all the detection issues
+        total_problems += interactions.size();  // to account for all the detection issues
         detection_problems += interactions.size();
-        score = total_issues;   // need to update this one last time
+        score = total_problems; // need to update this one last time
 
     } catch (const std::bad_alloc& e) {
         printf("ERROR: not enough memory to work with given array for given arguments\n");
@@ -423,12 +423,15 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
             // updating detection issues for this Interaction:
             std::set<T*> other_sets = row_sets; // this will hold all T sets this Interaction is NOT part of
             for (T *t_set : i1->sets) other_sets.erase(t_set);
-            for (T *t_set : other_sets) // for every other T set in this row,
+            for (T *t_set : other_sets) {   // for every other T set in this row,
+                if (i1->row_diffs.at(t_set) <= delta)
+                    for (Single *s: i1->singles) s->d_issues++; // to balance out a -- later
                 i1->row_diffs.at(t_set)--;  // to balance out all row_diffs getting ++ after this
+            }
             for (auto& kv : i1->row_diffs) {    // for all row_diffs,
                 kv.second++;    // increase their separation; offset by the -- earlier for T sets in this row
                 if (kv.second < delta) i1->is_detectable = false;   // separation still not high enough
-                else if (kv.second == delta)    // detection issue just solved for all Singles involved
+                if (kv.second <= delta) // detection issue heading towards solved for all Singles involved
                     for (Single *s: i1->singles) s->d_issues--;
             }
             if (i1->is_detectable) {    // if true, this Interaction just became detectable
