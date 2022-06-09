@@ -60,8 +60,6 @@ class Prev_T_Data
 
 void Array::tweak_row(int *row, std::set<Interaction*> *row_interactions)
 {
-    // TODO: turn this into a giant switch case function that chooses a heuristic function to call based on
-    // the score:total_problems ratio
     float ratio = static_cast<float>(score)/total_problems;
     bool satisfied = false; // used repeatedly to decide whether it is time to switch heuristics
 
@@ -75,11 +73,11 @@ void Array::tweak_row(int *row, std::set<Interaction*> *row_interactions)
     } else {    // p == all
         if (total_problems < 400) satisfied = true; // arbitrary choice
         else if (ratio < 0.40) satisfied = true;    // arbitrary choice
-    }//
+    }
     if (satisfied) {
         heuristic_optimal_row(row);
         return;
-    }//*/
+    }
 
     // TODO: come up with more heuristics
     

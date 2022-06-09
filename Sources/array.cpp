@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 06/06/2022
+Last updated 06/09/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -20,8 +20,6 @@ static void print_failure(Interaction *interaction, T *t_set, long unsigned int 
 static void print_singles(Factor **factors, int num_factors);
 static void print_interactions(std::vector<Interaction*> interactions);
 static void print_sets(std::vector<T*> sets);
-
-
 
 /* CONSTRUCTOR - initializes the object
  * - overloaded: this is the default with no parameters, and should not be used
@@ -52,6 +50,12 @@ Interaction::Interaction(std::vector<Single*> *temp) : Interaction::Interaction(
     }
 }
 
+/* UTILITY METHOD: to_string - gets a string representation of the Interaction
+ * 
+ * returns:
+ * - a string representing the Interaction
+ *  --> This is not to be used for printing; rather, it is for mapping unique strings to their Interactions
+*/
 std::string Interaction::to_string()
 {
     std::string ret = "";
@@ -293,25 +297,24 @@ void Array::add_row()
 
     // greedily select the values that appear to need the most attention
     for (long unsigned int col = 0; col < num_factors; col++) {
-        int worst_val = 0;  // assume 0 is the worst to start, then check if any others are worse
-        for (long unsigned int val = 1; val < factors[permutation[col]]->level; val++) {
 
-            if (factors[permutation[col]]->singles[val]->c_issues >
-            factors[permutation[col]]->singles[worst_val]->c_issues)
-                worst_val = val;
-            else if (factors[permutation[col]]->singles[val]->c_issues ==
-            factors[permutation[col]]->singles[worst_val]->c_issues)
-                if (rand() % 2 == 0) worst_val = val;    // break ties randomly
-            
-            // TODO: think about more than just c_issues
+        // assume 0 is the worst to start, then check if any others are worse
+        Single *worst_single = factors[permutation[col]]->singles[0];
+        int worst_score = 2*worst_single->c_issues + worst_single->l_issues + 3*worst_single->d_issues;
+        for (long unsigned int val = 1; val < factors[permutation[col]]->level; val++) {
+            Single *cur_single = factors[permutation[col]]->singles[val];
+            int cur_score = 2*cur_single->c_issues + cur_single->l_issues + 3*cur_single->d_issues;
+            if (cur_score > worst_score || (cur_score == worst_score && rand() % 2 == 0)) {
+                worst_single = cur_single;
+                worst_score = cur_score;
+            }
         }
-        new_row[permutation[col]] = worst_val;
-        if (factors[permutation[col]]->singles[worst_val]->c_issues == 0) {
+        new_row[permutation[col]] = worst_single->value;
+        if (worst_score == 0) {
             new_row[permutation[col]] = (static_cast<long unsigned int>(rand()) / (col+1)) %
                 factors[permutation[col]]->level;
             dont_cares[permutation[col]] = true;
         }
-        // TODO: think about more than just c_issues!!! (for dont_cares as well)
     }   // entire row is now initialized based on the greedy approach
     
     std::set<Interaction*> row_interactions;
@@ -341,17 +344,17 @@ void Array::add_random_row()
     update_array(new_row, &row_interactions);
 }
 
-void Array::add_row_debug(int val)
-{
-    int *new_row = new int[num_factors];
-    for (long unsigned int i = 0; i < num_factors; i++)
-        new_row[i] = val;
-    
-    std::set<Interaction*> row_interactions;
-    build_row_interactions(new_row, &row_interactions, 0, t, "");
-    update_array(new_row, &row_interactions);
-}
-
+/* SUB METHOD: update_array - updates data structures to reflect changes caused by adding a new row
+ * 
+ * parameters:
+ * - row: integer array representing a row that should be added to the array
+ * - row_interactions: set containing all Interactions present in the new row
+ * - keep: boolean representing whether or not the changes are intended to be kept
+ *  --> true by default; when false, score changes are kept but the row itself is not added
+ * 
+ * returns:
+ * - void, but after the method finishes, the array will have a new row appended to its end
+*/
 void Array::update_array(int *row, std::set<Interaction*> *row_interactions, bool keep)
 {
     rows.push_back(row);
@@ -440,6 +443,7 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
             }
         }
     }
+
     // note: if keep == false, then caller must store previous score and coverage, location, and detection
     // issue counts for array and individual Singles; after this method completes, caller should restore them
     if (!keep) {
@@ -449,11 +453,16 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
             for (T *t_set : i->sets)
                 t_set->rows.erase(num_tests);
         }
-        num_tests--; // restore the original value
+        num_tests--;
         rows.pop_back();
     }
 }
 
+/* UTILITY METHOD: to_string - gets a string representation of the array
+ * 
+ * returns:
+ * - a string representing the array
+*/
 std::string Array::to_string()
 {
     std::string ret = "";
@@ -462,33 +471,6 @@ std::string Array::to_string()
             ret += std::to_string(row[i]) + '\t';
         ret += '\n';
     }
-
-    // TODO: get rid of this next block, it is only for debugging
-    int count = 0;
-    for (Interaction *i : interactions) {
-        for (T* t1 : i->sets)
-            for (T *t2 : t1->location_conflicts) {
-                print_failure(t1, t2);
-                t1->location_conflicts.erase(t2);
-                t2->location_conflicts.erase(t1);
-                count++;
-            }
-    }
-    ret += "\ntotal location problems: " + std::to_string(count);
-    count = 0;
-    for (Interaction *i : interactions) {
-        for (const auto& kv : i->row_diffs)
-            if (kv.second < delta) {
-                std::set<int> dif;
-                std::set_difference(i->rows.begin(), i->rows.end(), kv.first->rows.begin(),
-                    kv.first->rows.end(), std::inserter(dif, dif.begin()));
-                print_failure(i, kv.first, delta, &dif);
-                count++;
-            }
-    }
-    ret += "\ntotal detection problems: " + std::to_string(count) + "\n";
-    //*/
-
     return ret;
 }
 

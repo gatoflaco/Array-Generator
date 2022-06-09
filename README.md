@@ -13,25 +13,10 @@
 ## Overview
 The purpose of this program is to generate test suites of enumerated 2-dimensional arrays with the covering, locating, and detecting properties.
 
-### This project is just getting started, so do not expect it to be functional for some weeks yet. 
+### I have just recently gotten this to a reasonably sufficient level of functionality. While the code can generate decently optimal covering, locating, and detecting arrays with high consistency, I have not had the chance to optimize the code or even test it all that much. Please be patient while I continue to work this project to a higher level of quality.
+Also, I have been too lazy to write the readme hehe. I will have all the details written out soon, hopefully within the next few weeks!
 
 ## Additional Links
 Colbourn and McClary, *[Locating and Detecting Arrays for Interaction Faults](https://drops.dagstuhl.de/opus/volltexte/2009/2240/pdf/09281.ColbournCharles.Paper.2240.pdf)*
 - Paper cited as first to propose locating and detecting arrays
 - Formal definitions for covering, locating, and detecting arrays can be found here
-
-(Ignore the stuff below, I'm using it to test things by hand)
-
-0   0   0
-1   1   1   ->  [-2, -2, -2]
-1   0   0  (0   0   0   ->  [ 2,  2,  2]    ->  1   0   0   ->  [ 0,  1,  1])
-0   1   1   ->  [-2,  0,  0]
-0   1   0  (0   0   0   ->  [ 0,  1,  1]    ->  0   1   0   ->  [ 0,  0,  0])
-1   0   1   ->  [ 0, -1, -1]
-
-1   1   0
-0   0   1   ->  [-2, -2, -2]
-0   0   0   ->  [ 0,  0,  0]
-1   1   1   ->  [ 0,  0,  0]
-1   0   0  (0   0   0   ->  [ 1,  1,  0]    ->  1   0   0   ->  [ 0,  0,  0])
-0   1   1   ->  [-1, -1,  0]
