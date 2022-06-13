@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 06/06/2022
+Last updated 06/13/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -28,7 +28,7 @@ class Interaction
 
         // this tracks the set differences between the set of rows in which this Interaction occurs and the
         // sets of rows in which relevant T sets this Interaction is not part of occur; that is, this is
-        std::map<T*, long unsigned int> row_diffs;  // a field to map detection issues to their delta values
+        std::map<T*, uint64_t> row_diffs;   // a field to map detection issues to their delta values
         bool is_detectable; // easy lookup bool to cut down on redundant checks
 
         std::string to_string();    // returns a string representing all Singles in the interaction
@@ -62,10 +62,10 @@ class T
 class Array
 {
     public:
-        long unsigned int score;    // this is a measure of how close the array is to complete; 0 is complete
-        long unsigned int d;        // this is the size of the sets of t-way interactions
-        long unsigned int t;        // this is the strength of interest
-        long unsigned int delta;    // this is the desired separation of the array
+        uint64_t score;     // this is a measure of how close the array is to complete; 0 is complete
+        uint64_t d;         // this is the size of the sets of t-way interactions
+        uint64_t t;         // this is the strength of interest
+        uint64_t delta;     // this is the desired separation of the array
 
         void add_row();             // adds a row to the array based on scoring
         void add_random_row();      // adds a random row to the array
@@ -90,38 +90,37 @@ class Array
         ~Array();   // deconstructor
 
     private:
-        long unsigned int total_problems;       // the array's score starts off as this value
-        long unsigned int coverage_problems;    // subset of total_issues representing just coverage
-        long unsigned int location_problems;    // subset of total_issues representing just location
-        long unsigned int detection_problems;   // subset of total_issues representing just detection
+        uint64_t total_problems;        // the array's score starts off as this value
+        uint64_t coverage_problems;     // subset of total_issues representing just coverage
+        uint64_t location_problems;     // subset of total_issues representing just location
+        uint64_t detection_problems;    // subset of total_issues representing just detection
         std::map<std::string, Interaction*> interaction_map;    // used by build_row_interactions()
         verb_mode v;    // this makes the program print out the data structures when enabled
         out_mode o;     // this dictates how much output should be printed; see parser.h for typedef
         prop_mode p;    // this is used to avoid building sets if it won't be needed anyway
         std::vector<int*> rows;         // list of the rows themselves, as a vector of int arrays
-        long unsigned int num_tests;    // field to reference the upper bound on iterating through rows
-        long unsigned int num_factors;  // field to reference the upper bound on iterating through columns
+        uint64_t num_tests;     // field to reference the upper bound on iterating through rows
+        uint64_t num_factors;   // field to reference the upper bound on iterating through columns
         Factor **factors;    // pointer to the start of an array of pointers to Factor objects
         std::vector<Interaction*> interactions; // list of all individual t-way interactions
-        std::vector<T*> sets;  // list of all size-d sets of t-way interactions
+        std::vector<T*> sets;   // list of all size-d sets of t-way interactions
 
-        bool *dont_cares;   // for tracking what factors are "don't cares"; fully completed factors
+        prop_mode *dont_cares;  // for tracking which factors have solved all issues of which categories
         int *permutation;   // for dictating order of iteration; should be regularly shuffled
 
         // this utility method is called in the constructor to fill out the vector of all interactions
         // almost certainly needs to be recursive in order to handle arbitrary values of t
-        void build_t_way_interactions(long unsigned int start, long unsigned int t_cur,
-            std::vector<Single*> *singles_so_far);
+        void build_t_way_interactions(uint64_t start, uint64_t t_cur, std::vector<Single*> *singles_so_far);
 
         // after the above method completes, call this one to fill out the set of all size-d sets
         // almost certainly needs to be recursive in order to handle arbitrary values of d
-        void build_size_d_sets(long unsigned int start, long unsigned int d_cur,
+        void build_size_d_sets(uint64_t start, uint64_t d_cur,
             std::vector<Interaction*> *interactions_so_far);
 
         // this utility method closely mimics the build_t_way_interactions() method, but uses the information
         // from a given row to fill out a set of interactions representing those that appear in the row
         void build_row_interactions(int *row, std::set<Interaction*> *row_interactions,
-            long unsigned int start, long unsigned int t_cur, std::string key);
+            uint64_t start, uint64_t t_cur, std::string key);
         
         void tweak_row(int *row, std::set<Interaction*> *row_interactions); // improves a decision for a row
 
@@ -130,8 +129,8 @@ class Array
         int heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions, int *problems);
         // TODO: make a somewhere-in-the-middle heuristic
         void heuristic_optimal_row(int *row);
-        void heuristic_optimal_helper(int *row, long unsigned int cur_col, std::vector<int*> *best_rows,
-            long unsigned int *best_score);
+        void heuristic_optimal_helper(int *row, uint64_t cur_col,
+            std::vector<int*> *best_rows, uint64_t *best_score);
 
         // updates the internal data structures - counts, scores, rows, etc. - based on the row being added
         void update_array(int *row, std::set<Interaction*> *row_interactions, bool keep = true);

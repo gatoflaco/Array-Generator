@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 06/09/2022
+Last updated 06/13/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -16,7 +16,7 @@ Last updated 06/09/2022
 // method forward declarations
 static void print_failure(Interaction *interaction);
 static void print_failure(T *t_set_1, T *t_set_2);
-static void print_failure(Interaction *interaction, T *t_set, long unsigned int delta, std::set<int> *dif);
+static void print_failure(Interaction *interaction, T *t_set, uint64_t delta, std::set<int> *dif);
 static void print_singles(Factor **factors, int num_factors);
 static void print_interactions(std::vector<Interaction*> interactions);
 static void print_sets(std::vector<T*> sets);
@@ -41,7 +41,7 @@ Interaction::Interaction(std::vector<Single*> *temp) : Interaction::Interaction(
     rows = temp->at(0)->rows;
 
     // fencepost loop: for any t > 1, rows of the Interaction is the intersection of each Single's rows
-    for (long unsigned int i = 1; i < temp->size(); i++) {
+    for (uint64_t i = 1; i < temp->size(); i++) {
       singles.insert(temp->at(i));
       std::set<int> temp_set;
       std::set_intersection(rows.begin(), rows.end(),
@@ -81,7 +81,7 @@ T::T(std::vector<Interaction*> *temp) : T::T()
     rows = temp->at(0)->rows;
 
     // fencepost loop: for any t > 1, rows of the Interaction is the intersection of each Single's rows
-    for (long unsigned int i = 1; i < temp->size(); i++) {
+    for (uint64_t i = 1; i < temp->size(); i++) {
       interactions.insert(temp->at(i));
       std::set<int> temp_set;
       std::set_union(rows.begin(), rows.end(),
@@ -114,9 +114,9 @@ Array::Array(Parser *in) : Array::Array()
     v = in->v; o = in->o; p = in->p;
     num_tests = in->num_rows;
     num_factors = in->num_cols;
-    dont_cares = new bool[num_factors]{false};  // all factors are not "don't cares" at first
+    dont_cares = new prop_mode[num_factors]{none};
     permutation = new int[num_factors];
-    for (long unsigned int col = 0; col < num_factors; col++) permutation[col] = col;
+    for (uint64_t col = 0; col < num_factors; col++) permutation[col] = col;
 
     if(d <= 0) {
         printf("NOTE: bad value for d, continuing with d = 1\n");
@@ -135,9 +135,9 @@ Array::Array(Parser *in) : Array::Array()
     try {
         // build all Singles, associated with an array of Factors
         factors = new Factor*[num_factors];
-        for (long unsigned int i = 0; i < num_factors; i++) {
+        for (uint64_t i = 0; i < num_factors; i++) {
             factors[i] = new Factor(i, in->levels.at(i), new Single*[in->levels.at(i)]);
-            for (long unsigned int j = 0; j < factors[i]->level; j++)
+            for (uint64_t j = 0; j < factors[i]->level; j++)
                 factors[i]->singles[j] = new Single(i, j);
         }
         if (v == v_on) print_singles(factors, num_factors);
@@ -191,8 +191,7 @@ Array::Array(Parser *in) : Array::Array()
  * returns:
  * - void, but after the method finishes, the array's interactions vector will be initialized
 */
-void Array::build_t_way_interactions(long unsigned int start, long unsigned int t_cur,
-    std::vector<Single*> *singles_so_far)
+void Array::build_t_way_interactions(uint64_t start, uint64_t t_cur, std::vector<Single*> *singles_so_far)
 {
     // base case: interaction is completed and ready to store
     if (t_cur == 0) {
@@ -207,8 +206,8 @@ void Array::build_t_way_interactions(long unsigned int start, long unsigned int 
     }
 
     // recursive case: need to introduce another loop for higher strength
-    for (long unsigned int col = start; col < num_factors - t_cur + 1; col++) {
-        for (long unsigned int level = 0; level < factors[col]->level; level++) {
+    for (uint64_t col = start; col < num_factors - t_cur + 1; col++) {
+        for (uint64_t level = 0; level < factors[col]->level; level++) {
             singles_so_far->push_back(factors[col]->singles[level]);    // note these are Single *
             build_t_way_interactions(col+1, t_cur-1, singles_so_far);
             singles_so_far->pop_back();
@@ -230,8 +229,7 @@ void Array::build_t_way_interactions(long unsigned int start, long unsigned int 
  * returns:
  * - void, but after the method finishes, the array's sets set will be initialized
 */
-void Array::build_size_d_sets(long unsigned int start, long unsigned int d_cur,
-    std::vector<Interaction*> *interactions_so_far)
+void Array::build_size_d_sets(uint64_t start, uint64_t d_cur, std::vector<Interaction*> *interactions_so_far)
 {
     // base case: set is completed and ready to store
     if (d_cur == 0) {
@@ -243,7 +241,7 @@ void Array::build_size_d_sets(long unsigned int start, long unsigned int d_cur,
     }
 
     // recursive case: need to introduce another loop for higher magnitude
-    for (long unsigned int i = start; i < interactions.size() - d_cur + 1; i++) {
+    for (uint64_t i = start; i < interactions.size() - d_cur + 1; i++) {
         interactions_so_far->push_back(interactions[i]);    // note these are Interaction *
         build_size_d_sets(i+1, d_cur-1, interactions_so_far);
         interactions_so_far->pop_back();
@@ -265,14 +263,14 @@ void Array::build_size_d_sets(long unsigned int start, long unsigned int d_cur,
  * - void, but after the method finishes, the row_interactions set will hold all the interactions in the row
 */
 void Array::build_row_interactions(int *row, std::set<Interaction*> *row_interactions,
-    long unsigned int start, long unsigned int t_cur, std::string key)
+    uint64_t start, uint64_t t_cur, std::string key)
 {
     if (t_cur == 0) {
         row_interactions->insert(interaction_map.at(key));
         return;
     }
 
-    for (long unsigned int col = start; col < num_factors - t_cur + 1; col++) {
+    for (uint64_t col = start; col < num_factors - t_cur + 1; col++) {
         std::string cur = key + "f" + std::to_string(col) + "," + std::to_string(row[col]);
         build_row_interactions(row, row_interactions, col+1, t_cur-1, cur);
     }
@@ -286,9 +284,8 @@ void Array::build_row_interactions(int *row, std::set<Interaction*> *row_interac
 */
 void Array::add_row()
 {
-    if (score == 0) return; // nothing to do if the array already satisfies all properties
     int *new_row = new int[num_factors]{0};
-    for (long unsigned int size = num_factors; size > 0; size--) {
+    for (uint64_t size = num_factors; size > 0; size--) {
         int rand_idx = rand() % static_cast<int>(size);
         int temp = permutation[size - 1];
         permutation[size - 1] = permutation[rand_idx];
@@ -296,12 +293,12 @@ void Array::add_row()
     }   // at this point, permutation should be shuffled
 
     // greedily select the values that appear to need the most attention
-    for (long unsigned int col = 0; col < num_factors; col++) {
+    for (uint64_t col = 0; col < num_factors; col++) {
 
         // assume 0 is the worst to start, then check if any others are worse
         Single *worst_single = factors[permutation[col]]->singles[0];
         int worst_score = 2*worst_single->c_issues + worst_single->l_issues + 3*worst_single->d_issues;
-        for (long unsigned int val = 1; val < factors[permutation[col]]->level; val++) {
+        for (uint64_t val = 1; val < factors[permutation[col]]->level; val++) {
             Single *cur_single = factors[permutation[col]]->singles[val];
             int cur_score = 2*cur_single->c_issues + cur_single->l_issues + 3*cur_single->d_issues;
             if (cur_score > worst_score || (cur_score == worst_score && rand() % 2 == 0)) {
@@ -310,11 +307,18 @@ void Array::add_row()
             }
         }
         new_row[permutation[col]] = worst_single->value;
-        if (worst_score == 0) {
-            new_row[permutation[col]] = (static_cast<long unsigned int>(rand()) / (col+1)) %
-                factors[permutation[col]]->level;
-            dont_cares[permutation[col]] = true;
-        }
+        
+        if (dont_cares[permutation[col]] == none && worst_single->c_issues == 0)
+            dont_cares[permutation[col]] = c_only;
+        if (p != c_only && dont_cares[permutation[col]] == c_only && worst_single->l_issues == 0)
+            dont_cares[permutation[col]] = c_and_l;
+        if (p == all && dont_cares[permutation[col]] == c_and_l && worst_single->d_issues == 0)
+            dont_cares[permutation[col]] = all;
+        
+        if ((p == all && dont_cares[permutation[col]] == all) ||
+            (p == c_and_l && dont_cares[permutation[col]] == c_and_l) ||
+            (p == c_only && dont_cares[permutation[col]] == c_only))
+            new_row[permutation[col]] = static_cast<uint64_t>(rand()) % factors[permutation[col]]->level;
     }   // entire row is now initialized based on the greedy approach
     
     std::set<Interaction*> row_interactions;
@@ -332,12 +336,11 @@ void Array::add_row()
 */
 void Array::add_random_row()
 {
-    if (score == 0) return; // nothing to do if the array already satisfies all properties
     int *new_row = new int[num_factors];
 
     // simply randomly generate each value
-    for (long unsigned int i = 0; i < num_factors; i++)
-        new_row[i] = (static_cast<long unsigned int>(rand()) / (i+1)) % factors[i]->level;
+    for (uint64_t i = 0; i < num_factors; i++)
+        new_row[i] = static_cast<uint64_t>(rand()) % factors[i]->level;
     
     std::set<Interaction*> row_interactions;
     build_row_interactions(new_row, &row_interactions, 0, t, "");
@@ -360,7 +363,7 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
     rows.push_back(row);
     if (v == v_on && keep) {
         printf(">Pushed row:\t");
-        for (long unsigned int i = 0; i < num_factors; i++)
+        for (uint64_t i = 0; i < num_factors; i++)
             printf("%d\t", row[i]);
         printf("\n");
     }
@@ -467,7 +470,7 @@ std::string Array::to_string()
 {
     std::string ret = "";
     for (int *row : rows) {
-        for (long unsigned int i = 0; i < num_factors; i++)
+        for (uint64_t i = 0; i < num_factors; i++)
             ret += std::to_string(row[i]) + '\t';
         ret += '\n';
     }
@@ -513,8 +516,8 @@ bool Array::is_locating(bool report)
 {
     if (report && o != silent) printf("Checking location....\n\n");
     bool passed = true;
-    for (long unsigned int i = 0; i < sets.size() - 1; i++) {
-        for (long unsigned int j = i + 1; j < sets.size(); j++) {
+    for (uint64_t i = 0; i < sets.size() - 1; i++) {
+        for (uint64_t j = i + 1; j < sets.size(); j++) {
             if (sets.at(i)->rows == sets.at(j)->rows) { // location issue
                 if (o != normal) {   // if not reporting failures, can reduce work
                     if (report && o == halfway) printf("LOCATION CHECK: FAILED\n\n");
@@ -565,8 +568,8 @@ bool Array::is_detecting(bool report)
 */
 Array::~Array()
 {
-    for (long unsigned int i = 0; i < num_tests; i++) delete[] rows[i];
-    for (long unsigned int i = 0; i < num_factors; i++) delete factors[i];
+    for (uint64_t i = 0; i < num_tests; i++) delete[] rows[i];
+    for (uint64_t i = 0; i < num_factors; i++) delete factors[i];
     delete[] factors;
     for (Interaction *i : interactions) delete i;
     for (T *t_set : sets) delete t_set;
@@ -609,7 +612,7 @@ static void print_failure(T *t_set_1, T *t_set_2)
     std::cout << output << std::endl;
 }
 
-static void print_failure(Interaction *interaction, T *t_set, long unsigned int delta, std::set<int> *dif)
+static void print_failure(Interaction *interaction, T *t_set, uint64_t delta, std::set<int> *dif)
 {
     printf("\t-- ROW DIFFERENCE LESS THAN %lu --\n", delta);
     std::string output("\tInt: {");
@@ -638,7 +641,7 @@ static void print_singles(Factor **factors, int num_factors)
     printf("\n==%d== Listing all Singles below:\n\n", pid);
     for (int col = 0; col < num_factors; col++) {
         printf("Factor %lu:\n", factors[col]->id);
-        for (long unsigned int level = 0; level < factors[col]->level; level++) {
+        for (uint64_t level = 0; level < factors[col]->level; level++) {
             printf("\t(f%lu, %lu): {", factors[col]->singles[level]->factor, factors[col]->singles[level]->value);
             for (int row : factors[col]->singles[level]->rows) printf(" %d", row);
             printf(" }\n");

@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 05/23/2022
+Last updated 06/13/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -43,8 +43,7 @@ Parser::Parser(int argc, char *argv[]) : Parser()
                         break;
                     default:
                         try {
-                            long unsigned int param =
-                                static_cast<long unsigned int>(std::stoi(std::string(1, c)));
+                            uint64_t param = static_cast<uint64_t>(std::stoi(std::string(1, c)));
                             printf("NOTE: bad flag \'%lu\'; ignored", param);
                             printf(" (looks like an int, did you mean to specify without a hyphen?)\n");
                         } catch ( ... ) {
@@ -55,7 +54,7 @@ Parser::Parser(int argc, char *argv[]) : Parser()
             }
         } else {    // command line arguments for specifying d, t, and δ
             try {   // see if it is an int
-                long unsigned int param = static_cast<long unsigned int>(std::stoi(arg));
+                uint64_t param = static_cast<uint64_t>(std::stoi(arg));
                 if (num_params < 1) {
                     t = param;
                 } else if (num_params < 2) {
@@ -118,8 +117,8 @@ int Parser::process_input()
     std::getline(in, cur_line);
     try {
         std::istringstream iss(cur_line);
-        long unsigned int level;
-        for (long unsigned int i = 0; i < num_cols; i++) {
+        uint64_t level;
+        for (uint64_t i = 0; i < num_cols; i++) {
             if (!(iss >> level)) throw 0;   // error when not enough levels given or not int
             levels.push_back(level);
         }
@@ -220,5 +219,5 @@ void Parser::other_error(int lineno, std::string line, bool verbose)
 */
 Parser::~Parser()
 {
-    for (long unsigned int *row : array) delete[] row;
+    for (uint64_t *row : array) delete[] row;
 }

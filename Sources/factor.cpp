@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 05/21/2022
+Last updated 06/13/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -22,7 +22,7 @@ Single::Single()
 /* CONSTRUCTOR - initializes the object
  * - overloaded: this version can set its fields based on parameters
 */
-Single::Single(long unsigned int f, long unsigned int v)
+Single::Single(uint64_t f, uint64_t v)
 {
     c_issues = 0; l_issues = 0; d_issues = 0;   // to be incremented later
     factor = f;
@@ -48,7 +48,7 @@ Factor::Factor()
 /* CONSTRUCTOR - initializes the object
  * - overloaded: this version can set its fields based on parameters
 */
-Factor::Factor(long unsigned int i, long unsigned int l, Single **ptr_array)
+Factor::Factor(uint64_t i, uint64_t l, Single **ptr_array)
 {
     id = i;
     level = l;
@@ -59,6 +59,6 @@ Factor::Factor(long unsigned int i, long unsigned int l, Single **ptr_array)
 */
 Factor::~Factor()
 {
-    for (long unsigned int i = 0; i < level; i++) delete singles[i];
+    for (uint64_t i = 0; i < level; i++) delete singles[i];
     delete[] singles;
 }

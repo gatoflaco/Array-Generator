@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 06/01/2022
+Last updated 06/13/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    long unsigned int row_count = 0;    // for user's information
+    uint64_t row_count = 0; // for user's information
     if (om != silent) printf("Array score is currently %lu, adding row %lu.\n", array.score, ++row_count);
     array.add_random_row();
     //array.add_row_debug(0); // TODO: GET RID OF THIS EVENTUALLY

@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 05/21/2022
+Last updated 06/13/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -17,26 +17,26 @@ Last updated 05/21/2022
 class Single
 {
     public:
-        long unsigned int c_issues; // in how many coverage issues does this Single appear
-        long unsigned int l_issues; // in how many location issues does this Single appear
-        long unsigned int d_issues; // in how many detection issues does this Single appear
-        long unsigned int factor;   // represents the factor, or column of the array
-        long unsigned int value;    // represents the actual value of the factor
+        uint64_t c_issues;  // in how many coverage issues does this Single appear
+        uint64_t l_issues;  // in how many location issues does this Single appear
+        uint64_t d_issues;  // in how many detection issues does this Single appear
+        uint64_t factor;    // represents the factor, or column of the array
+        uint64_t value;     // represents the actual value of the factor
         std::set<int> rows;         // tracks the set of rows in which this (factor, value) occurs
         std::string to_string();    // returns a string representing the (factor, value)
-        Single();                                           // default constructor, don't use this
-        Single(long unsigned int f, long unsigned int v);   // constructor that takes the (factor, value)
+        Single();                       // default constructor, don't use this
+        Single(uint64_t f, uint64_t v); // constructor that takes the (factor, value)
 };
 
 // think of this class as containing the information associated with a single column in the array
 class Factor
 {
     public:
-        long unsigned int id;
-        long unsigned int level;
+        uint64_t id;
+        uint64_t level;
         Single **singles;
         Factor();   // default constructor, don't use this
-        Factor(long unsigned int i, long unsigned int l, Single **ptr_array);
+        Factor(uint64_t i, uint64_t l, Single **ptr_array);
         ~Factor();
 };
 
