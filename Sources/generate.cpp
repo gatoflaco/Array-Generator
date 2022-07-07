@@ -1,8 +1,33 @@
 /* Array-Generator by Isaac Jung
-Last updated 06/13/2022
+Last updated 07/07/2022
 
 |===========================================================================================================|
-|   (to be written)                                                                                         |
+|   This file contains the main() method which reflects the high level flow of the program. It starts by    |
+| creating a Parser object which processes the command line arguments and flags in its constructor. It then |
+| calls the process_input() method on the Parser object, which reads the file to establish the properties   |
+| desired for the array. It uses the processed input to create an Array object, whose constructor organizes |
+| objects representing (factor, value) pairs, interactions among pairs, sets of interactions, and more, and |
+| the relationships among all these things. From there, the main() method adds a completely random row to   |
+| the array to start, before entering a loop of adding one row at a time until the array is completed with  |
+| the desired properties as requested by the user. Once completed, the array is saved to a file, or printed |
+| to std out, depending on what arguments were provided on the command line (see README.md). If, for some   |
+| reason, the array cannot be completed, main() attempts to detect this and stop early, rather than get     |
+| caught in an infinite loop. In this case, whatever was able to be generated will still be saved/printed,  |
+| along with a warning to the user about the failure.                                                       |
+|   Other classes used by this program are: Single, Factor, Interaction, T, Prev_S_Data, Prev_I_Data, and   |
+| Prev_T_Data. The Single and Factor classes can be found in the factor.h and factor.cpp files. The         |
+| Interaction and T classes can be found in the array.h and array.cpp files. All of the Prev_x_data classes |
+| are self-contained in heuristics.cpp, and do not need to be used by other modules. Here are general       |
+| descriptions of how all of the classes in this program are intended to be used:                           |
+| - Parser: parses input from the user to set flags and get info about the array to be generated            |
+| - Array: stores important traits of the array and serves as an interface for adding rows                  |
+| - Single: simple struct-like class for use by the Array object, representing a (factor, value)            |
+| - Factor: another struct-like class that associates lists of Singles with their corresponding factors     |
+| - Interaction: struct-like class to group Singles together, fundamental to the defining of coverage       |
+| - T: struct-like class to group Interactions together, fundamental to defining location and detection     | 
+| - Prev_S_Data: struct-like class to hold previous state information regarding a Single                    |
+| - Prev_I_Data: struct-like class to hold previous state information regarding an Interaction              |
+| - Prev_T_Data: struct-like class to hold previous state information regarding a T                         |
 |===========================================================================================================|
 */
 
@@ -101,25 +126,25 @@ static void verbose_print(int d, int t, int delta) {
     else if (om == silent) printf("==%d== Output mode: silent\n", pid);
     else printf("==%d== Output mode: UNDEFINED\n", pid);
     if (pm == all) {
-        printf("==%d== Checking: coverage, location, detection\n", pid);
+        printf("==%d== Generating: coverage, location, detection\n", pid);
         printf("==%d== Using d = %d, t = %d, δ = %d\n", pid, d, t, delta);
     } else if (pm == c_only) {
-        printf("==%d== Checking: coverage\n", pid);
+        printf("==%d== Generating: coverage\n", pid);
         printf("==%d== Using t = %d\n", pid, t);
     } else if (pm == l_only) {
-        printf("==%d== Checking: location\n", pid);
+        printf("==%d== Generating: location\n", pid);
         printf("==%d== Using d = %d, t = %d\n", pid, d, t);
     } else if (pm == d_only) {
-        printf("==%d== Checking: detection\n", pid);
+        printf("==%d== Generating: detection\n", pid);
         printf("==%d== Using d = %d, t = %d, δ = %d\n", pid, d, t, delta);
     } else if (pm == c_and_l) {
-        printf("==%d== Checking: coverage, location\n", pid);
+        printf("==%d== Generating: coverage, location\n", pid);
         printf("==%d== Using d = %d, t = %d\n", pid, d, t);
     } else if (pm == c_and_d) {
-        printf("==%d== Checking: coverage, detection\n", pid);
+        printf("==%d== Generating: coverage, detection\n", pid);
         printf("==%d== Using d = %d, t = %d, δ = %d\n", pid, d, t, delta);
     } else if (pm == l_and_d) {
-        printf("==%d== Checking: location, detection\n", pid);
+        printf("==%d== Generating: location, detection\n", pid);
         printf("==%d== Using d = %d, t = %d, δ = %d\n", pid, d, t, delta);
     } else {
         printf("==%d== No properties to check\nQuitting...\n", pid);

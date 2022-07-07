@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 06/13/2022
+Last updated 06/22/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -18,7 +18,7 @@ class Single
 {
     public:
         uint64_t c_issues;  // in how many coverage issues does this Single appear
-        uint64_t l_issues;  // in how many location issues does this Single appear
+        int64_t l_issues;   // in how many location issues does this Single appear
         uint64_t d_issues;  // in how many detection issues does this Single appear
         uint64_t factor;    // represents the factor, or column of the array
         uint64_t value;     // represents the actual value of the factor

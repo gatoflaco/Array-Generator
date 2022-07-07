@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 06/13/2022
+Last updated 07/07/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods belonging to the Array class which are declared in array.h.  |
@@ -10,14 +10,14 @@ Last updated 06/13/2022
 
 #include "array.h"
 
-// class used by heuristic_optimal_row()
+// class used by heuristic_all_helper()
 class Prev_S_Data
 {
     public:
         uint64_t c_issues;
-        uint64_t l_issues;
+        int64_t l_issues;
         uint64_t d_issues;
-        Prev_S_Data(uint64_t c, uint64_t l, uint64_t d) {
+        Prev_S_Data(uint64_t c, int64_t l, uint64_t d) {
             c_issues = c; l_issues = l; d_issues = d;
         }
         void restore(Single *s) {   // replace fields of s with those stored in this object
@@ -25,24 +25,24 @@ class Prev_S_Data
         }
 };
 
-// class used by heuristic_optimal_row()
+// class used by heuristic_all_helper()
 class Prev_I_Data
 {
     public:
-        Prev_I_Data(bool c, std::map<T*, uint64_t> r, bool d) {
-            is_covered = c; row_diffs = r; is_detectable = d;
+        Prev_I_Data(bool c, std::map<T*, int64_t> r, bool d) {
+            is_covered = c; deltas = r; is_detectable = d;
         }
         void restore(Interaction *i) {   // replace fields of i with those stored in this object
-            i->is_covered = is_covered; i->row_diffs = row_diffs; i->is_detectable = is_detectable;
+            i->is_covered = is_covered; i->deltas = deltas; i->is_detectable = is_detectable;
         }
 
     private:
         bool is_covered;
-        std::map<T*, uint64_t> row_diffs;
+        std::map<T*, int64_t> deltas;
         bool is_detectable;
 };
 
-// class used by heuristic_optimal_row()
+// class used by heuristic_all_helper()
 class Prev_T_Data
 {
     public:
@@ -66,16 +66,16 @@ void Array::tweak_row(int *row, std::set<Interaction*> *row_interactions)
     // first up, should we use the most in-depth scoring function:
     if (p == c_only) {
         if (total_problems < 500) satisfied = true; // arbitrary choice
-        else if (ratio < 0.60) satisfied = true;    // arbitrary choice
+        else if (ratio < 0.90) satisfied = true;    // arbitrary choice
     } else if (p == c_and_l) {
         if (total_problems < 450) satisfied = true; // arbitrary choice
-        else if (ratio < 0.50) satisfied = true;    // arbitrary choice
+        else if (ratio < 0.85) satisfied = true;    // arbitrary choice
     } else {    // p == all
         if (total_problems < 400) satisfied = true; // arbitrary choice
-        else if (ratio < 0.40) satisfied = true;    // arbitrary choice
+        else if (ratio < 0.80) satisfied = true;    // arbitrary choice
     }
     if (satisfied) {
-        heuristic_optimal_row(row);
+        heuristic_all(row);
         return;
     }
 
@@ -126,7 +126,7 @@ void Array::heuristic_c_only(int *row, std::set<Interaction*> *row_interactions)
 
             for (uint64_t i = 1; i < factors[permutation[col]]->level; i++) {   // for every value
                 row[permutation[col]] = (row[permutation[col]] + 1) %
-                    static_cast<int>(factors[permutation[col]]->level); // try that value
+                    static_cast<int64_t>(factors[permutation[col]]->level); // try that value
                 std::set<Interaction*> new_interactions;    // get the new Interactions
                 build_row_interactions(row, &new_interactions, 0, t, "");
 
@@ -147,13 +147,14 @@ void Array::heuristic_c_only(int *row, std::set<Interaction*> *row_interactions)
     // last resort, start looking for *anything* that is missing
     for (uint64_t col = 0; col < num_factors; col++) {  // for all factors
         if (dont_cares_c[permutation[col]] != none) continue;   // no need to check already completed factors
-        for (uint64_t i = 1; i < factors[permutation[col]]->level; i++) {   // for every value
+        bool improved = false;
+        for (uint64_t i = 0; i < factors[permutation[col]]->level; i++) {   // for every value
             row[permutation[col]] = (row[permutation[col]] + 1) %
-                static_cast<int>(factors[permutation[col]]->level); // try that value
+                static_cast<int64_t>(factors[permutation[col]]->level); // try that value
             std::set<Interaction*> new_interactions;    // get the new Interactions
             build_row_interactions(row, &new_interactions, 0, t, "");
 
-            bool improved = false;  // see if the change helped
+            improved = false;   // see if the change helped
             for (Interaction *interaction : new_interactions)
                 if (interaction->rows.size() == 0) {    // the Interaction is not already covered
                     for (Single *s : interaction->singles) dont_cares_c[s->factor] = c_only;
@@ -161,6 +162,8 @@ void Array::heuristic_c_only(int *row, std::set<Interaction*> *row_interactions)
                 }
             if (improved) break;    // keep this factor as this value
         }
+        if (improved) continue;
+        row[permutation[col]] = static_cast<uint64_t>(rand()) % factors[permutation[col]]->level;
     }
     delete[] dont_cares_c;
     delete[] problems;
@@ -194,7 +197,7 @@ int Array::heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions
     return max_problems;
 }
 
-/* SUB METHOD: heuristic_optimal_row - tweaks a row so that it solves the most problems possible
+/* SUB METHOD: heuristic_all - tweaks a row so that it solves the most problems possible
  * - does the deepest inspection of all the heuristics; therefore, should not be used till close to complete
  * 
  * parameters:
@@ -205,13 +208,13 @@ int Array::heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions
  *  --> note that this does not mean that running this for the whole array will guarantee the smallest array;
  *      this is still a greedy algorithm for the current row, without any lookahead to future rows
 */
-void Array::heuristic_optimal_row(int *row)
+void Array::heuristic_all(int *row)
 {
     std::vector<int*> best_rows;
-    uint64_t best_score = 0;
-    heuristic_optimal_helper(row, 0, &best_rows, &best_score);
+    int64_t best_score = 0;
+    heuristic_all_helper(row, 0, &best_rows, &best_score);
 
-    // after heuristic_optimal_helper() finishes, best_rows holds one or more optimal choices for a row
+    // after heuristic_all_helper() finishes, best_rows holds one or more optimal choices for a row
     for (unsigned long int col = 0; col < num_factors; col++)   // break ties randomly
         row[col] = best_rows.at(static_cast<uint64_t>(rand()) % best_rows.size())[col];
     
@@ -219,29 +222,32 @@ void Array::heuristic_optimal_row(int *row)
     for (int *r : best_rows) delete[] r;
 }
 
-void Array::heuristic_optimal_helper(int *row, uint64_t cur_col,
-    std::vector<int*> *best_rows, uint64_t *best_score)
+void Array::heuristic_all_helper(int *row, uint64_t cur_col,
+    std::vector<int*> *best_rows, int64_t *best_score)
 {
     // base case: row represents a unique combination and is ready for scoring
     if (cur_col == num_factors) {
         std::set<Interaction*> row_interactions;
         build_row_interactions(row, &row_interactions, 0, t, "");
-        std::set<Single*> row_singles;
         std::set<T*> row_t_sets;
+        std::set<Single*> affected_singles; // may be more than just the Singles appearing in this row
 
         // store current state of the array and other data structures; they are about to be modified
         uint64_t prev_score = score;
         uint64_t prev_c = coverage_problems, prev_l = location_problems, prev_d = detection_problems;
+        bool prev_covering = is_covering, prev_locating = is_locating, prev_detecting = is_detecting;
         std::map<Single*, Prev_S_Data*> prev_singles;   // for restoring changed Single data
         std::map<Interaction*, Prev_I_Data*> prev_interactions; // for restoring changed Interaction data
         std::map<T*, Prev_T_Data*> prev_t_sets;  // for restoring changed T set data
         for (Interaction *i : row_interactions) {
-            for (Single *s : i->singles) row_singles.insert(s);
-            for (T *t_set : i->sets) row_t_sets.insert(t_set);
-            Prev_I_Data *x = new Prev_I_Data(i->is_covered, i->row_diffs, i->is_detectable);
+            for (T *t_set : i->sets) {
+                row_t_sets.insert(t_set);
+                for (Single *s : t_set->singles) affected_singles.insert(s);
+            }
+            Prev_I_Data *x = new Prev_I_Data(i->is_covered, i->deltas, i->is_detectable);
             prev_interactions.insert({i, x});
         }
-        for (Single *s : row_singles) {
+        for (Single *s : affected_singles) {
             Prev_S_Data *x = new Prev_S_Data(s->c_issues, s->l_issues, s->d_issues);
             prev_singles.insert({s, x});
         }
@@ -253,13 +259,13 @@ void Array::heuristic_optimal_helper(int *row, uint64_t cur_col,
         update_array(row, &row_interactions, false);    // see how all scores, etc., would change
 
         // define the row score to be the combination of net changes below, weighted by importance
-        uint64_t row_score = 2*(prev_score - score);
-        for (Single *s : row_singles) { // improve the score based on individual Single improvement
+        int64_t row_score = 0; //= prev_score - static_cast<int64_t>(score);
+        for (Single *s : affected_singles) {    // improve the score based on individual Single improvement
             uint64_t weight = (factors[s->factor]->level);  // higher level factors hold more weight
             Prev_S_Data *x = prev_singles.at(s);
-            row_score += weight*(x->c_issues - s->c_issues);
+            row_score += static_cast<int64_t>(weight*(x->c_issues - s->c_issues));
             if (s->l_issues < x->l_issues) row_score += weight*(x->l_issues - s->l_issues);
-            row_score += 3*weight*(x->d_issues - s->d_issues);  // working towards detection is worth most
+            row_score += static_cast<int64_t>(3*weight*(x->d_issues - s->d_issues));
         }
         
         // decide what to do with this row based on its score compared to best_score
@@ -277,7 +283,8 @@ void Array::heuristic_optimal_helper(int *row, uint64_t cur_col,
         // restore the original state of the array and data structures, and free memory
         score = prev_score;
         coverage_problems = prev_c, location_problems = prev_l, detection_problems = prev_d;
-        for (Single *s : row_singles) {
+        is_covering = prev_covering; is_locating = prev_locating; is_detecting = prev_detecting;
+        for (Single *s : affected_singles) {
             Prev_S_Data *x = prev_singles.at(s);
             x->restore(s);
             delete x;
@@ -299,14 +306,14 @@ void Array::heuristic_optimal_helper(int *row, uint64_t cur_col,
     if ((p == all && dont_cares[permutation[cur_col]] == all) ||
         (p == c_and_l && dont_cares[permutation[cur_col]] == c_and_l) ||
         (p == c_only && dont_cares[permutation[cur_col]] == c_only)) {
-        heuristic_optimal_helper(row, cur_col+1, best_rows, best_score);
+        heuristic_all_helper(row, cur_col+1, best_rows, best_score);
         return;
     }
     for (uint64_t offset = 0; offset < factors[permutation[cur_col]]->level; offset++) {
         int temp = row[permutation[cur_col]];
         row[permutation[cur_col]] = (row[permutation[cur_col]] + static_cast<int>(offset)) %
             static_cast<int>(factors[permutation[cur_col]]->level); // try every value for this factor
-        heuristic_optimal_helper(row, cur_col+1, best_rows, best_score);
+        heuristic_all_helper(row, cur_col+1, best_rows, best_score);
         row[permutation[cur_col]] = temp;
     }
 }

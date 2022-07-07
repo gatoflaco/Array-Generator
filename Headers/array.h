@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 06/13/2022
+Last updated 07/07/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -28,7 +28,7 @@ class Interaction
 
         // this tracks the set differences between the set of rows in which this Interaction occurs and the
         // sets of rows in which relevant T sets this Interaction is not part of occur; that is, this is
-        std::map<T*, uint64_t> row_diffs;   // a field to map detection issues to their delta values
+        std::map<T*, int64_t> deltas;   // a field to map detection issues to their delta values
         bool is_detectable; // easy lookup bool to cut down on redundant checks
 
         std::string to_string();    // returns a string representing all Singles in the interaction
@@ -43,7 +43,10 @@ class Interaction
 class T
 {
     public:
-        std::set<Interaction*> interactions; // for easier access to the interactions themselves
+        int id; // used only in verbose mode, to have some id associated with the T set
+
+        std::vector<Single*> singles;           // for easier access to the singles themselves
+        std::set<Interaction*> interactions;    // for easier access to the interactions themselves
 
         // each interaction in a given T set has its own version of this; the ρ associated with a T is simply
         std::set<int> rows;  // the union of the ρ's for each interaction in that T
@@ -75,21 +78,22 @@ class Array
 
         // checks whether the array is covering; this means that every interaction of strength t occurs in
         // the array at least 1 time (TODO: extend this to at least δ times for (t, δ)-coverage)
-        bool is_covering(bool report = true);
+        bool is_covering;
 
         // checks whether the array is (d, t)-locating; this means that for every pair of size-d sets of
         // t-way interactions, the rows covered by those sets are not equal
-        bool is_locating(bool report = true);
+        bool is_locating;
 
         // checks whether the array is (d, t, δ)-detecting; this checks for all t-way interactions, for all
         // size-d sets, T is a member of the set OR T's rows minus the set's rows has >= δ elements
-        bool is_detecting(bool report = true);
+        bool is_detecting;
 
         Array();    // default constructor, don't use this
         Array(Parser *in);  // constructor with an initialized Parser object
         ~Array();   // deconstructor
 
     private:
+        Parser *pa; // TODO: GET RID OF THIS, IT IS FOR DEBUGGING ONLY
         uint64_t total_problems;        // the array's score starts off as this value
         uint64_t coverage_problems;     // subset of total_issues representing just coverage
         uint64_t location_problems;     // subset of total_issues representing just location
@@ -128,9 +132,9 @@ class Array
         void heuristic_c_only(int *row, std::set<Interaction*> *row_interactions);
         int heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions, int *problems);
         // TODO: make a somewhere-in-the-middle heuristic
-        void heuristic_optimal_row(int *row);
-        void heuristic_optimal_helper(int *row, uint64_t cur_col,
-            std::vector<int*> *best_rows, uint64_t *best_score);
+        void heuristic_all(int *row);
+        void heuristic_all_helper(int *row, uint64_t cur_col,
+            std::vector<int*> *best_rows, int64_t *best_score);
 
         // updates the internal data structures - counts, scores, rows, etc. - based on the row being added
         void update_array(int *row, std::set<Interaction*> *row_interactions, bool keep = true);
