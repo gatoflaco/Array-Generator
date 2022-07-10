@@ -229,7 +229,7 @@ void Array::heuristic_all_helper(int *row, uint64_t cur_col,
     if (cur_col == num_factors) {
         std::set<Interaction*> row_interactions;
         build_row_interactions(row, &row_interactions, 0, t, "");
-        std::set<T*> row_t_sets;
+        std::set<T*> affected_t_sets;   // may be more than just the T sets appearing in this row
         std::set<Single*> affected_singles; // may be more than just the Singles appearing in this row
 
         // store current state of the array and other data structures; they are about to be modified
@@ -240,9 +240,13 @@ void Array::heuristic_all_helper(int *row, uint64_t cur_col,
         std::map<Interaction*, Prev_I_Data*> prev_interactions; // for restoring changed Interaction data
         std::map<T*, Prev_T_Data*> prev_t_sets;  // for restoring changed T set data
         for (Interaction *i : row_interactions) {
-            for (T *t_set : i->sets) {
-                row_t_sets.insert(t_set);
-                for (Single *s : t_set->singles) affected_singles.insert(s);
+            for (T *t1 : i->sets) {
+                affected_t_sets.insert(t1);
+                for (Single *s : t1->singles) affected_singles.insert(s);
+                for (T *t2 : t1->location_conflicts) {
+                    affected_t_sets.insert(t2);
+                    for (Single *s : t2->singles) affected_singles.insert(s);
+                }
             }
             Prev_I_Data *x = new Prev_I_Data(i->is_covered, i->deltas, i->is_detectable);
             prev_interactions.insert({i, x});
@@ -251,7 +255,7 @@ void Array::heuristic_all_helper(int *row, uint64_t cur_col,
             Prev_S_Data *x = new Prev_S_Data(s->c_issues, s->l_issues, s->d_issues);
             prev_singles.insert({s, x});
         }
-        for (T *t_set : row_t_sets) {
+        for (T *t_set : affected_t_sets) {
             Prev_T_Data *x = new Prev_T_Data(t_set->location_conflicts, t_set->is_locatable);
             prev_t_sets.insert({t_set, x});
         }
@@ -289,7 +293,7 @@ void Array::heuristic_all_helper(int *row, uint64_t cur_col,
             x->restore(s);
             delete x;
         }
-        for (T *t_set : row_t_sets) {
+        for (T *t_set : affected_t_sets) {
             Prev_T_Data *x = prev_t_sets.at(t_set);
             x->restore(t_set);
             delete x;

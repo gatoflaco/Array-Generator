@@ -165,7 +165,7 @@ Array::Array(Parser *in) : Array::Array()
         // build all Ts
         std::vector<Interaction*> temp_interactions;
         build_size_d_sets(0, d, &temp_interactions);
-        //if (v == v_on) print_sets(sets);
+        if (v == v_on) print_sets(sets);
         total_problems += sets.size();  // to account for all the location issues
         location_problems += sets.size();
         score += sets.size();   // need to update this
@@ -363,6 +363,7 @@ void Array::add_row()
         //print_sets(sets);
         printf("Is the array covering? --> %s\nIs the array locating? --> %s\nIs the array detecting? --> %s\n",
             is_covering ? "true" : "false", is_locating ? "true" : "false", is_detecting ? "true" : "false");
+        /*
         for (Interaction *i : interactions) {
             if (v == v_off || i->is_detectable) continue;
             printf("\nFor interaction %d, the following sets are not delta-separated:\n", i->id);
@@ -373,7 +374,7 @@ void Array::add_row()
                 my_str = my_str.substr(0, my_str.size()-2) + "}";
                 printf("%s - delta %lu\n", my_str.c_str(), kv.second);
             }
-        }
+        }//*/
         for (T* t1 : sets) {
             if (v == v_off || t1->is_locatable) continue;
             printf("\nFor set %d, the following sets are in conflict:\n", t1->id);
@@ -503,10 +504,23 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
             } else {    // need to check if location issues were solved
                 std::set<T*> temp = t1->location_conflicts; // make a deep copy (for mutating), and
                 uint64_t solved = 0;
+                std::set<T*> others;
                 for (T *t2 : t1->location_conflicts)    // for every T set in the current T's conflicts,
                     if (row_sets.find(t2) == row_sets.end()) {  // if the conflicting set is not in this row,
                         temp.erase(t2); // it is no longer an issue for the current T
                         solved++;
+                        if (t2->location_conflicts.erase(t1) == 1) {
+                            for (Single *s : t2->singles) {
+                                s->l_issues--;
+                                score--;
+                            }
+                            if (t2->location_conflicts.size() == 0) {   // if true, this T just became locatable
+                                t2->is_locatable = true;
+                                score--;    // array score improves for the solved location problem
+                                location_problems--;
+                                if (location_problems == 0) is_locating = true;
+                            }
+                        }
                     }
                 for (Single *s: t1->singles) {  // update scores
                     s->l_issues -= solved;
