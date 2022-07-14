@@ -49,6 +49,7 @@ static prop_mode pm; // property mode
 
 // =========================v=v=v== static methods - forward declarations ==v=v=v========================= //
 
+static int print_results(Parser *p, Array *array, uint64_t row_count, bool success);
 static void verbose_print(int d, int t, int delta);
 
 // =========================^=^=^== static methods - forward declarations ==^=^=^========================= //
@@ -79,31 +80,68 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    uint64_t row_count = 0; // for user's information
+    uint64_t row_count = 0; // for tracking how many rows have been added to the array
     if (om != silent) printf("Array score is currently %lu, adding row %lu.\n", array.score, ++row_count);
     array.add_random_row();
-    //array.add_row_debug(0); // TODO: GET RID OF THIS EVENTUALLY
+    uint64_t prev_score;    // for comparing to current score to see if nothing is changing
+    uint8_t no_change_counter = 0;  // need this to stop an infinite loop if the array cannot be completed
     while (array.score > 0) {   // add rows until the array is complete
+        prev_score = array.score;
         if (om != silent) printf("Array score is currently %lu, adding row %lu.\n", array.score, ++row_count);
         array.add_row();
+        if (array.score == prev_score) no_change_counter++;
+        else no_change_counter = 0;
+        if (no_change_counter > 10) break;
     }
-    if (om != silent) printf("Completed array with %lu rows.\n\n", row_count);
+    return print_results(&p, &array, row_count, (no_change_counter == 0));
+}
 
-    if (p.out_filename.empty()) {
-        if (om != silent) printf("The finished array is: \n");
-        printf("%s\n", array.to_string().c_str());
+/* SUB METHOD: print_results - prints the completion status after the array is finished being generated
+ * 
+ * parameters:
+ * - p: Parser object that has already had its process_input() method called
+ * - array: Array object that has already been completely constructed
+ * - row_count: number of rows that have been added to the array
+ * - success: whether the array was completed with all requested properties satisfied or not
+ * 
+ * returns:
+ * - exit code representing the state of the program (0 means the program finished successfully)
+*/
+static int print_results(Parser *p, Array *array, uint64_t row_count, bool success)
+{
+    if (!success) {
+        printf("WARNING: It appears impossible to complete array with requested properties.\n");
+        if (vm == v_off) printf("\tTry rerunning in verbose mode for details (by including -v flag).\n");
+        printf("\nCancelling array generation....\n");
+    }
+    else if (om != silent) printf("Completed array with %lu rows.\n\n", row_count);
+
+    if (p->out_filename.empty()) {
+        if (!success) printf("The array up to this point was:\n");
+        else if (om != silent) printf("The finished array is:\n");
+        printf("%s\n", array->to_string().c_str());
     } else {
         try {
-            p.out.open(p.out_filename.c_str(), std::ofstream::out);
+            p->out.open(p->out_filename.c_str(), std::ofstream::out);
         } catch ( ... ) {
+            if (!success) {
+                printf("Tried to write what rows the array had into file, but an error occurred.\n");
+                printf("Please manually copy-paste it if needed:\n%s\n", array->to_string().c_str());
+                return 0;
+            }
             printf("Error opening file for writing. Please manually copy-paste the array as needed:\n%s\n",
-                array.to_string().c_str());
+                array->to_string().c_str());
             return 0;
         }
-        std::string str = array.to_string();
-        p.out.write(str.c_str(), static_cast<std::streamsize>(str.size()));
-        p.out.close();
-        if (om != silent) printf("Wrote array into file with path name <%s>.\n\n",p.out_filename.c_str());
+        std::string str = array->to_string();
+        p->out.write(str.c_str(), static_cast<std::streamsize>(str.size()));
+        p->out.close();
+        if (!success) {
+            printf("Wrote what rows the array had up to this point into file with path name <./%s>.\n\n",
+                p->out_filename.c_str());
+        }
+        else if (om != silent)
+            printf("Wrote array into file with path name <./%s>.\n\n", p->out_filename.c_str());
     }
     return 0;
 }

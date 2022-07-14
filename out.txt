@@ -1,14 +1,50 @@
+For a (2, 3)-locating array, the following two sets have an unsolvable conflict:
+	Set 663:	{ 13:{ (f0, 0) (f2, 0) (f3, 0) }; 34:{ (f0, 1) (f2, 0) (f3, 0) } }
+	Set 1626:	{ 43:{ (f1, 0) (f2, 0) (f3, 0) }; 52:{ (f1, 1) (f2, 0) (f3, 0) } }
+Note that there are many many more examples, but this is just one to demonstrate the problem.
+What is the problem?
+We want size-2 sets of 3-way interactions, but the first two factors can only take on two levels.
+Notice that the first set keeps (f2, 0) and (f3, 0) constant,
+	so the only difference between the interactions is that f0 is either 0 or 1.
+0 and 1 are the only two values f0 could possible take on, so this is as if to say that f0 does not matter.
+Then, ρ(A, {{(f0, 0), (f2, 0), (f3, 0)}, {(f0, 1), (f2, 0), (f3, 0)}}) =  ρ(A, {{(f2, 0), (f3, 0)}, {(f2, 0), (f3, 0)}}).
+That is, the size-2 set of those 3-way interactions will occur in the same rows
+	as the size-2 set of the 2-way interactions derived by taking out the f0 singles.
+Now look at the second set.
+It also keeps (f2, 0) and (f3, 0) constant, they exact same 2-way interaction held constant in the first set.
+Its third singles? (f1, 0) and (f1, 1), *the two values that f1 can possibly take on*.
+The same effect occurs, where this basically says that it does not matter what f1 is,
+	boiling the ρ down to just ρ(A, {{(f2, 0), (f3, 0)}, {(f2, 0), (f3, 0)}}).
+This shows that these two distinct sets will definitely occur on the same set of rows!!
+The location property will be impossible to satisfy.
+
+Even a (2, 1)-locating array will be impossible, as the following two sets will exist:
+	{ { (f0, 0) }; { (f0, 1) } }
+	{ { (f1, 0) }; { (f1, 1) } }
+ρ for both of these sets will be the set of all rows in the array.
+What we are seeing is that when it is possible to construct a size-d set that contains every level a given factor can take on,
+	it renders the contribution of that factor to the ρ of that set void.
+This makes the ρ of that set definitely equivalent to the ρ of some size-d set of a smaller interaction size.
+IF THERE EXIST TWO OR MORE FACTORS FOR WHICH THIS IS POSSIBLE, THE LOCATION PROPERTY WILL BE IMPOSSIBLE TO SATISFY.
+This is because there will definitely be some pair of size-d sets wherein each set's ρ is effectively reduced to the ρ of the same set.
+Then, a precondition to check for is that less than d factors have d levels;
+	if this is violated, (d, t)-location is impossible for any t.
+
+Below is some output I pulled from for the above example.
+
+
+
 Reading input....
 
-==6140== Verbose mode enabled
-==6140== Output mode: normal
-==6140== Generating: coverage, location
-==6140== Using d = 2, t = 2
+==5122== Verbose mode enabled
+==5122== Output mode: normal
+==5122== Generating: coverage, location, detection
+==5122== Using d = 2, t = 3, δ = 1
 
 Building internal data structures....
 
 
-==6140== Listing all Singles below:
+==5122== Listing all Singles below:
 
 Factor 0:
 	(f0, 0): { }
@@ -29,158 +65,250 @@ Factor 3:
 	(f3, 2): { }
 
 
-==6140== Listing all Interactions below:
+==5122== Listing all Interactions below:
 
 Interaction 1:
-	Int: { (f0, 0) (f1, 0) }
+	Int: { (f0, 0) (f1, 0) (f2, 0) }
 	Rows: { }
 
 Interaction 2:
-	Int: { (f0, 0) (f1, 1) }
+	Int: { (f0, 0) (f1, 0) (f2, 1) }
 	Rows: { }
 
 Interaction 3:
-	Int: { (f0, 0) (f2, 0) }
+	Int: { (f0, 0) (f1, 0) (f2, 2) }
 	Rows: { }
 
 Interaction 4:
-	Int: { (f0, 0) (f2, 1) }
+	Int: { (f0, 0) (f1, 0) (f3, 0) }
 	Rows: { }
 
 Interaction 5:
-	Int: { (f0, 0) (f2, 2) }
+	Int: { (f0, 0) (f1, 0) (f3, 1) }
 	Rows: { }
 
 Interaction 6:
-	Int: { (f0, 0) (f3, 0) }
+	Int: { (f0, 0) (f1, 0) (f3, 2) }
 	Rows: { }
 
 Interaction 7:
-	Int: { (f0, 0) (f3, 1) }
+	Int: { (f0, 0) (f1, 1) (f2, 0) }
 	Rows: { }
 
 Interaction 8:
-	Int: { (f0, 0) (f3, 2) }
+	Int: { (f0, 0) (f1, 1) (f2, 1) }
 	Rows: { }
 
 Interaction 9:
-	Int: { (f0, 1) (f1, 0) }
+	Int: { (f0, 0) (f1, 1) (f2, 2) }
 	Rows: { }
 
 Interaction 10:
-	Int: { (f0, 1) (f1, 1) }
+	Int: { (f0, 0) (f1, 1) (f3, 0) }
 	Rows: { }
 
 Interaction 11:
-	Int: { (f0, 1) (f2, 0) }
+	Int: { (f0, 0) (f1, 1) (f3, 1) }
 	Rows: { }
 
 Interaction 12:
-	Int: { (f0, 1) (f2, 1) }
+	Int: { (f0, 0) (f1, 1) (f3, 2) }
 	Rows: { }
 
 Interaction 13:
-	Int: { (f0, 1) (f2, 2) }
+	Int: { (f0, 0) (f2, 0) (f3, 0) }
 	Rows: { }
 
 Interaction 14:
-	Int: { (f0, 1) (f3, 0) }
+	Int: { (f0, 0) (f2, 0) (f3, 1) }
 	Rows: { }
 
 Interaction 15:
-	Int: { (f0, 1) (f3, 1) }
+	Int: { (f0, 0) (f2, 0) (f3, 2) }
 	Rows: { }
 
 Interaction 16:
-	Int: { (f0, 1) (f3, 2) }
+	Int: { (f0, 0) (f2, 1) (f3, 0) }
 	Rows: { }
 
 Interaction 17:
-	Int: { (f1, 0) (f2, 0) }
+	Int: { (f0, 0) (f2, 1) (f3, 1) }
 	Rows: { }
 
 Interaction 18:
-	Int: { (f1, 0) (f2, 1) }
+	Int: { (f0, 0) (f2, 1) (f3, 2) }
 	Rows: { }
 
 Interaction 19:
-	Int: { (f1, 0) (f2, 2) }
+	Int: { (f0, 0) (f2, 2) (f3, 0) }
 	Rows: { }
 
 Interaction 20:
-	Int: { (f1, 0) (f3, 0) }
+	Int: { (f0, 0) (f2, 2) (f3, 1) }
 	Rows: { }
 
 Interaction 21:
-	Int: { (f1, 0) (f3, 1) }
+	Int: { (f0, 0) (f2, 2) (f3, 2) }
 	Rows: { }
 
 Interaction 22:
-	Int: { (f1, 0) (f3, 2) }
+	Int: { (f0, 1) (f1, 0) (f2, 0) }
 	Rows: { }
 
 Interaction 23:
-	Int: { (f1, 1) (f2, 0) }
+	Int: { (f0, 1) (f1, 0) (f2, 1) }
 	Rows: { }
 
 Interaction 24:
-	Int: { (f1, 1) (f2, 1) }
+	Int: { (f0, 1) (f1, 0) (f2, 2) }
 	Rows: { }
 
 Interaction 25:
-	Int: { (f1, 1) (f2, 2) }
+	Int: { (f0, 1) (f1, 0) (f3, 0) }
 	Rows: { }
 
 Interaction 26:
-	Int: { (f1, 1) (f3, 0) }
+	Int: { (f0, 1) (f1, 0) (f3, 1) }
 	Rows: { }
 
 Interaction 27:
-	Int: { (f1, 1) (f3, 1) }
+	Int: { (f0, 1) (f1, 0) (f3, 2) }
 	Rows: { }
 
 Interaction 28:
-	Int: { (f1, 1) (f3, 2) }
+	Int: { (f0, 1) (f1, 1) (f2, 0) }
 	Rows: { }
 
 Interaction 29:
-	Int: { (f2, 0) (f3, 0) }
+	Int: { (f0, 1) (f1, 1) (f2, 1) }
 	Rows: { }
 
 Interaction 30:
-	Int: { (f2, 0) (f3, 1) }
+	Int: { (f0, 1) (f1, 1) (f2, 2) }
 	Rows: { }
 
 Interaction 31:
-	Int: { (f2, 0) (f3, 2) }
+	Int: { (f0, 1) (f1, 1) (f3, 0) }
 	Rows: { }
 
 Interaction 32:
-	Int: { (f2, 1) (f3, 0) }
+	Int: { (f0, 1) (f1, 1) (f3, 1) }
 	Rows: { }
 
 Interaction 33:
-	Int: { (f2, 1) (f3, 1) }
+	Int: { (f0, 1) (f1, 1) (f3, 2) }
 	Rows: { }
 
 Interaction 34:
-	Int: { (f2, 1) (f3, 2) }
+	Int: { (f0, 1) (f2, 0) (f3, 0) }
 	Rows: { }
 
 Interaction 35:
-	Int: { (f2, 2) (f3, 0) }
+	Int: { (f0, 1) (f2, 0) (f3, 1) }
 	Rows: { }
 
 Interaction 36:
-	Int: { (f2, 2) (f3, 1) }
+	Int: { (f0, 1) (f2, 0) (f3, 2) }
 	Rows: { }
 
 Interaction 37:
-	Int: { (f2, 2) (f3, 2) }
+	Int: { (f0, 1) (f2, 1) (f3, 0) }
+	Rows: { }
+
+Interaction 38:
+	Int: { (f0, 1) (f2, 1) (f3, 1) }
+	Rows: { }
+
+Interaction 39:
+	Int: { (f0, 1) (f2, 1) (f3, 2) }
+	Rows: { }
+
+Interaction 40:
+	Int: { (f0, 1) (f2, 2) (f3, 0) }
+	Rows: { }
+
+Interaction 41:
+	Int: { (f0, 1) (f2, 2) (f3, 1) }
+	Rows: { }
+
+Interaction 42:
+	Int: { (f0, 1) (f2, 2) (f3, 2) }
+	Rows: { }
+
+Interaction 43:
+	Int: { (f1, 0) (f2, 0) (f3, 0) }
+	Rows: { }
+
+Interaction 44:
+	Int: { (f1, 0) (f2, 0) (f3, 1) }
+	Rows: { }
+
+Interaction 45:
+	Int: { (f1, 0) (f2, 0) (f3, 2) }
+	Rows: { }
+
+Interaction 46:
+	Int: { (f1, 0) (f2, 1) (f3, 0) }
+	Rows: { }
+
+Interaction 47:
+	Int: { (f1, 0) (f2, 1) (f3, 1) }
+	Rows: { }
+
+Interaction 48:
+	Int: { (f1, 0) (f2, 1) (f3, 2) }
+	Rows: { }
+
+Interaction 49:
+	Int: { (f1, 0) (f2, 2) (f3, 0) }
+	Rows: { }
+
+Interaction 50:
+	Int: { (f1, 0) (f2, 2) (f3, 1) }
+	Rows: { }
+
+Interaction 51:
+	Int: { (f1, 0) (f2, 2) (f3, 2) }
+	Rows: { }
+
+Interaction 52:
+	Int: { (f1, 1) (f2, 0) (f3, 0) }
+	Rows: { }
+
+Interaction 53:
+	Int: { (f1, 1) (f2, 0) (f3, 1) }
+	Rows: { }
+
+Interaction 54:
+	Int: { (f1, 1) (f2, 0) (f3, 2) }
+	Rows: { }
+
+Interaction 55:
+	Int: { (f1, 1) (f2, 1) (f3, 0) }
+	Rows: { }
+
+Interaction 56:
+	Int: { (f1, 1) (f2, 1) (f3, 1) }
+	Rows: { }
+
+Interaction 57:
+	Int: { (f1, 1) (f2, 1) (f3, 2) }
+	Rows: { }
+
+Interaction 58:
+	Int: { (f1, 1) (f2, 2) (f3, 0) }
+	Rows: { }
+
+Interaction 59:
+	Int: { (f1, 1) (f2, 2) (f3, 1) }
+	Rows: { }
+
+Interaction 60:
+	Int: { (f1, 1) (f2, 2) (f3, 2) }
 	Rows: { }
 
 
-==6140== Listing all Ts below:
+==5122== Listing all Ts below:
 
 Set 1:
 	Set: { 1 2 }
@@ -327,2295 +455,10463 @@ Set 36:
 	Rows: { }
 
 Set 37:
-	Set: { 2 3 }
+	Set: { 1 38 }
 	Rows: { }
 
 Set 38:
-	Set: { 2 4 }
+	Set: { 1 39 }
 	Rows: { }
 
 Set 39:
-	Set: { 2 5 }
+	Set: { 1 40 }
 	Rows: { }
 
 Set 40:
-	Set: { 2 6 }
+	Set: { 1 41 }
 	Rows: { }
 
 Set 41:
-	Set: { 2 7 }
+	Set: { 1 42 }
 	Rows: { }
 
 Set 42:
-	Set: { 2 8 }
+	Set: { 1 43 }
 	Rows: { }
 
 Set 43:
-	Set: { 2 9 }
+	Set: { 1 44 }
 	Rows: { }
 
 Set 44:
-	Set: { 2 10 }
+	Set: { 1 45 }
 	Rows: { }
 
 Set 45:
-	Set: { 2 11 }
+	Set: { 1 46 }
 	Rows: { }
 
 Set 46:
-	Set: { 2 12 }
+	Set: { 1 47 }
 	Rows: { }
 
 Set 47:
-	Set: { 2 13 }
+	Set: { 1 48 }
 	Rows: { }
 
 Set 48:
-	Set: { 2 14 }
+	Set: { 1 49 }
 	Rows: { }
 
 Set 49:
-	Set: { 2 15 }
+	Set: { 1 50 }
 	Rows: { }
 
 Set 50:
-	Set: { 2 16 }
+	Set: { 1 51 }
 	Rows: { }
 
 Set 51:
-	Set: { 2 17 }
+	Set: { 1 52 }
 	Rows: { }
 
 Set 52:
-	Set: { 2 18 }
+	Set: { 1 53 }
 	Rows: { }
 
 Set 53:
-	Set: { 2 19 }
+	Set: { 1 54 }
 	Rows: { }
 
 Set 54:
-	Set: { 2 20 }
+	Set: { 1 55 }
 	Rows: { }
 
 Set 55:
-	Set: { 2 21 }
+	Set: { 1 56 }
 	Rows: { }
 
 Set 56:
-	Set: { 2 22 }
+	Set: { 1 57 }
 	Rows: { }
 
 Set 57:
-	Set: { 2 23 }
+	Set: { 1 58 }
 	Rows: { }
 
 Set 58:
-	Set: { 2 24 }
+	Set: { 1 59 }
 	Rows: { }
 
 Set 59:
-	Set: { 2 25 }
+	Set: { 1 60 }
 	Rows: { }
 
 Set 60:
-	Set: { 2 26 }
+	Set: { 2 3 }
 	Rows: { }
 
 Set 61:
-	Set: { 2 27 }
+	Set: { 2 4 }
 	Rows: { }
 
 Set 62:
-	Set: { 2 28 }
+	Set: { 2 5 }
 	Rows: { }
 
 Set 63:
-	Set: { 2 29 }
+	Set: { 2 6 }
 	Rows: { }
 
 Set 64:
-	Set: { 2 30 }
+	Set: { 2 7 }
 	Rows: { }
 
 Set 65:
-	Set: { 2 31 }
+	Set: { 2 8 }
 	Rows: { }
 
 Set 66:
-	Set: { 2 32 }
+	Set: { 2 9 }
 	Rows: { }
 
 Set 67:
-	Set: { 2 33 }
+	Set: { 2 10 }
 	Rows: { }
 
 Set 68:
-	Set: { 2 34 }
+	Set: { 2 11 }
 	Rows: { }
 
 Set 69:
-	Set: { 2 35 }
+	Set: { 2 12 }
 	Rows: { }
 
 Set 70:
-	Set: { 2 36 }
+	Set: { 2 13 }
 	Rows: { }
 
 Set 71:
-	Set: { 2 37 }
+	Set: { 2 14 }
 	Rows: { }
 
 Set 72:
-	Set: { 3 4 }
+	Set: { 2 15 }
 	Rows: { }
 
 Set 73:
-	Set: { 3 5 }
+	Set: { 2 16 }
 	Rows: { }
 
 Set 74:
-	Set: { 3 6 }
+	Set: { 2 17 }
 	Rows: { }
 
 Set 75:
-	Set: { 3 7 }
+	Set: { 2 18 }
 	Rows: { }
 
 Set 76:
-	Set: { 3 8 }
+	Set: { 2 19 }
 	Rows: { }
 
 Set 77:
-	Set: { 3 9 }
+	Set: { 2 20 }
 	Rows: { }
 
 Set 78:
-	Set: { 3 10 }
+	Set: { 2 21 }
 	Rows: { }
 
 Set 79:
-	Set: { 3 11 }
+	Set: { 2 22 }
 	Rows: { }
 
 Set 80:
-	Set: { 3 12 }
+	Set: { 2 23 }
 	Rows: { }
 
 Set 81:
-	Set: { 3 13 }
+	Set: { 2 24 }
 	Rows: { }
 
 Set 82:
-	Set: { 3 14 }
+	Set: { 2 25 }
 	Rows: { }
 
 Set 83:
-	Set: { 3 15 }
+	Set: { 2 26 }
 	Rows: { }
 
 Set 84:
-	Set: { 3 16 }
+	Set: { 2 27 }
 	Rows: { }
 
 Set 85:
-	Set: { 3 17 }
+	Set: { 2 28 }
 	Rows: { }
 
 Set 86:
-	Set: { 3 18 }
+	Set: { 2 29 }
 	Rows: { }
 
 Set 87:
-	Set: { 3 19 }
+	Set: { 2 30 }
 	Rows: { }
 
 Set 88:
-	Set: { 3 20 }
+	Set: { 2 31 }
 	Rows: { }
 
 Set 89:
-	Set: { 3 21 }
+	Set: { 2 32 }
 	Rows: { }
 
 Set 90:
-	Set: { 3 22 }
+	Set: { 2 33 }
 	Rows: { }
 
 Set 91:
-	Set: { 3 23 }
+	Set: { 2 34 }
 	Rows: { }
 
 Set 92:
-	Set: { 3 24 }
+	Set: { 2 35 }
 	Rows: { }
 
 Set 93:
-	Set: { 3 25 }
+	Set: { 2 36 }
 	Rows: { }
 
 Set 94:
-	Set: { 3 26 }
+	Set: { 2 37 }
 	Rows: { }
 
 Set 95:
-	Set: { 3 27 }
+	Set: { 2 38 }
 	Rows: { }
 
 Set 96:
-	Set: { 3 28 }
+	Set: { 2 39 }
 	Rows: { }
 
 Set 97:
-	Set: { 3 29 }
+	Set: { 2 40 }
 	Rows: { }
 
 Set 98:
-	Set: { 3 30 }
+	Set: { 2 41 }
 	Rows: { }
 
 Set 99:
-	Set: { 3 31 }
+	Set: { 2 42 }
 	Rows: { }
 
 Set 100:
-	Set: { 3 32 }
+	Set: { 2 43 }
 	Rows: { }
 
 Set 101:
-	Set: { 3 33 }
+	Set: { 2 44 }
 	Rows: { }
 
 Set 102:
-	Set: { 3 34 }
+	Set: { 2 45 }
 	Rows: { }
 
 Set 103:
-	Set: { 3 35 }
+	Set: { 2 46 }
 	Rows: { }
 
 Set 104:
-	Set: { 3 36 }
+	Set: { 2 47 }
 	Rows: { }
 
 Set 105:
-	Set: { 3 37 }
+	Set: { 2 48 }
 	Rows: { }
 
 Set 106:
-	Set: { 4 5 }
+	Set: { 2 49 }
 	Rows: { }
 
 Set 107:
-	Set: { 4 6 }
+	Set: { 2 50 }
 	Rows: { }
 
 Set 108:
-	Set: { 4 7 }
+	Set: { 2 51 }
 	Rows: { }
 
 Set 109:
-	Set: { 4 8 }
+	Set: { 2 52 }
 	Rows: { }
 
 Set 110:
-	Set: { 4 9 }
+	Set: { 2 53 }
 	Rows: { }
 
 Set 111:
-	Set: { 4 10 }
+	Set: { 2 54 }
 	Rows: { }
 
 Set 112:
-	Set: { 4 11 }
+	Set: { 2 55 }
 	Rows: { }
 
 Set 113:
-	Set: { 4 12 }
+	Set: { 2 56 }
 	Rows: { }
 
 Set 114:
-	Set: { 4 13 }
+	Set: { 2 57 }
 	Rows: { }
 
 Set 115:
-	Set: { 4 14 }
+	Set: { 2 58 }
 	Rows: { }
 
 Set 116:
-	Set: { 4 15 }
+	Set: { 2 59 }
 	Rows: { }
 
 Set 117:
-	Set: { 4 16 }
+	Set: { 2 60 }
 	Rows: { }
 
 Set 118:
-	Set: { 4 17 }
+	Set: { 3 4 }
 	Rows: { }
 
 Set 119:
-	Set: { 4 18 }
+	Set: { 3 5 }
 	Rows: { }
 
 Set 120:
-	Set: { 4 19 }
+	Set: { 3 6 }
 	Rows: { }
 
 Set 121:
-	Set: { 4 20 }
+	Set: { 3 7 }
 	Rows: { }
 
 Set 122:
-	Set: { 4 21 }
+	Set: { 3 8 }
 	Rows: { }
 
 Set 123:
-	Set: { 4 22 }
+	Set: { 3 9 }
 	Rows: { }
 
 Set 124:
-	Set: { 4 23 }
+	Set: { 3 10 }
 	Rows: { }
 
 Set 125:
-	Set: { 4 24 }
+	Set: { 3 11 }
 	Rows: { }
 
 Set 126:
-	Set: { 4 25 }
+	Set: { 3 12 }
 	Rows: { }
 
 Set 127:
-	Set: { 4 26 }
+	Set: { 3 13 }
 	Rows: { }
 
 Set 128:
-	Set: { 4 27 }
+	Set: { 3 14 }
 	Rows: { }
 
 Set 129:
-	Set: { 4 28 }
+	Set: { 3 15 }
 	Rows: { }
 
 Set 130:
-	Set: { 4 29 }
+	Set: { 3 16 }
 	Rows: { }
 
 Set 131:
-	Set: { 4 30 }
+	Set: { 3 17 }
 	Rows: { }
 
 Set 132:
-	Set: { 4 31 }
+	Set: { 3 18 }
 	Rows: { }
 
 Set 133:
-	Set: { 4 32 }
+	Set: { 3 19 }
 	Rows: { }
 
 Set 134:
-	Set: { 4 33 }
+	Set: { 3 20 }
 	Rows: { }
 
 Set 135:
-	Set: { 4 34 }
+	Set: { 3 21 }
 	Rows: { }
 
 Set 136:
-	Set: { 4 35 }
+	Set: { 3 22 }
 	Rows: { }
 
 Set 137:
-	Set: { 4 36 }
+	Set: { 3 23 }
 	Rows: { }
 
 Set 138:
-	Set: { 4 37 }
+	Set: { 3 24 }
 	Rows: { }
 
 Set 139:
-	Set: { 5 6 }
+	Set: { 3 25 }
 	Rows: { }
 
 Set 140:
-	Set: { 5 7 }
+	Set: { 3 26 }
 	Rows: { }
 
 Set 141:
-	Set: { 5 8 }
+	Set: { 3 27 }
 	Rows: { }
 
 Set 142:
-	Set: { 5 9 }
+	Set: { 3 28 }
 	Rows: { }
 
 Set 143:
-	Set: { 5 10 }
+	Set: { 3 29 }
 	Rows: { }
 
 Set 144:
-	Set: { 5 11 }
+	Set: { 3 30 }
 	Rows: { }
 
 Set 145:
-	Set: { 5 12 }
+	Set: { 3 31 }
 	Rows: { }
 
 Set 146:
-	Set: { 5 13 }
+	Set: { 3 32 }
 	Rows: { }
 
 Set 147:
-	Set: { 5 14 }
+	Set: { 3 33 }
 	Rows: { }
 
 Set 148:
-	Set: { 5 15 }
+	Set: { 3 34 }
 	Rows: { }
 
 Set 149:
-	Set: { 5 16 }
+	Set: { 3 35 }
 	Rows: { }
 
 Set 150:
-	Set: { 5 17 }
+	Set: { 3 36 }
 	Rows: { }
 
 Set 151:
-	Set: { 5 18 }
+	Set: { 3 37 }
 	Rows: { }
 
 Set 152:
-	Set: { 5 19 }
+	Set: { 3 38 }
 	Rows: { }
 
 Set 153:
-	Set: { 5 20 }
+	Set: { 3 39 }
 	Rows: { }
 
 Set 154:
-	Set: { 5 21 }
+	Set: { 3 40 }
 	Rows: { }
 
 Set 155:
-	Set: { 5 22 }
+	Set: { 3 41 }
 	Rows: { }
 
 Set 156:
-	Set: { 5 23 }
+	Set: { 3 42 }
 	Rows: { }
 
 Set 157:
-	Set: { 5 24 }
+	Set: { 3 43 }
 	Rows: { }
 
 Set 158:
-	Set: { 5 25 }
+	Set: { 3 44 }
 	Rows: { }
 
 Set 159:
-	Set: { 5 26 }
+	Set: { 3 45 }
 	Rows: { }
 
 Set 160:
-	Set: { 5 27 }
+	Set: { 3 46 }
 	Rows: { }
 
 Set 161:
-	Set: { 5 28 }
+	Set: { 3 47 }
 	Rows: { }
 
 Set 162:
-	Set: { 5 29 }
+	Set: { 3 48 }
 	Rows: { }
 
 Set 163:
-	Set: { 5 30 }
+	Set: { 3 49 }
 	Rows: { }
 
 Set 164:
-	Set: { 5 31 }
+	Set: { 3 50 }
 	Rows: { }
 
 Set 165:
-	Set: { 5 32 }
+	Set: { 3 51 }
 	Rows: { }
 
 Set 166:
-	Set: { 5 33 }
+	Set: { 3 52 }
 	Rows: { }
 
 Set 167:
-	Set: { 5 34 }
+	Set: { 3 53 }
 	Rows: { }
 
 Set 168:
-	Set: { 5 35 }
+	Set: { 3 54 }
 	Rows: { }
 
 Set 169:
-	Set: { 5 36 }
+	Set: { 3 55 }
 	Rows: { }
 
 Set 170:
-	Set: { 5 37 }
+	Set: { 3 56 }
 	Rows: { }
 
 Set 171:
-	Set: { 6 7 }
+	Set: { 3 57 }
 	Rows: { }
 
 Set 172:
-	Set: { 6 8 }
+	Set: { 3 58 }
 	Rows: { }
 
 Set 173:
-	Set: { 6 9 }
+	Set: { 3 59 }
 	Rows: { }
 
 Set 174:
-	Set: { 6 10 }
+	Set: { 3 60 }
 	Rows: { }
 
 Set 175:
-	Set: { 6 11 }
+	Set: { 4 5 }
 	Rows: { }
 
 Set 176:
-	Set: { 6 12 }
+	Set: { 4 6 }
 	Rows: { }
 
 Set 177:
-	Set: { 6 13 }
+	Set: { 4 7 }
 	Rows: { }
 
 Set 178:
-	Set: { 6 14 }
+	Set: { 4 8 }
 	Rows: { }
 
 Set 179:
-	Set: { 6 15 }
+	Set: { 4 9 }
 	Rows: { }
 
 Set 180:
-	Set: { 6 16 }
+	Set: { 4 10 }
 	Rows: { }
 
 Set 181:
-	Set: { 6 17 }
+	Set: { 4 11 }
 	Rows: { }
 
 Set 182:
-	Set: { 6 18 }
+	Set: { 4 12 }
 	Rows: { }
 
 Set 183:
-	Set: { 6 19 }
+	Set: { 4 13 }
 	Rows: { }
 
 Set 184:
-	Set: { 6 20 }
+	Set: { 4 14 }
 	Rows: { }
 
 Set 185:
-	Set: { 6 21 }
+	Set: { 4 15 }
 	Rows: { }
 
 Set 186:
-	Set: { 6 22 }
+	Set: { 4 16 }
 	Rows: { }
 
 Set 187:
-	Set: { 6 23 }
+	Set: { 4 17 }
 	Rows: { }
 
 Set 188:
-	Set: { 6 24 }
+	Set: { 4 18 }
 	Rows: { }
 
 Set 189:
-	Set: { 6 25 }
+	Set: { 4 19 }
 	Rows: { }
 
 Set 190:
-	Set: { 6 26 }
+	Set: { 4 20 }
 	Rows: { }
 
 Set 191:
-	Set: { 6 27 }
+	Set: { 4 21 }
 	Rows: { }
 
 Set 192:
-	Set: { 6 28 }
+	Set: { 4 22 }
 	Rows: { }
 
 Set 193:
-	Set: { 6 29 }
+	Set: { 4 23 }
 	Rows: { }
 
 Set 194:
-	Set: { 6 30 }
+	Set: { 4 24 }
 	Rows: { }
 
 Set 195:
-	Set: { 6 31 }
+	Set: { 4 25 }
 	Rows: { }
 
 Set 196:
-	Set: { 6 32 }
+	Set: { 4 26 }
 	Rows: { }
 
 Set 197:
-	Set: { 6 33 }
+	Set: { 4 27 }
 	Rows: { }
 
 Set 198:
-	Set: { 6 34 }
+	Set: { 4 28 }
 	Rows: { }
 
 Set 199:
-	Set: { 6 35 }
+	Set: { 4 29 }
 	Rows: { }
 
 Set 200:
-	Set: { 6 36 }
+	Set: { 4 30 }
 	Rows: { }
 
 Set 201:
-	Set: { 6 37 }
+	Set: { 4 31 }
 	Rows: { }
 
 Set 202:
-	Set: { 7 8 }
+	Set: { 4 32 }
 	Rows: { }
 
 Set 203:
-	Set: { 7 9 }
+	Set: { 4 33 }
 	Rows: { }
 
 Set 204:
-	Set: { 7 10 }
+	Set: { 4 34 }
 	Rows: { }
 
 Set 205:
-	Set: { 7 11 }
+	Set: { 4 35 }
 	Rows: { }
 
 Set 206:
-	Set: { 7 12 }
+	Set: { 4 36 }
 	Rows: { }
 
 Set 207:
-	Set: { 7 13 }
+	Set: { 4 37 }
 	Rows: { }
 
 Set 208:
-	Set: { 7 14 }
+	Set: { 4 38 }
 	Rows: { }
 
 Set 209:
-	Set: { 7 15 }
+	Set: { 4 39 }
 	Rows: { }
 
 Set 210:
-	Set: { 7 16 }
+	Set: { 4 40 }
 	Rows: { }
 
 Set 211:
-	Set: { 7 17 }
+	Set: { 4 41 }
 	Rows: { }
 
 Set 212:
-	Set: { 7 18 }
+	Set: { 4 42 }
 	Rows: { }
 
 Set 213:
-	Set: { 7 19 }
+	Set: { 4 43 }
 	Rows: { }
 
 Set 214:
-	Set: { 7 20 }
+	Set: { 4 44 }
 	Rows: { }
 
 Set 215:
-	Set: { 7 21 }
+	Set: { 4 45 }
 	Rows: { }
 
 Set 216:
-	Set: { 7 22 }
+	Set: { 4 46 }
 	Rows: { }
 
 Set 217:
-	Set: { 7 23 }
+	Set: { 4 47 }
 	Rows: { }
 
 Set 218:
-	Set: { 7 24 }
+	Set: { 4 48 }
 	Rows: { }
 
 Set 219:
-	Set: { 7 25 }
+	Set: { 4 49 }
 	Rows: { }
 
 Set 220:
-	Set: { 7 26 }
+	Set: { 4 50 }
 	Rows: { }
 
 Set 221:
-	Set: { 7 27 }
+	Set: { 4 51 }
 	Rows: { }
 
 Set 222:
-	Set: { 7 28 }
+	Set: { 4 52 }
 	Rows: { }
 
 Set 223:
-	Set: { 7 29 }
+	Set: { 4 53 }
 	Rows: { }
 
 Set 224:
-	Set: { 7 30 }
+	Set: { 4 54 }
 	Rows: { }
 
 Set 225:
-	Set: { 7 31 }
+	Set: { 4 55 }
 	Rows: { }
 
 Set 226:
-	Set: { 7 32 }
+	Set: { 4 56 }
 	Rows: { }
 
 Set 227:
-	Set: { 7 33 }
+	Set: { 4 57 }
 	Rows: { }
 
 Set 228:
-	Set: { 7 34 }
+	Set: { 4 58 }
 	Rows: { }
 
 Set 229:
-	Set: { 7 35 }
+	Set: { 4 59 }
 	Rows: { }
 
 Set 230:
-	Set: { 7 36 }
+	Set: { 4 60 }
 	Rows: { }
 
 Set 231:
-	Set: { 7 37 }
+	Set: { 5 6 }
 	Rows: { }
 
 Set 232:
-	Set: { 8 9 }
+	Set: { 5 7 }
 	Rows: { }
 
 Set 233:
-	Set: { 8 10 }
+	Set: { 5 8 }
 	Rows: { }
 
 Set 234:
-	Set: { 8 11 }
+	Set: { 5 9 }
 	Rows: { }
 
 Set 235:
-	Set: { 8 12 }
+	Set: { 5 10 }
 	Rows: { }
 
 Set 236:
-	Set: { 8 13 }
+	Set: { 5 11 }
 	Rows: { }
 
 Set 237:
-	Set: { 8 14 }
+	Set: { 5 12 }
 	Rows: { }
 
 Set 238:
-	Set: { 8 15 }
+	Set: { 5 13 }
 	Rows: { }
 
 Set 239:
-	Set: { 8 16 }
+	Set: { 5 14 }
 	Rows: { }
 
 Set 240:
-	Set: { 8 17 }
+	Set: { 5 15 }
 	Rows: { }
 
 Set 241:
-	Set: { 8 18 }
+	Set: { 5 16 }
 	Rows: { }
 
 Set 242:
-	Set: { 8 19 }
+	Set: { 5 17 }
 	Rows: { }
 
 Set 243:
-	Set: { 8 20 }
+	Set: { 5 18 }
 	Rows: { }
 
 Set 244:
-	Set: { 8 21 }
+	Set: { 5 19 }
 	Rows: { }
 
 Set 245:
-	Set: { 8 22 }
+	Set: { 5 20 }
 	Rows: { }
 
 Set 246:
-	Set: { 8 23 }
+	Set: { 5 21 }
 	Rows: { }
 
 Set 247:
-	Set: { 8 24 }
+	Set: { 5 22 }
 	Rows: { }
 
 Set 248:
-	Set: { 8 25 }
+	Set: { 5 23 }
 	Rows: { }
 
 Set 249:
-	Set: { 8 26 }
+	Set: { 5 24 }
 	Rows: { }
 
 Set 250:
-	Set: { 8 27 }
+	Set: { 5 25 }
 	Rows: { }
 
 Set 251:
-	Set: { 8 28 }
+	Set: { 5 26 }
 	Rows: { }
 
 Set 252:
-	Set: { 8 29 }
+	Set: { 5 27 }
 	Rows: { }
 
 Set 253:
-	Set: { 8 30 }
+	Set: { 5 28 }
 	Rows: { }
 
 Set 254:
-	Set: { 8 31 }
+	Set: { 5 29 }
 	Rows: { }
 
 Set 255:
-	Set: { 8 32 }
+	Set: { 5 30 }
 	Rows: { }
 
 Set 256:
-	Set: { 8 33 }
+	Set: { 5 31 }
 	Rows: { }
 
 Set 257:
-	Set: { 8 34 }
+	Set: { 5 32 }
 	Rows: { }
 
 Set 258:
-	Set: { 8 35 }
+	Set: { 5 33 }
 	Rows: { }
 
 Set 259:
-	Set: { 8 36 }
+	Set: { 5 34 }
 	Rows: { }
 
 Set 260:
-	Set: { 8 37 }
+	Set: { 5 35 }
 	Rows: { }
 
 Set 261:
-	Set: { 9 10 }
+	Set: { 5 36 }
 	Rows: { }
 
 Set 262:
-	Set: { 9 11 }
+	Set: { 5 37 }
 	Rows: { }
 
 Set 263:
-	Set: { 9 12 }
+	Set: { 5 38 }
 	Rows: { }
 
 Set 264:
-	Set: { 9 13 }
+	Set: { 5 39 }
 	Rows: { }
 
 Set 265:
-	Set: { 9 14 }
+	Set: { 5 40 }
 	Rows: { }
 
 Set 266:
-	Set: { 9 15 }
+	Set: { 5 41 }
 	Rows: { }
 
 Set 267:
-	Set: { 9 16 }
+	Set: { 5 42 }
 	Rows: { }
 
 Set 268:
-	Set: { 9 17 }
+	Set: { 5 43 }
 	Rows: { }
 
 Set 269:
-	Set: { 9 18 }
+	Set: { 5 44 }
 	Rows: { }
 
 Set 270:
-	Set: { 9 19 }
+	Set: { 5 45 }
 	Rows: { }
 
 Set 271:
-	Set: { 9 20 }
+	Set: { 5 46 }
 	Rows: { }
 
 Set 272:
-	Set: { 9 21 }
+	Set: { 5 47 }
 	Rows: { }
 
 Set 273:
-	Set: { 9 22 }
+	Set: { 5 48 }
 	Rows: { }
 
 Set 274:
-	Set: { 9 23 }
+	Set: { 5 49 }
 	Rows: { }
 
 Set 275:
-	Set: { 9 24 }
+	Set: { 5 50 }
 	Rows: { }
 
 Set 276:
-	Set: { 9 25 }
+	Set: { 5 51 }
 	Rows: { }
 
 Set 277:
-	Set: { 9 26 }
+	Set: { 5 52 }
 	Rows: { }
 
 Set 278:
-	Set: { 9 27 }
+	Set: { 5 53 }
 	Rows: { }
 
 Set 279:
-	Set: { 9 28 }
+	Set: { 5 54 }
 	Rows: { }
 
 Set 280:
-	Set: { 9 29 }
+	Set: { 5 55 }
 	Rows: { }
 
 Set 281:
-	Set: { 9 30 }
+	Set: { 5 56 }
 	Rows: { }
 
 Set 282:
-	Set: { 9 31 }
+	Set: { 5 57 }
 	Rows: { }
 
 Set 283:
-	Set: { 9 32 }
+	Set: { 5 58 }
 	Rows: { }
 
 Set 284:
-	Set: { 9 33 }
+	Set: { 5 59 }
 	Rows: { }
 
 Set 285:
-	Set: { 9 34 }
+	Set: { 5 60 }
 	Rows: { }
 
 Set 286:
-	Set: { 9 35 }
+	Set: { 6 7 }
 	Rows: { }
 
 Set 287:
-	Set: { 9 36 }
+	Set: { 6 8 }
 	Rows: { }
 
 Set 288:
-	Set: { 9 37 }
+	Set: { 6 9 }
 	Rows: { }
 
 Set 289:
-	Set: { 10 11 }
+	Set: { 6 10 }
 	Rows: { }
 
 Set 290:
-	Set: { 10 12 }
+	Set: { 6 11 }
 	Rows: { }
 
 Set 291:
-	Set: { 10 13 }
+	Set: { 6 12 }
 	Rows: { }
 
 Set 292:
-	Set: { 10 14 }
+	Set: { 6 13 }
 	Rows: { }
 
 Set 293:
-	Set: { 10 15 }
+	Set: { 6 14 }
 	Rows: { }
 
 Set 294:
-	Set: { 10 16 }
+	Set: { 6 15 }
 	Rows: { }
 
 Set 295:
-	Set: { 10 17 }
+	Set: { 6 16 }
 	Rows: { }
 
 Set 296:
-	Set: { 10 18 }
+	Set: { 6 17 }
 	Rows: { }
 
 Set 297:
-	Set: { 10 19 }
+	Set: { 6 18 }
 	Rows: { }
 
 Set 298:
-	Set: { 10 20 }
+	Set: { 6 19 }
 	Rows: { }
 
 Set 299:
-	Set: { 10 21 }
+	Set: { 6 20 }
 	Rows: { }
 
 Set 300:
-	Set: { 10 22 }
+	Set: { 6 21 }
 	Rows: { }
 
 Set 301:
-	Set: { 10 23 }
+	Set: { 6 22 }
 	Rows: { }
 
 Set 302:
-	Set: { 10 24 }
+	Set: { 6 23 }
 	Rows: { }
 
 Set 303:
-	Set: { 10 25 }
+	Set: { 6 24 }
 	Rows: { }
 
 Set 304:
-	Set: { 10 26 }
+	Set: { 6 25 }
 	Rows: { }
 
 Set 305:
-	Set: { 10 27 }
+	Set: { 6 26 }
 	Rows: { }
 
 Set 306:
-	Set: { 10 28 }
+	Set: { 6 27 }
 	Rows: { }
 
 Set 307:
-	Set: { 10 29 }
+	Set: { 6 28 }
 	Rows: { }
 
 Set 308:
-	Set: { 10 30 }
+	Set: { 6 29 }
 	Rows: { }
 
 Set 309:
-	Set: { 10 31 }
+	Set: { 6 30 }
 	Rows: { }
 
 Set 310:
-	Set: { 10 32 }
+	Set: { 6 31 }
 	Rows: { }
 
 Set 311:
-	Set: { 10 33 }
+	Set: { 6 32 }
 	Rows: { }
 
 Set 312:
-	Set: { 10 34 }
+	Set: { 6 33 }
 	Rows: { }
 
 Set 313:
-	Set: { 10 35 }
+	Set: { 6 34 }
 	Rows: { }
 
 Set 314:
-	Set: { 10 36 }
+	Set: { 6 35 }
 	Rows: { }
 
 Set 315:
-	Set: { 10 37 }
+	Set: { 6 36 }
 	Rows: { }
 
 Set 316:
-	Set: { 11 12 }
+	Set: { 6 37 }
 	Rows: { }
 
 Set 317:
-	Set: { 11 13 }
+	Set: { 6 38 }
 	Rows: { }
 
 Set 318:
-	Set: { 11 14 }
+	Set: { 6 39 }
 	Rows: { }
 
 Set 319:
-	Set: { 11 15 }
+	Set: { 6 40 }
 	Rows: { }
 
 Set 320:
-	Set: { 11 16 }
+	Set: { 6 41 }
 	Rows: { }
 
 Set 321:
-	Set: { 11 17 }
+	Set: { 6 42 }
 	Rows: { }
 
 Set 322:
-	Set: { 11 18 }
+	Set: { 6 43 }
 	Rows: { }
 
 Set 323:
-	Set: { 11 19 }
+	Set: { 6 44 }
 	Rows: { }
 
 Set 324:
-	Set: { 11 20 }
+	Set: { 6 45 }
 	Rows: { }
 
 Set 325:
-	Set: { 11 21 }
+	Set: { 6 46 }
 	Rows: { }
 
 Set 326:
-	Set: { 11 22 }
+	Set: { 6 47 }
 	Rows: { }
 
 Set 327:
-	Set: { 11 23 }
+	Set: { 6 48 }
 	Rows: { }
 
 Set 328:
-	Set: { 11 24 }
+	Set: { 6 49 }
 	Rows: { }
 
 Set 329:
-	Set: { 11 25 }
+	Set: { 6 50 }
 	Rows: { }
 
 Set 330:
-	Set: { 11 26 }
+	Set: { 6 51 }
 	Rows: { }
 
 Set 331:
-	Set: { 11 27 }
+	Set: { 6 52 }
 	Rows: { }
 
 Set 332:
-	Set: { 11 28 }
+	Set: { 6 53 }
 	Rows: { }
 
 Set 333:
-	Set: { 11 29 }
+	Set: { 6 54 }
 	Rows: { }
 
 Set 334:
-	Set: { 11 30 }
+	Set: { 6 55 }
 	Rows: { }
 
 Set 335:
-	Set: { 11 31 }
+	Set: { 6 56 }
 	Rows: { }
 
 Set 336:
-	Set: { 11 32 }
+	Set: { 6 57 }
 	Rows: { }
 
 Set 337:
-	Set: { 11 33 }
+	Set: { 6 58 }
 	Rows: { }
 
 Set 338:
-	Set: { 11 34 }
+	Set: { 6 59 }
 	Rows: { }
 
 Set 339:
-	Set: { 11 35 }
+	Set: { 6 60 }
 	Rows: { }
 
 Set 340:
-	Set: { 11 36 }
+	Set: { 7 8 }
 	Rows: { }
 
 Set 341:
-	Set: { 11 37 }
+	Set: { 7 9 }
 	Rows: { }
 
 Set 342:
-	Set: { 12 13 }
+	Set: { 7 10 }
 	Rows: { }
 
 Set 343:
-	Set: { 12 14 }
+	Set: { 7 11 }
 	Rows: { }
 
 Set 344:
-	Set: { 12 15 }
+	Set: { 7 12 }
 	Rows: { }
 
 Set 345:
-	Set: { 12 16 }
+	Set: { 7 13 }
 	Rows: { }
 
 Set 346:
-	Set: { 12 17 }
+	Set: { 7 14 }
 	Rows: { }
 
 Set 347:
-	Set: { 12 18 }
+	Set: { 7 15 }
 	Rows: { }
 
 Set 348:
-	Set: { 12 19 }
+	Set: { 7 16 }
 	Rows: { }
 
 Set 349:
-	Set: { 12 20 }
+	Set: { 7 17 }
 	Rows: { }
 
 Set 350:
-	Set: { 12 21 }
+	Set: { 7 18 }
 	Rows: { }
 
 Set 351:
-	Set: { 12 22 }
+	Set: { 7 19 }
 	Rows: { }
 
 Set 352:
-	Set: { 12 23 }
+	Set: { 7 20 }
 	Rows: { }
 
 Set 353:
-	Set: { 12 24 }
+	Set: { 7 21 }
 	Rows: { }
 
 Set 354:
-	Set: { 12 25 }
+	Set: { 7 22 }
 	Rows: { }
 
 Set 355:
-	Set: { 12 26 }
+	Set: { 7 23 }
 	Rows: { }
 
 Set 356:
-	Set: { 12 27 }
+	Set: { 7 24 }
 	Rows: { }
 
 Set 357:
-	Set: { 12 28 }
+	Set: { 7 25 }
 	Rows: { }
 
 Set 358:
-	Set: { 12 29 }
+	Set: { 7 26 }
 	Rows: { }
 
 Set 359:
-	Set: { 12 30 }
+	Set: { 7 27 }
 	Rows: { }
 
 Set 360:
-	Set: { 12 31 }
+	Set: { 7 28 }
 	Rows: { }
 
 Set 361:
-	Set: { 12 32 }
+	Set: { 7 29 }
 	Rows: { }
 
 Set 362:
-	Set: { 12 33 }
+	Set: { 7 30 }
 	Rows: { }
 
 Set 363:
-	Set: { 12 34 }
+	Set: { 7 31 }
 	Rows: { }
 
 Set 364:
-	Set: { 12 35 }
+	Set: { 7 32 }
 	Rows: { }
 
 Set 365:
-	Set: { 12 36 }
+	Set: { 7 33 }
 	Rows: { }
 
 Set 366:
-	Set: { 12 37 }
+	Set: { 7 34 }
 	Rows: { }
 
 Set 367:
-	Set: { 13 14 }
+	Set: { 7 35 }
 	Rows: { }
 
 Set 368:
-	Set: { 13 15 }
+	Set: { 7 36 }
 	Rows: { }
 
 Set 369:
-	Set: { 13 16 }
+	Set: { 7 37 }
 	Rows: { }
 
 Set 370:
-	Set: { 13 17 }
+	Set: { 7 38 }
 	Rows: { }
 
 Set 371:
-	Set: { 13 18 }
+	Set: { 7 39 }
 	Rows: { }
 
 Set 372:
-	Set: { 13 19 }
+	Set: { 7 40 }
 	Rows: { }
 
 Set 373:
-	Set: { 13 20 }
+	Set: { 7 41 }
 	Rows: { }
 
 Set 374:
-	Set: { 13 21 }
+	Set: { 7 42 }
 	Rows: { }
 
 Set 375:
-	Set: { 13 22 }
+	Set: { 7 43 }
 	Rows: { }
 
 Set 376:
-	Set: { 13 23 }
+	Set: { 7 44 }
 	Rows: { }
 
 Set 377:
-	Set: { 13 24 }
+	Set: { 7 45 }
 	Rows: { }
 
 Set 378:
-	Set: { 13 25 }
+	Set: { 7 46 }
 	Rows: { }
 
 Set 379:
-	Set: { 13 26 }
+	Set: { 7 47 }
 	Rows: { }
 
 Set 380:
-	Set: { 13 27 }
+	Set: { 7 48 }
 	Rows: { }
 
 Set 381:
-	Set: { 13 28 }
+	Set: { 7 49 }
 	Rows: { }
 
 Set 382:
-	Set: { 13 29 }
+	Set: { 7 50 }
 	Rows: { }
 
 Set 383:
-	Set: { 13 30 }
+	Set: { 7 51 }
 	Rows: { }
 
 Set 384:
-	Set: { 13 31 }
+	Set: { 7 52 }
 	Rows: { }
 
 Set 385:
-	Set: { 13 32 }
+	Set: { 7 53 }
 	Rows: { }
 
 Set 386:
-	Set: { 13 33 }
+	Set: { 7 54 }
 	Rows: { }
 
 Set 387:
-	Set: { 13 34 }
+	Set: { 7 55 }
 	Rows: { }
 
 Set 388:
-	Set: { 13 35 }
+	Set: { 7 56 }
 	Rows: { }
 
 Set 389:
-	Set: { 13 36 }
+	Set: { 7 57 }
 	Rows: { }
 
 Set 390:
-	Set: { 13 37 }
+	Set: { 7 58 }
 	Rows: { }
 
 Set 391:
-	Set: { 14 15 }
+	Set: { 7 59 }
 	Rows: { }
 
 Set 392:
-	Set: { 14 16 }
+	Set: { 7 60 }
 	Rows: { }
 
 Set 393:
-	Set: { 14 17 }
+	Set: { 8 9 }
 	Rows: { }
 
 Set 394:
-	Set: { 14 18 }
+	Set: { 8 10 }
 	Rows: { }
 
 Set 395:
-	Set: { 14 19 }
+	Set: { 8 11 }
 	Rows: { }
 
 Set 396:
-	Set: { 14 20 }
+	Set: { 8 12 }
 	Rows: { }
 
 Set 397:
-	Set: { 14 21 }
+	Set: { 8 13 }
 	Rows: { }
 
 Set 398:
-	Set: { 14 22 }
+	Set: { 8 14 }
 	Rows: { }
 
 Set 399:
-	Set: { 14 23 }
+	Set: { 8 15 }
 	Rows: { }
 
 Set 400:
-	Set: { 14 24 }
+	Set: { 8 16 }
 	Rows: { }
 
 Set 401:
-	Set: { 14 25 }
+	Set: { 8 17 }
 	Rows: { }
 
 Set 402:
-	Set: { 14 26 }
+	Set: { 8 18 }
 	Rows: { }
 
 Set 403:
-	Set: { 14 27 }
+	Set: { 8 19 }
 	Rows: { }
 
 Set 404:
-	Set: { 14 28 }
+	Set: { 8 20 }
 	Rows: { }
 
 Set 405:
-	Set: { 14 29 }
+	Set: { 8 21 }
 	Rows: { }
 
 Set 406:
-	Set: { 14 30 }
+	Set: { 8 22 }
 	Rows: { }
 
 Set 407:
-	Set: { 14 31 }
+	Set: { 8 23 }
 	Rows: { }
 
 Set 408:
-	Set: { 14 32 }
+	Set: { 8 24 }
 	Rows: { }
 
 Set 409:
-	Set: { 14 33 }
+	Set: { 8 25 }
 	Rows: { }
 
 Set 410:
-	Set: { 14 34 }
+	Set: { 8 26 }
 	Rows: { }
 
 Set 411:
-	Set: { 14 35 }
+	Set: { 8 27 }
 	Rows: { }
 
 Set 412:
-	Set: { 14 36 }
+	Set: { 8 28 }
 	Rows: { }
 
 Set 413:
-	Set: { 14 37 }
+	Set: { 8 29 }
 	Rows: { }
 
 Set 414:
-	Set: { 15 16 }
+	Set: { 8 30 }
 	Rows: { }
 
 Set 415:
-	Set: { 15 17 }
+	Set: { 8 31 }
 	Rows: { }
 
 Set 416:
-	Set: { 15 18 }
+	Set: { 8 32 }
 	Rows: { }
 
 Set 417:
-	Set: { 15 19 }
+	Set: { 8 33 }
 	Rows: { }
 
 Set 418:
-	Set: { 15 20 }
+	Set: { 8 34 }
 	Rows: { }
 
 Set 419:
-	Set: { 15 21 }
+	Set: { 8 35 }
 	Rows: { }
 
 Set 420:
-	Set: { 15 22 }
+	Set: { 8 36 }
 	Rows: { }
 
 Set 421:
-	Set: { 15 23 }
+	Set: { 8 37 }
 	Rows: { }
 
 Set 422:
-	Set: { 15 24 }
+	Set: { 8 38 }
 	Rows: { }
 
 Set 423:
-	Set: { 15 25 }
+	Set: { 8 39 }
 	Rows: { }
 
 Set 424:
-	Set: { 15 26 }
+	Set: { 8 40 }
 	Rows: { }
 
 Set 425:
-	Set: { 15 27 }
+	Set: { 8 41 }
 	Rows: { }
 
 Set 426:
-	Set: { 15 28 }
+	Set: { 8 42 }
 	Rows: { }
 
 Set 427:
-	Set: { 15 29 }
+	Set: { 8 43 }
 	Rows: { }
 
 Set 428:
-	Set: { 15 30 }
+	Set: { 8 44 }
 	Rows: { }
 
 Set 429:
-	Set: { 15 31 }
+	Set: { 8 45 }
 	Rows: { }
 
 Set 430:
-	Set: { 15 32 }
+	Set: { 8 46 }
 	Rows: { }
 
 Set 431:
-	Set: { 15 33 }
+	Set: { 8 47 }
 	Rows: { }
 
 Set 432:
-	Set: { 15 34 }
+	Set: { 8 48 }
 	Rows: { }
 
 Set 433:
-	Set: { 15 35 }
+	Set: { 8 49 }
 	Rows: { }
 
 Set 434:
-	Set: { 15 36 }
+	Set: { 8 50 }
 	Rows: { }
 
 Set 435:
-	Set: { 15 37 }
+	Set: { 8 51 }
 	Rows: { }
 
 Set 436:
-	Set: { 16 17 }
+	Set: { 8 52 }
 	Rows: { }
 
 Set 437:
-	Set: { 16 18 }
+	Set: { 8 53 }
 	Rows: { }
 
 Set 438:
-	Set: { 16 19 }
+	Set: { 8 54 }
 	Rows: { }
 
 Set 439:
-	Set: { 16 20 }
+	Set: { 8 55 }
 	Rows: { }
 
 Set 440:
-	Set: { 16 21 }
+	Set: { 8 56 }
 	Rows: { }
 
 Set 441:
-	Set: { 16 22 }
+	Set: { 8 57 }
 	Rows: { }
 
 Set 442:
-	Set: { 16 23 }
+	Set: { 8 58 }
 	Rows: { }
 
 Set 443:
-	Set: { 16 24 }
+	Set: { 8 59 }
 	Rows: { }
 
 Set 444:
-	Set: { 16 25 }
+	Set: { 8 60 }
 	Rows: { }
 
 Set 445:
-	Set: { 16 26 }
+	Set: { 9 10 }
 	Rows: { }
 
 Set 446:
-	Set: { 16 27 }
+	Set: { 9 11 }
 	Rows: { }
 
 Set 447:
-	Set: { 16 28 }
+	Set: { 9 12 }
 	Rows: { }
 
 Set 448:
-	Set: { 16 29 }
+	Set: { 9 13 }
 	Rows: { }
 
 Set 449:
-	Set: { 16 30 }
+	Set: { 9 14 }
 	Rows: { }
 
 Set 450:
-	Set: { 16 31 }
+	Set: { 9 15 }
 	Rows: { }
 
 Set 451:
-	Set: { 16 32 }
+	Set: { 9 16 }
 	Rows: { }
 
 Set 452:
-	Set: { 16 33 }
+	Set: { 9 17 }
 	Rows: { }
 
 Set 453:
-	Set: { 16 34 }
+	Set: { 9 18 }
 	Rows: { }
 
 Set 454:
-	Set: { 16 35 }
+	Set: { 9 19 }
 	Rows: { }
 
 Set 455:
-	Set: { 16 36 }
+	Set: { 9 20 }
 	Rows: { }
 
 Set 456:
-	Set: { 16 37 }
+	Set: { 9 21 }
 	Rows: { }
 
 Set 457:
-	Set: { 17 18 }
+	Set: { 9 22 }
 	Rows: { }
 
 Set 458:
-	Set: { 17 19 }
+	Set: { 9 23 }
 	Rows: { }
 
 Set 459:
-	Set: { 17 20 }
+	Set: { 9 24 }
 	Rows: { }
 
 Set 460:
-	Set: { 17 21 }
+	Set: { 9 25 }
 	Rows: { }
 
 Set 461:
-	Set: { 17 22 }
+	Set: { 9 26 }
 	Rows: { }
 
 Set 462:
-	Set: { 17 23 }
+	Set: { 9 27 }
 	Rows: { }
 
 Set 463:
-	Set: { 17 24 }
+	Set: { 9 28 }
 	Rows: { }
 
 Set 464:
-	Set: { 17 25 }
+	Set: { 9 29 }
 	Rows: { }
 
 Set 465:
-	Set: { 17 26 }
+	Set: { 9 30 }
 	Rows: { }
 
 Set 466:
-	Set: { 17 27 }
+	Set: { 9 31 }
 	Rows: { }
 
 Set 467:
-	Set: { 17 28 }
+	Set: { 9 32 }
 	Rows: { }
 
 Set 468:
-	Set: { 17 29 }
+	Set: { 9 33 }
 	Rows: { }
 
 Set 469:
-	Set: { 17 30 }
+	Set: { 9 34 }
 	Rows: { }
 
 Set 470:
-	Set: { 17 31 }
+	Set: { 9 35 }
 	Rows: { }
 
 Set 471:
-	Set: { 17 32 }
+	Set: { 9 36 }
 	Rows: { }
 
 Set 472:
-	Set: { 17 33 }
+	Set: { 9 37 }
 	Rows: { }
 
 Set 473:
-	Set: { 17 34 }
+	Set: { 9 38 }
 	Rows: { }
 
 Set 474:
-	Set: { 17 35 }
+	Set: { 9 39 }
 	Rows: { }
 
 Set 475:
-	Set: { 17 36 }
+	Set: { 9 40 }
 	Rows: { }
 
 Set 476:
-	Set: { 17 37 }
+	Set: { 9 41 }
 	Rows: { }
 
 Set 477:
-	Set: { 18 19 }
+	Set: { 9 42 }
 	Rows: { }
 
 Set 478:
-	Set: { 18 20 }
+	Set: { 9 43 }
 	Rows: { }
 
 Set 479:
-	Set: { 18 21 }
+	Set: { 9 44 }
 	Rows: { }
 
 Set 480:
-	Set: { 18 22 }
+	Set: { 9 45 }
 	Rows: { }
 
 Set 481:
-	Set: { 18 23 }
+	Set: { 9 46 }
 	Rows: { }
 
 Set 482:
-	Set: { 18 24 }
+	Set: { 9 47 }
 	Rows: { }
 
 Set 483:
-	Set: { 18 25 }
+	Set: { 9 48 }
 	Rows: { }
 
 Set 484:
-	Set: { 18 26 }
+	Set: { 9 49 }
 	Rows: { }
 
 Set 485:
-	Set: { 18 27 }
+	Set: { 9 50 }
 	Rows: { }
 
 Set 486:
-	Set: { 18 28 }
+	Set: { 9 51 }
 	Rows: { }
 
 Set 487:
-	Set: { 18 29 }
+	Set: { 9 52 }
 	Rows: { }
 
 Set 488:
-	Set: { 18 30 }
+	Set: { 9 53 }
 	Rows: { }
 
 Set 489:
-	Set: { 18 31 }
+	Set: { 9 54 }
 	Rows: { }
 
 Set 490:
-	Set: { 18 32 }
+	Set: { 9 55 }
 	Rows: { }
 
 Set 491:
-	Set: { 18 33 }
+	Set: { 9 56 }
 	Rows: { }
 
 Set 492:
-	Set: { 18 34 }
+	Set: { 9 57 }
 	Rows: { }
 
 Set 493:
-	Set: { 18 35 }
+	Set: { 9 58 }
 	Rows: { }
 
 Set 494:
-	Set: { 18 36 }
+	Set: { 9 59 }
 	Rows: { }
 
 Set 495:
-	Set: { 18 37 }
+	Set: { 9 60 }
 	Rows: { }
 
 Set 496:
-	Set: { 19 20 }
+	Set: { 10 11 }
 	Rows: { }
 
 Set 497:
-	Set: { 19 21 }
+	Set: { 10 12 }
 	Rows: { }
 
 Set 498:
-	Set: { 19 22 }
+	Set: { 10 13 }
 	Rows: { }
 
 Set 499:
-	Set: { 19 23 }
+	Set: { 10 14 }
 	Rows: { }
 
 Set 500:
-	Set: { 19 24 }
+	Set: { 10 15 }
 	Rows: { }
 
 Set 501:
-	Set: { 19 25 }
+	Set: { 10 16 }
 	Rows: { }
 
 Set 502:
-	Set: { 19 26 }
+	Set: { 10 17 }
 	Rows: { }
 
 Set 503:
-	Set: { 19 27 }
+	Set: { 10 18 }
 	Rows: { }
 
 Set 504:
-	Set: { 19 28 }
+	Set: { 10 19 }
 	Rows: { }
 
 Set 505:
-	Set: { 19 29 }
+	Set: { 10 20 }
 	Rows: { }
 
 Set 506:
-	Set: { 19 30 }
+	Set: { 10 21 }
 	Rows: { }
 
 Set 507:
-	Set: { 19 31 }
+	Set: { 10 22 }
 	Rows: { }
 
 Set 508:
-	Set: { 19 32 }
+	Set: { 10 23 }
 	Rows: { }
 
 Set 509:
-	Set: { 19 33 }
+	Set: { 10 24 }
 	Rows: { }
 
 Set 510:
-	Set: { 19 34 }
+	Set: { 10 25 }
 	Rows: { }
 
 Set 511:
-	Set: { 19 35 }
+	Set: { 10 26 }
 	Rows: { }
 
 Set 512:
-	Set: { 19 36 }
+	Set: { 10 27 }
 	Rows: { }
 
 Set 513:
-	Set: { 19 37 }
+	Set: { 10 28 }
 	Rows: { }
 
 Set 514:
-	Set: { 20 21 }
+	Set: { 10 29 }
 	Rows: { }
 
 Set 515:
-	Set: { 20 22 }
+	Set: { 10 30 }
 	Rows: { }
 
 Set 516:
-	Set: { 20 23 }
+	Set: { 10 31 }
 	Rows: { }
 
 Set 517:
-	Set: { 20 24 }
+	Set: { 10 32 }
 	Rows: { }
 
 Set 518:
-	Set: { 20 25 }
+	Set: { 10 33 }
 	Rows: { }
 
 Set 519:
-	Set: { 20 26 }
+	Set: { 10 34 }
 	Rows: { }
 
 Set 520:
-	Set: { 20 27 }
+	Set: { 10 35 }
 	Rows: { }
 
 Set 521:
-	Set: { 20 28 }
+	Set: { 10 36 }
 	Rows: { }
 
 Set 522:
-	Set: { 20 29 }
+	Set: { 10 37 }
 	Rows: { }
 
 Set 523:
-	Set: { 20 30 }
+	Set: { 10 38 }
 	Rows: { }
 
 Set 524:
-	Set: { 20 31 }
+	Set: { 10 39 }
 	Rows: { }
 
 Set 525:
-	Set: { 20 32 }
+	Set: { 10 40 }
 	Rows: { }
 
 Set 526:
-	Set: { 20 33 }
+	Set: { 10 41 }
 	Rows: { }
 
 Set 527:
-	Set: { 20 34 }
+	Set: { 10 42 }
 	Rows: { }
 
 Set 528:
-	Set: { 20 35 }
+	Set: { 10 43 }
 	Rows: { }
 
 Set 529:
-	Set: { 20 36 }
+	Set: { 10 44 }
 	Rows: { }
 
 Set 530:
-	Set: { 20 37 }
+	Set: { 10 45 }
 	Rows: { }
 
 Set 531:
-	Set: { 21 22 }
+	Set: { 10 46 }
 	Rows: { }
 
 Set 532:
-	Set: { 21 23 }
+	Set: { 10 47 }
 	Rows: { }
 
 Set 533:
-	Set: { 21 24 }
+	Set: { 10 48 }
 	Rows: { }
 
 Set 534:
-	Set: { 21 25 }
+	Set: { 10 49 }
 	Rows: { }
 
 Set 535:
-	Set: { 21 26 }
+	Set: { 10 50 }
 	Rows: { }
 
 Set 536:
-	Set: { 21 27 }
+	Set: { 10 51 }
 	Rows: { }
 
 Set 537:
-	Set: { 21 28 }
+	Set: { 10 52 }
 	Rows: { }
 
 Set 538:
-	Set: { 21 29 }
+	Set: { 10 53 }
 	Rows: { }
 
 Set 539:
-	Set: { 21 30 }
+	Set: { 10 54 }
 	Rows: { }
 
 Set 540:
-	Set: { 21 31 }
+	Set: { 10 55 }
 	Rows: { }
 
 Set 541:
-	Set: { 21 32 }
+	Set: { 10 56 }
 	Rows: { }
 
 Set 542:
-	Set: { 21 33 }
+	Set: { 10 57 }
 	Rows: { }
 
 Set 543:
-	Set: { 21 34 }
+	Set: { 10 58 }
 	Rows: { }
 
 Set 544:
-	Set: { 21 35 }
+	Set: { 10 59 }
 	Rows: { }
 
 Set 545:
-	Set: { 21 36 }
+	Set: { 10 60 }
 	Rows: { }
 
 Set 546:
-	Set: { 21 37 }
+	Set: { 11 12 }
 	Rows: { }
 
 Set 547:
-	Set: { 22 23 }
+	Set: { 11 13 }
 	Rows: { }
 
 Set 548:
-	Set: { 22 24 }
+	Set: { 11 14 }
 	Rows: { }
 
 Set 549:
-	Set: { 22 25 }
+	Set: { 11 15 }
 	Rows: { }
 
 Set 550:
-	Set: { 22 26 }
+	Set: { 11 16 }
 	Rows: { }
 
 Set 551:
-	Set: { 22 27 }
+	Set: { 11 17 }
 	Rows: { }
 
 Set 552:
-	Set: { 22 28 }
+	Set: { 11 18 }
 	Rows: { }
 
 Set 553:
-	Set: { 22 29 }
+	Set: { 11 19 }
 	Rows: { }
 
 Set 554:
-	Set: { 22 30 }
+	Set: { 11 20 }
 	Rows: { }
 
 Set 555:
-	Set: { 22 31 }
+	Set: { 11 21 }
 	Rows: { }
 
 Set 556:
-	Set: { 22 32 }
+	Set: { 11 22 }
 	Rows: { }
 
 Set 557:
-	Set: { 22 33 }
+	Set: { 11 23 }
 	Rows: { }
 
 Set 558:
-	Set: { 22 34 }
+	Set: { 11 24 }
 	Rows: { }
 
 Set 559:
-	Set: { 22 35 }
+	Set: { 11 25 }
 	Rows: { }
 
 Set 560:
-	Set: { 22 36 }
+	Set: { 11 26 }
 	Rows: { }
 
 Set 561:
-	Set: { 22 37 }
+	Set: { 11 27 }
 	Rows: { }
 
 Set 562:
-	Set: { 23 24 }
+	Set: { 11 28 }
 	Rows: { }
 
 Set 563:
-	Set: { 23 25 }
+	Set: { 11 29 }
 	Rows: { }
 
 Set 564:
-	Set: { 23 26 }
+	Set: { 11 30 }
 	Rows: { }
 
 Set 565:
-	Set: { 23 27 }
+	Set: { 11 31 }
 	Rows: { }
 
 Set 566:
-	Set: { 23 28 }
+	Set: { 11 32 }
 	Rows: { }
 
 Set 567:
-	Set: { 23 29 }
+	Set: { 11 33 }
 	Rows: { }
 
 Set 568:
-	Set: { 23 30 }
+	Set: { 11 34 }
 	Rows: { }
 
 Set 569:
-	Set: { 23 31 }
+	Set: { 11 35 }
 	Rows: { }
 
 Set 570:
-	Set: { 23 32 }
+	Set: { 11 36 }
 	Rows: { }
 
 Set 571:
-	Set: { 23 33 }
+	Set: { 11 37 }
 	Rows: { }
 
 Set 572:
-	Set: { 23 34 }
+	Set: { 11 38 }
 	Rows: { }
 
 Set 573:
-	Set: { 23 35 }
+	Set: { 11 39 }
 	Rows: { }
 
 Set 574:
-	Set: { 23 36 }
+	Set: { 11 40 }
 	Rows: { }
 
 Set 575:
-	Set: { 23 37 }
+	Set: { 11 41 }
 	Rows: { }
 
 Set 576:
-	Set: { 24 25 }
+	Set: { 11 42 }
 	Rows: { }
 
 Set 577:
-	Set: { 24 26 }
+	Set: { 11 43 }
 	Rows: { }
 
 Set 578:
-	Set: { 24 27 }
+	Set: { 11 44 }
 	Rows: { }
 
 Set 579:
-	Set: { 24 28 }
+	Set: { 11 45 }
 	Rows: { }
 
 Set 580:
-	Set: { 24 29 }
+	Set: { 11 46 }
 	Rows: { }
 
 Set 581:
-	Set: { 24 30 }
+	Set: { 11 47 }
 	Rows: { }
 
 Set 582:
-	Set: { 24 31 }
+	Set: { 11 48 }
 	Rows: { }
 
 Set 583:
-	Set: { 24 32 }
+	Set: { 11 49 }
 	Rows: { }
 
 Set 584:
-	Set: { 24 33 }
+	Set: { 11 50 }
 	Rows: { }
 
 Set 585:
-	Set: { 24 34 }
+	Set: { 11 51 }
 	Rows: { }
 
 Set 586:
-	Set: { 24 35 }
+	Set: { 11 52 }
 	Rows: { }
 
 Set 587:
-	Set: { 24 36 }
+	Set: { 11 53 }
 	Rows: { }
 
 Set 588:
-	Set: { 24 37 }
+	Set: { 11 54 }
 	Rows: { }
 
 Set 589:
-	Set: { 25 26 }
+	Set: { 11 55 }
 	Rows: { }
 
 Set 590:
-	Set: { 25 27 }
+	Set: { 11 56 }
 	Rows: { }
 
 Set 591:
-	Set: { 25 28 }
+	Set: { 11 57 }
 	Rows: { }
 
 Set 592:
-	Set: { 25 29 }
+	Set: { 11 58 }
 	Rows: { }
 
 Set 593:
-	Set: { 25 30 }
+	Set: { 11 59 }
 	Rows: { }
 
 Set 594:
-	Set: { 25 31 }
+	Set: { 11 60 }
 	Rows: { }
 
 Set 595:
-	Set: { 25 32 }
+	Set: { 12 13 }
 	Rows: { }
 
 Set 596:
-	Set: { 25 33 }
+	Set: { 12 14 }
 	Rows: { }
 
 Set 597:
-	Set: { 25 34 }
+	Set: { 12 15 }
 	Rows: { }
 
 Set 598:
-	Set: { 25 35 }
+	Set: { 12 16 }
 	Rows: { }
 
 Set 599:
-	Set: { 25 36 }
+	Set: { 12 17 }
 	Rows: { }
 
 Set 600:
-	Set: { 25 37 }
+	Set: { 12 18 }
 	Rows: { }
 
 Set 601:
-	Set: { 26 27 }
+	Set: { 12 19 }
 	Rows: { }
 
 Set 602:
-	Set: { 26 28 }
+	Set: { 12 20 }
 	Rows: { }
 
 Set 603:
-	Set: { 26 29 }
+	Set: { 12 21 }
 	Rows: { }
 
 Set 604:
-	Set: { 26 30 }
+	Set: { 12 22 }
 	Rows: { }
 
 Set 605:
-	Set: { 26 31 }
+	Set: { 12 23 }
 	Rows: { }
 
 Set 606:
-	Set: { 26 32 }
+	Set: { 12 24 }
 	Rows: { }
 
 Set 607:
-	Set: { 26 33 }
+	Set: { 12 25 }
 	Rows: { }
 
 Set 608:
-	Set: { 26 34 }
+	Set: { 12 26 }
 	Rows: { }
 
 Set 609:
+	Set: { 12 27 }
+	Rows: { }
+
+Set 610:
+	Set: { 12 28 }
+	Rows: { }
+
+Set 611:
+	Set: { 12 29 }
+	Rows: { }
+
+Set 612:
+	Set: { 12 30 }
+	Rows: { }
+
+Set 613:
+	Set: { 12 31 }
+	Rows: { }
+
+Set 614:
+	Set: { 12 32 }
+	Rows: { }
+
+Set 615:
+	Set: { 12 33 }
+	Rows: { }
+
+Set 616:
+	Set: { 12 34 }
+	Rows: { }
+
+Set 617:
+	Set: { 12 35 }
+	Rows: { }
+
+Set 618:
+	Set: { 12 36 }
+	Rows: { }
+
+Set 619:
+	Set: { 12 37 }
+	Rows: { }
+
+Set 620:
+	Set: { 12 38 }
+	Rows: { }
+
+Set 621:
+	Set: { 12 39 }
+	Rows: { }
+
+Set 622:
+	Set: { 12 40 }
+	Rows: { }
+
+Set 623:
+	Set: { 12 41 }
+	Rows: { }
+
+Set 624:
+	Set: { 12 42 }
+	Rows: { }
+
+Set 625:
+	Set: { 12 43 }
+	Rows: { }
+
+Set 626:
+	Set: { 12 44 }
+	Rows: { }
+
+Set 627:
+	Set: { 12 45 }
+	Rows: { }
+
+Set 628:
+	Set: { 12 46 }
+	Rows: { }
+
+Set 629:
+	Set: { 12 47 }
+	Rows: { }
+
+Set 630:
+	Set: { 12 48 }
+	Rows: { }
+
+Set 631:
+	Set: { 12 49 }
+	Rows: { }
+
+Set 632:
+	Set: { 12 50 }
+	Rows: { }
+
+Set 633:
+	Set: { 12 51 }
+	Rows: { }
+
+Set 634:
+	Set: { 12 52 }
+	Rows: { }
+
+Set 635:
+	Set: { 12 53 }
+	Rows: { }
+
+Set 636:
+	Set: { 12 54 }
+	Rows: { }
+
+Set 637:
+	Set: { 12 55 }
+	Rows: { }
+
+Set 638:
+	Set: { 12 56 }
+	Rows: { }
+
+Set 639:
+	Set: { 12 57 }
+	Rows: { }
+
+Set 640:
+	Set: { 12 58 }
+	Rows: { }
+
+Set 641:
+	Set: { 12 59 }
+	Rows: { }
+
+Set 642:
+	Set: { 12 60 }
+	Rows: { }
+
+Set 643:
+	Set: { 13 14 }
+	Rows: { }
+
+Set 644:
+	Set: { 13 15 }
+	Rows: { }
+
+Set 645:
+	Set: { 13 16 }
+	Rows: { }
+
+Set 646:
+	Set: { 13 17 }
+	Rows: { }
+
+Set 647:
+	Set: { 13 18 }
+	Rows: { }
+
+Set 648:
+	Set: { 13 19 }
+	Rows: { }
+
+Set 649:
+	Set: { 13 20 }
+	Rows: { }
+
+Set 650:
+	Set: { 13 21 }
+	Rows: { }
+
+Set 651:
+	Set: { 13 22 }
+	Rows: { }
+
+Set 652:
+	Set: { 13 23 }
+	Rows: { }
+
+Set 653:
+	Set: { 13 24 }
+	Rows: { }
+
+Set 654:
+	Set: { 13 25 }
+	Rows: { }
+
+Set 655:
+	Set: { 13 26 }
+	Rows: { }
+
+Set 656:
+	Set: { 13 27 }
+	Rows: { }
+
+Set 657:
+	Set: { 13 28 }
+	Rows: { }
+
+Set 658:
+	Set: { 13 29 }
+	Rows: { }
+
+Set 659:
+	Set: { 13 30 }
+	Rows: { }
+
+Set 660:
+	Set: { 13 31 }
+	Rows: { }
+
+Set 661:
+	Set: { 13 32 }
+	Rows: { }
+
+Set 662:
+	Set: { 13 33 }
+	Rows: { }
+
+Set 663:
+	Set: { 13 34 }
+	Rows: { }
+
+Set 664:
+	Set: { 13 35 }
+	Rows: { }
+
+Set 665:
+	Set: { 13 36 }
+	Rows: { }
+
+Set 666:
+	Set: { 13 37 }
+	Rows: { }
+
+Set 667:
+	Set: { 13 38 }
+	Rows: { }
+
+Set 668:
+	Set: { 13 39 }
+	Rows: { }
+
+Set 669:
+	Set: { 13 40 }
+	Rows: { }
+
+Set 670:
+	Set: { 13 41 }
+	Rows: { }
+
+Set 671:
+	Set: { 13 42 }
+	Rows: { }
+
+Set 672:
+	Set: { 13 43 }
+	Rows: { }
+
+Set 673:
+	Set: { 13 44 }
+	Rows: { }
+
+Set 674:
+	Set: { 13 45 }
+	Rows: { }
+
+Set 675:
+	Set: { 13 46 }
+	Rows: { }
+
+Set 676:
+	Set: { 13 47 }
+	Rows: { }
+
+Set 677:
+	Set: { 13 48 }
+	Rows: { }
+
+Set 678:
+	Set: { 13 49 }
+	Rows: { }
+
+Set 679:
+	Set: { 13 50 }
+	Rows: { }
+
+Set 680:
+	Set: { 13 51 }
+	Rows: { }
+
+Set 681:
+	Set: { 13 52 }
+	Rows: { }
+
+Set 682:
+	Set: { 13 53 }
+	Rows: { }
+
+Set 683:
+	Set: { 13 54 }
+	Rows: { }
+
+Set 684:
+	Set: { 13 55 }
+	Rows: { }
+
+Set 685:
+	Set: { 13 56 }
+	Rows: { }
+
+Set 686:
+	Set: { 13 57 }
+	Rows: { }
+
+Set 687:
+	Set: { 13 58 }
+	Rows: { }
+
+Set 688:
+	Set: { 13 59 }
+	Rows: { }
+
+Set 689:
+	Set: { 13 60 }
+	Rows: { }
+
+Set 690:
+	Set: { 14 15 }
+	Rows: { }
+
+Set 691:
+	Set: { 14 16 }
+	Rows: { }
+
+Set 692:
+	Set: { 14 17 }
+	Rows: { }
+
+Set 693:
+	Set: { 14 18 }
+	Rows: { }
+
+Set 694:
+	Set: { 14 19 }
+	Rows: { }
+
+Set 695:
+	Set: { 14 20 }
+	Rows: { }
+
+Set 696:
+	Set: { 14 21 }
+	Rows: { }
+
+Set 697:
+	Set: { 14 22 }
+	Rows: { }
+
+Set 698:
+	Set: { 14 23 }
+	Rows: { }
+
+Set 699:
+	Set: { 14 24 }
+	Rows: { }
+
+Set 700:
+	Set: { 14 25 }
+	Rows: { }
+
+Set 701:
+	Set: { 14 26 }
+	Rows: { }
+
+Set 702:
+	Set: { 14 27 }
+	Rows: { }
+
+Set 703:
+	Set: { 14 28 }
+	Rows: { }
+
+Set 704:
+	Set: { 14 29 }
+	Rows: { }
+
+Set 705:
+	Set: { 14 30 }
+	Rows: { }
+
+Set 706:
+	Set: { 14 31 }
+	Rows: { }
+
+Set 707:
+	Set: { 14 32 }
+	Rows: { }
+
+Set 708:
+	Set: { 14 33 }
+	Rows: { }
+
+Set 709:
+	Set: { 14 34 }
+	Rows: { }
+
+Set 710:
+	Set: { 14 35 }
+	Rows: { }
+
+Set 711:
+	Set: { 14 36 }
+	Rows: { }
+
+Set 712:
+	Set: { 14 37 }
+	Rows: { }
+
+Set 713:
+	Set: { 14 38 }
+	Rows: { }
+
+Set 714:
+	Set: { 14 39 }
+	Rows: { }
+
+Set 715:
+	Set: { 14 40 }
+	Rows: { }
+
+Set 716:
+	Set: { 14 41 }
+	Rows: { }
+
+Set 717:
+	Set: { 14 42 }
+	Rows: { }
+
+Set 718:
+	Set: { 14 43 }
+	Rows: { }
+
+Set 719:
+	Set: { 14 44 }
+	Rows: { }
+
+Set 720:
+	Set: { 14 45 }
+	Rows: { }
+
+Set 721:
+	Set: { 14 46 }
+	Rows: { }
+
+Set 722:
+	Set: { 14 47 }
+	Rows: { }
+
+Set 723:
+	Set: { 14 48 }
+	Rows: { }
+
+Set 724:
+	Set: { 14 49 }
+	Rows: { }
+
+Set 725:
+	Set: { 14 50 }
+	Rows: { }
+
+Set 726:
+	Set: { 14 51 }
+	Rows: { }
+
+Set 727:
+	Set: { 14 52 }
+	Rows: { }
+
+Set 728:
+	Set: { 14 53 }
+	Rows: { }
+
+Set 729:
+	Set: { 14 54 }
+	Rows: { }
+
+Set 730:
+	Set: { 14 55 }
+	Rows: { }
+
+Set 731:
+	Set: { 14 56 }
+	Rows: { }
+
+Set 732:
+	Set: { 14 57 }
+	Rows: { }
+
+Set 733:
+	Set: { 14 58 }
+	Rows: { }
+
+Set 734:
+	Set: { 14 59 }
+	Rows: { }
+
+Set 735:
+	Set: { 14 60 }
+	Rows: { }
+
+Set 736:
+	Set: { 15 16 }
+	Rows: { }
+
+Set 737:
+	Set: { 15 17 }
+	Rows: { }
+
+Set 738:
+	Set: { 15 18 }
+	Rows: { }
+
+Set 739:
+	Set: { 15 19 }
+	Rows: { }
+
+Set 740:
+	Set: { 15 20 }
+	Rows: { }
+
+Set 741:
+	Set: { 15 21 }
+	Rows: { }
+
+Set 742:
+	Set: { 15 22 }
+	Rows: { }
+
+Set 743:
+	Set: { 15 23 }
+	Rows: { }
+
+Set 744:
+	Set: { 15 24 }
+	Rows: { }
+
+Set 745:
+	Set: { 15 25 }
+	Rows: { }
+
+Set 746:
+	Set: { 15 26 }
+	Rows: { }
+
+Set 747:
+	Set: { 15 27 }
+	Rows: { }
+
+Set 748:
+	Set: { 15 28 }
+	Rows: { }
+
+Set 749:
+	Set: { 15 29 }
+	Rows: { }
+
+Set 750:
+	Set: { 15 30 }
+	Rows: { }
+
+Set 751:
+	Set: { 15 31 }
+	Rows: { }
+
+Set 752:
+	Set: { 15 32 }
+	Rows: { }
+
+Set 753:
+	Set: { 15 33 }
+	Rows: { }
+
+Set 754:
+	Set: { 15 34 }
+	Rows: { }
+
+Set 755:
+	Set: { 15 35 }
+	Rows: { }
+
+Set 756:
+	Set: { 15 36 }
+	Rows: { }
+
+Set 757:
+	Set: { 15 37 }
+	Rows: { }
+
+Set 758:
+	Set: { 15 38 }
+	Rows: { }
+
+Set 759:
+	Set: { 15 39 }
+	Rows: { }
+
+Set 760:
+	Set: { 15 40 }
+	Rows: { }
+
+Set 761:
+	Set: { 15 41 }
+	Rows: { }
+
+Set 762:
+	Set: { 15 42 }
+	Rows: { }
+
+Set 763:
+	Set: { 15 43 }
+	Rows: { }
+
+Set 764:
+	Set: { 15 44 }
+	Rows: { }
+
+Set 765:
+	Set: { 15 45 }
+	Rows: { }
+
+Set 766:
+	Set: { 15 46 }
+	Rows: { }
+
+Set 767:
+	Set: { 15 47 }
+	Rows: { }
+
+Set 768:
+	Set: { 15 48 }
+	Rows: { }
+
+Set 769:
+	Set: { 15 49 }
+	Rows: { }
+
+Set 770:
+	Set: { 15 50 }
+	Rows: { }
+
+Set 771:
+	Set: { 15 51 }
+	Rows: { }
+
+Set 772:
+	Set: { 15 52 }
+	Rows: { }
+
+Set 773:
+	Set: { 15 53 }
+	Rows: { }
+
+Set 774:
+	Set: { 15 54 }
+	Rows: { }
+
+Set 775:
+	Set: { 15 55 }
+	Rows: { }
+
+Set 776:
+	Set: { 15 56 }
+	Rows: { }
+
+Set 777:
+	Set: { 15 57 }
+	Rows: { }
+
+Set 778:
+	Set: { 15 58 }
+	Rows: { }
+
+Set 779:
+	Set: { 15 59 }
+	Rows: { }
+
+Set 780:
+	Set: { 15 60 }
+	Rows: { }
+
+Set 781:
+	Set: { 16 17 }
+	Rows: { }
+
+Set 782:
+	Set: { 16 18 }
+	Rows: { }
+
+Set 783:
+	Set: { 16 19 }
+	Rows: { }
+
+Set 784:
+	Set: { 16 20 }
+	Rows: { }
+
+Set 785:
+	Set: { 16 21 }
+	Rows: { }
+
+Set 786:
+	Set: { 16 22 }
+	Rows: { }
+
+Set 787:
+	Set: { 16 23 }
+	Rows: { }
+
+Set 788:
+	Set: { 16 24 }
+	Rows: { }
+
+Set 789:
+	Set: { 16 25 }
+	Rows: { }
+
+Set 790:
+	Set: { 16 26 }
+	Rows: { }
+
+Set 791:
+	Set: { 16 27 }
+	Rows: { }
+
+Set 792:
+	Set: { 16 28 }
+	Rows: { }
+
+Set 793:
+	Set: { 16 29 }
+	Rows: { }
+
+Set 794:
+	Set: { 16 30 }
+	Rows: { }
+
+Set 795:
+	Set: { 16 31 }
+	Rows: { }
+
+Set 796:
+	Set: { 16 32 }
+	Rows: { }
+
+Set 797:
+	Set: { 16 33 }
+	Rows: { }
+
+Set 798:
+	Set: { 16 34 }
+	Rows: { }
+
+Set 799:
+	Set: { 16 35 }
+	Rows: { }
+
+Set 800:
+	Set: { 16 36 }
+	Rows: { }
+
+Set 801:
+	Set: { 16 37 }
+	Rows: { }
+
+Set 802:
+	Set: { 16 38 }
+	Rows: { }
+
+Set 803:
+	Set: { 16 39 }
+	Rows: { }
+
+Set 804:
+	Set: { 16 40 }
+	Rows: { }
+
+Set 805:
+	Set: { 16 41 }
+	Rows: { }
+
+Set 806:
+	Set: { 16 42 }
+	Rows: { }
+
+Set 807:
+	Set: { 16 43 }
+	Rows: { }
+
+Set 808:
+	Set: { 16 44 }
+	Rows: { }
+
+Set 809:
+	Set: { 16 45 }
+	Rows: { }
+
+Set 810:
+	Set: { 16 46 }
+	Rows: { }
+
+Set 811:
+	Set: { 16 47 }
+	Rows: { }
+
+Set 812:
+	Set: { 16 48 }
+	Rows: { }
+
+Set 813:
+	Set: { 16 49 }
+	Rows: { }
+
+Set 814:
+	Set: { 16 50 }
+	Rows: { }
+
+Set 815:
+	Set: { 16 51 }
+	Rows: { }
+
+Set 816:
+	Set: { 16 52 }
+	Rows: { }
+
+Set 817:
+	Set: { 16 53 }
+	Rows: { }
+
+Set 818:
+	Set: { 16 54 }
+	Rows: { }
+
+Set 819:
+	Set: { 16 55 }
+	Rows: { }
+
+Set 820:
+	Set: { 16 56 }
+	Rows: { }
+
+Set 821:
+	Set: { 16 57 }
+	Rows: { }
+
+Set 822:
+	Set: { 16 58 }
+	Rows: { }
+
+Set 823:
+	Set: { 16 59 }
+	Rows: { }
+
+Set 824:
+	Set: { 16 60 }
+	Rows: { }
+
+Set 825:
+	Set: { 17 18 }
+	Rows: { }
+
+Set 826:
+	Set: { 17 19 }
+	Rows: { }
+
+Set 827:
+	Set: { 17 20 }
+	Rows: { }
+
+Set 828:
+	Set: { 17 21 }
+	Rows: { }
+
+Set 829:
+	Set: { 17 22 }
+	Rows: { }
+
+Set 830:
+	Set: { 17 23 }
+	Rows: { }
+
+Set 831:
+	Set: { 17 24 }
+	Rows: { }
+
+Set 832:
+	Set: { 17 25 }
+	Rows: { }
+
+Set 833:
+	Set: { 17 26 }
+	Rows: { }
+
+Set 834:
+	Set: { 17 27 }
+	Rows: { }
+
+Set 835:
+	Set: { 17 28 }
+	Rows: { }
+
+Set 836:
+	Set: { 17 29 }
+	Rows: { }
+
+Set 837:
+	Set: { 17 30 }
+	Rows: { }
+
+Set 838:
+	Set: { 17 31 }
+	Rows: { }
+
+Set 839:
+	Set: { 17 32 }
+	Rows: { }
+
+Set 840:
+	Set: { 17 33 }
+	Rows: { }
+
+Set 841:
+	Set: { 17 34 }
+	Rows: { }
+
+Set 842:
+	Set: { 17 35 }
+	Rows: { }
+
+Set 843:
+	Set: { 17 36 }
+	Rows: { }
+
+Set 844:
+	Set: { 17 37 }
+	Rows: { }
+
+Set 845:
+	Set: { 17 38 }
+	Rows: { }
+
+Set 846:
+	Set: { 17 39 }
+	Rows: { }
+
+Set 847:
+	Set: { 17 40 }
+	Rows: { }
+
+Set 848:
+	Set: { 17 41 }
+	Rows: { }
+
+Set 849:
+	Set: { 17 42 }
+	Rows: { }
+
+Set 850:
+	Set: { 17 43 }
+	Rows: { }
+
+Set 851:
+	Set: { 17 44 }
+	Rows: { }
+
+Set 852:
+	Set: { 17 45 }
+	Rows: { }
+
+Set 853:
+	Set: { 17 46 }
+	Rows: { }
+
+Set 854:
+	Set: { 17 47 }
+	Rows: { }
+
+Set 855:
+	Set: { 17 48 }
+	Rows: { }
+
+Set 856:
+	Set: { 17 49 }
+	Rows: { }
+
+Set 857:
+	Set: { 17 50 }
+	Rows: { }
+
+Set 858:
+	Set: { 17 51 }
+	Rows: { }
+
+Set 859:
+	Set: { 17 52 }
+	Rows: { }
+
+Set 860:
+	Set: { 17 53 }
+	Rows: { }
+
+Set 861:
+	Set: { 17 54 }
+	Rows: { }
+
+Set 862:
+	Set: { 17 55 }
+	Rows: { }
+
+Set 863:
+	Set: { 17 56 }
+	Rows: { }
+
+Set 864:
+	Set: { 17 57 }
+	Rows: { }
+
+Set 865:
+	Set: { 17 58 }
+	Rows: { }
+
+Set 866:
+	Set: { 17 59 }
+	Rows: { }
+
+Set 867:
+	Set: { 17 60 }
+	Rows: { }
+
+Set 868:
+	Set: { 18 19 }
+	Rows: { }
+
+Set 869:
+	Set: { 18 20 }
+	Rows: { }
+
+Set 870:
+	Set: { 18 21 }
+	Rows: { }
+
+Set 871:
+	Set: { 18 22 }
+	Rows: { }
+
+Set 872:
+	Set: { 18 23 }
+	Rows: { }
+
+Set 873:
+	Set: { 18 24 }
+	Rows: { }
+
+Set 874:
+	Set: { 18 25 }
+	Rows: { }
+
+Set 875:
+	Set: { 18 26 }
+	Rows: { }
+
+Set 876:
+	Set: { 18 27 }
+	Rows: { }
+
+Set 877:
+	Set: { 18 28 }
+	Rows: { }
+
+Set 878:
+	Set: { 18 29 }
+	Rows: { }
+
+Set 879:
+	Set: { 18 30 }
+	Rows: { }
+
+Set 880:
+	Set: { 18 31 }
+	Rows: { }
+
+Set 881:
+	Set: { 18 32 }
+	Rows: { }
+
+Set 882:
+	Set: { 18 33 }
+	Rows: { }
+
+Set 883:
+	Set: { 18 34 }
+	Rows: { }
+
+Set 884:
+	Set: { 18 35 }
+	Rows: { }
+
+Set 885:
+	Set: { 18 36 }
+	Rows: { }
+
+Set 886:
+	Set: { 18 37 }
+	Rows: { }
+
+Set 887:
+	Set: { 18 38 }
+	Rows: { }
+
+Set 888:
+	Set: { 18 39 }
+	Rows: { }
+
+Set 889:
+	Set: { 18 40 }
+	Rows: { }
+
+Set 890:
+	Set: { 18 41 }
+	Rows: { }
+
+Set 891:
+	Set: { 18 42 }
+	Rows: { }
+
+Set 892:
+	Set: { 18 43 }
+	Rows: { }
+
+Set 893:
+	Set: { 18 44 }
+	Rows: { }
+
+Set 894:
+	Set: { 18 45 }
+	Rows: { }
+
+Set 895:
+	Set: { 18 46 }
+	Rows: { }
+
+Set 896:
+	Set: { 18 47 }
+	Rows: { }
+
+Set 897:
+	Set: { 18 48 }
+	Rows: { }
+
+Set 898:
+	Set: { 18 49 }
+	Rows: { }
+
+Set 899:
+	Set: { 18 50 }
+	Rows: { }
+
+Set 900:
+	Set: { 18 51 }
+	Rows: { }
+
+Set 901:
+	Set: { 18 52 }
+	Rows: { }
+
+Set 902:
+	Set: { 18 53 }
+	Rows: { }
+
+Set 903:
+	Set: { 18 54 }
+	Rows: { }
+
+Set 904:
+	Set: { 18 55 }
+	Rows: { }
+
+Set 905:
+	Set: { 18 56 }
+	Rows: { }
+
+Set 906:
+	Set: { 18 57 }
+	Rows: { }
+
+Set 907:
+	Set: { 18 58 }
+	Rows: { }
+
+Set 908:
+	Set: { 18 59 }
+	Rows: { }
+
+Set 909:
+	Set: { 18 60 }
+	Rows: { }
+
+Set 910:
+	Set: { 19 20 }
+	Rows: { }
+
+Set 911:
+	Set: { 19 21 }
+	Rows: { }
+
+Set 912:
+	Set: { 19 22 }
+	Rows: { }
+
+Set 913:
+	Set: { 19 23 }
+	Rows: { }
+
+Set 914:
+	Set: { 19 24 }
+	Rows: { }
+
+Set 915:
+	Set: { 19 25 }
+	Rows: { }
+
+Set 916:
+	Set: { 19 26 }
+	Rows: { }
+
+Set 917:
+	Set: { 19 27 }
+	Rows: { }
+
+Set 918:
+	Set: { 19 28 }
+	Rows: { }
+
+Set 919:
+	Set: { 19 29 }
+	Rows: { }
+
+Set 920:
+	Set: { 19 30 }
+	Rows: { }
+
+Set 921:
+	Set: { 19 31 }
+	Rows: { }
+
+Set 922:
+	Set: { 19 32 }
+	Rows: { }
+
+Set 923:
+	Set: { 19 33 }
+	Rows: { }
+
+Set 924:
+	Set: { 19 34 }
+	Rows: { }
+
+Set 925:
+	Set: { 19 35 }
+	Rows: { }
+
+Set 926:
+	Set: { 19 36 }
+	Rows: { }
+
+Set 927:
+	Set: { 19 37 }
+	Rows: { }
+
+Set 928:
+	Set: { 19 38 }
+	Rows: { }
+
+Set 929:
+	Set: { 19 39 }
+	Rows: { }
+
+Set 930:
+	Set: { 19 40 }
+	Rows: { }
+
+Set 931:
+	Set: { 19 41 }
+	Rows: { }
+
+Set 932:
+	Set: { 19 42 }
+	Rows: { }
+
+Set 933:
+	Set: { 19 43 }
+	Rows: { }
+
+Set 934:
+	Set: { 19 44 }
+	Rows: { }
+
+Set 935:
+	Set: { 19 45 }
+	Rows: { }
+
+Set 936:
+	Set: { 19 46 }
+	Rows: { }
+
+Set 937:
+	Set: { 19 47 }
+	Rows: { }
+
+Set 938:
+	Set: { 19 48 }
+	Rows: { }
+
+Set 939:
+	Set: { 19 49 }
+	Rows: { }
+
+Set 940:
+	Set: { 19 50 }
+	Rows: { }
+
+Set 941:
+	Set: { 19 51 }
+	Rows: { }
+
+Set 942:
+	Set: { 19 52 }
+	Rows: { }
+
+Set 943:
+	Set: { 19 53 }
+	Rows: { }
+
+Set 944:
+	Set: { 19 54 }
+	Rows: { }
+
+Set 945:
+	Set: { 19 55 }
+	Rows: { }
+
+Set 946:
+	Set: { 19 56 }
+	Rows: { }
+
+Set 947:
+	Set: { 19 57 }
+	Rows: { }
+
+Set 948:
+	Set: { 19 58 }
+	Rows: { }
+
+Set 949:
+	Set: { 19 59 }
+	Rows: { }
+
+Set 950:
+	Set: { 19 60 }
+	Rows: { }
+
+Set 951:
+	Set: { 20 21 }
+	Rows: { }
+
+Set 952:
+	Set: { 20 22 }
+	Rows: { }
+
+Set 953:
+	Set: { 20 23 }
+	Rows: { }
+
+Set 954:
+	Set: { 20 24 }
+	Rows: { }
+
+Set 955:
+	Set: { 20 25 }
+	Rows: { }
+
+Set 956:
+	Set: { 20 26 }
+	Rows: { }
+
+Set 957:
+	Set: { 20 27 }
+	Rows: { }
+
+Set 958:
+	Set: { 20 28 }
+	Rows: { }
+
+Set 959:
+	Set: { 20 29 }
+	Rows: { }
+
+Set 960:
+	Set: { 20 30 }
+	Rows: { }
+
+Set 961:
+	Set: { 20 31 }
+	Rows: { }
+
+Set 962:
+	Set: { 20 32 }
+	Rows: { }
+
+Set 963:
+	Set: { 20 33 }
+	Rows: { }
+
+Set 964:
+	Set: { 20 34 }
+	Rows: { }
+
+Set 965:
+	Set: { 20 35 }
+	Rows: { }
+
+Set 966:
+	Set: { 20 36 }
+	Rows: { }
+
+Set 967:
+	Set: { 20 37 }
+	Rows: { }
+
+Set 968:
+	Set: { 20 38 }
+	Rows: { }
+
+Set 969:
+	Set: { 20 39 }
+	Rows: { }
+
+Set 970:
+	Set: { 20 40 }
+	Rows: { }
+
+Set 971:
+	Set: { 20 41 }
+	Rows: { }
+
+Set 972:
+	Set: { 20 42 }
+	Rows: { }
+
+Set 973:
+	Set: { 20 43 }
+	Rows: { }
+
+Set 974:
+	Set: { 20 44 }
+	Rows: { }
+
+Set 975:
+	Set: { 20 45 }
+	Rows: { }
+
+Set 976:
+	Set: { 20 46 }
+	Rows: { }
+
+Set 977:
+	Set: { 20 47 }
+	Rows: { }
+
+Set 978:
+	Set: { 20 48 }
+	Rows: { }
+
+Set 979:
+	Set: { 20 49 }
+	Rows: { }
+
+Set 980:
+	Set: { 20 50 }
+	Rows: { }
+
+Set 981:
+	Set: { 20 51 }
+	Rows: { }
+
+Set 982:
+	Set: { 20 52 }
+	Rows: { }
+
+Set 983:
+	Set: { 20 53 }
+	Rows: { }
+
+Set 984:
+	Set: { 20 54 }
+	Rows: { }
+
+Set 985:
+	Set: { 20 55 }
+	Rows: { }
+
+Set 986:
+	Set: { 20 56 }
+	Rows: { }
+
+Set 987:
+	Set: { 20 57 }
+	Rows: { }
+
+Set 988:
+	Set: { 20 58 }
+	Rows: { }
+
+Set 989:
+	Set: { 20 59 }
+	Rows: { }
+
+Set 990:
+	Set: { 20 60 }
+	Rows: { }
+
+Set 991:
+	Set: { 21 22 }
+	Rows: { }
+
+Set 992:
+	Set: { 21 23 }
+	Rows: { }
+
+Set 993:
+	Set: { 21 24 }
+	Rows: { }
+
+Set 994:
+	Set: { 21 25 }
+	Rows: { }
+
+Set 995:
+	Set: { 21 26 }
+	Rows: { }
+
+Set 996:
+	Set: { 21 27 }
+	Rows: { }
+
+Set 997:
+	Set: { 21 28 }
+	Rows: { }
+
+Set 998:
+	Set: { 21 29 }
+	Rows: { }
+
+Set 999:
+	Set: { 21 30 }
+	Rows: { }
+
+Set 1000:
+	Set: { 21 31 }
+	Rows: { }
+
+Set 1001:
+	Set: { 21 32 }
+	Rows: { }
+
+Set 1002:
+	Set: { 21 33 }
+	Rows: { }
+
+Set 1003:
+	Set: { 21 34 }
+	Rows: { }
+
+Set 1004:
+	Set: { 21 35 }
+	Rows: { }
+
+Set 1005:
+	Set: { 21 36 }
+	Rows: { }
+
+Set 1006:
+	Set: { 21 37 }
+	Rows: { }
+
+Set 1007:
+	Set: { 21 38 }
+	Rows: { }
+
+Set 1008:
+	Set: { 21 39 }
+	Rows: { }
+
+Set 1009:
+	Set: { 21 40 }
+	Rows: { }
+
+Set 1010:
+	Set: { 21 41 }
+	Rows: { }
+
+Set 1011:
+	Set: { 21 42 }
+	Rows: { }
+
+Set 1012:
+	Set: { 21 43 }
+	Rows: { }
+
+Set 1013:
+	Set: { 21 44 }
+	Rows: { }
+
+Set 1014:
+	Set: { 21 45 }
+	Rows: { }
+
+Set 1015:
+	Set: { 21 46 }
+	Rows: { }
+
+Set 1016:
+	Set: { 21 47 }
+	Rows: { }
+
+Set 1017:
+	Set: { 21 48 }
+	Rows: { }
+
+Set 1018:
+	Set: { 21 49 }
+	Rows: { }
+
+Set 1019:
+	Set: { 21 50 }
+	Rows: { }
+
+Set 1020:
+	Set: { 21 51 }
+	Rows: { }
+
+Set 1021:
+	Set: { 21 52 }
+	Rows: { }
+
+Set 1022:
+	Set: { 21 53 }
+	Rows: { }
+
+Set 1023:
+	Set: { 21 54 }
+	Rows: { }
+
+Set 1024:
+	Set: { 21 55 }
+	Rows: { }
+
+Set 1025:
+	Set: { 21 56 }
+	Rows: { }
+
+Set 1026:
+	Set: { 21 57 }
+	Rows: { }
+
+Set 1027:
+	Set: { 21 58 }
+	Rows: { }
+
+Set 1028:
+	Set: { 21 59 }
+	Rows: { }
+
+Set 1029:
+	Set: { 21 60 }
+	Rows: { }
+
+Set 1030:
+	Set: { 22 23 }
+	Rows: { }
+
+Set 1031:
+	Set: { 22 24 }
+	Rows: { }
+
+Set 1032:
+	Set: { 22 25 }
+	Rows: { }
+
+Set 1033:
+	Set: { 22 26 }
+	Rows: { }
+
+Set 1034:
+	Set: { 22 27 }
+	Rows: { }
+
+Set 1035:
+	Set: { 22 28 }
+	Rows: { }
+
+Set 1036:
+	Set: { 22 29 }
+	Rows: { }
+
+Set 1037:
+	Set: { 22 30 }
+	Rows: { }
+
+Set 1038:
+	Set: { 22 31 }
+	Rows: { }
+
+Set 1039:
+	Set: { 22 32 }
+	Rows: { }
+
+Set 1040:
+	Set: { 22 33 }
+	Rows: { }
+
+Set 1041:
+	Set: { 22 34 }
+	Rows: { }
+
+Set 1042:
+	Set: { 22 35 }
+	Rows: { }
+
+Set 1043:
+	Set: { 22 36 }
+	Rows: { }
+
+Set 1044:
+	Set: { 22 37 }
+	Rows: { }
+
+Set 1045:
+	Set: { 22 38 }
+	Rows: { }
+
+Set 1046:
+	Set: { 22 39 }
+	Rows: { }
+
+Set 1047:
+	Set: { 22 40 }
+	Rows: { }
+
+Set 1048:
+	Set: { 22 41 }
+	Rows: { }
+
+Set 1049:
+	Set: { 22 42 }
+	Rows: { }
+
+Set 1050:
+	Set: { 22 43 }
+	Rows: { }
+
+Set 1051:
+	Set: { 22 44 }
+	Rows: { }
+
+Set 1052:
+	Set: { 22 45 }
+	Rows: { }
+
+Set 1053:
+	Set: { 22 46 }
+	Rows: { }
+
+Set 1054:
+	Set: { 22 47 }
+	Rows: { }
+
+Set 1055:
+	Set: { 22 48 }
+	Rows: { }
+
+Set 1056:
+	Set: { 22 49 }
+	Rows: { }
+
+Set 1057:
+	Set: { 22 50 }
+	Rows: { }
+
+Set 1058:
+	Set: { 22 51 }
+	Rows: { }
+
+Set 1059:
+	Set: { 22 52 }
+	Rows: { }
+
+Set 1060:
+	Set: { 22 53 }
+	Rows: { }
+
+Set 1061:
+	Set: { 22 54 }
+	Rows: { }
+
+Set 1062:
+	Set: { 22 55 }
+	Rows: { }
+
+Set 1063:
+	Set: { 22 56 }
+	Rows: { }
+
+Set 1064:
+	Set: { 22 57 }
+	Rows: { }
+
+Set 1065:
+	Set: { 22 58 }
+	Rows: { }
+
+Set 1066:
+	Set: { 22 59 }
+	Rows: { }
+
+Set 1067:
+	Set: { 22 60 }
+	Rows: { }
+
+Set 1068:
+	Set: { 23 24 }
+	Rows: { }
+
+Set 1069:
+	Set: { 23 25 }
+	Rows: { }
+
+Set 1070:
+	Set: { 23 26 }
+	Rows: { }
+
+Set 1071:
+	Set: { 23 27 }
+	Rows: { }
+
+Set 1072:
+	Set: { 23 28 }
+	Rows: { }
+
+Set 1073:
+	Set: { 23 29 }
+	Rows: { }
+
+Set 1074:
+	Set: { 23 30 }
+	Rows: { }
+
+Set 1075:
+	Set: { 23 31 }
+	Rows: { }
+
+Set 1076:
+	Set: { 23 32 }
+	Rows: { }
+
+Set 1077:
+	Set: { 23 33 }
+	Rows: { }
+
+Set 1078:
+	Set: { 23 34 }
+	Rows: { }
+
+Set 1079:
+	Set: { 23 35 }
+	Rows: { }
+
+Set 1080:
+	Set: { 23 36 }
+	Rows: { }
+
+Set 1081:
+	Set: { 23 37 }
+	Rows: { }
+
+Set 1082:
+	Set: { 23 38 }
+	Rows: { }
+
+Set 1083:
+	Set: { 23 39 }
+	Rows: { }
+
+Set 1084:
+	Set: { 23 40 }
+	Rows: { }
+
+Set 1085:
+	Set: { 23 41 }
+	Rows: { }
+
+Set 1086:
+	Set: { 23 42 }
+	Rows: { }
+
+Set 1087:
+	Set: { 23 43 }
+	Rows: { }
+
+Set 1088:
+	Set: { 23 44 }
+	Rows: { }
+
+Set 1089:
+	Set: { 23 45 }
+	Rows: { }
+
+Set 1090:
+	Set: { 23 46 }
+	Rows: { }
+
+Set 1091:
+	Set: { 23 47 }
+	Rows: { }
+
+Set 1092:
+	Set: { 23 48 }
+	Rows: { }
+
+Set 1093:
+	Set: { 23 49 }
+	Rows: { }
+
+Set 1094:
+	Set: { 23 50 }
+	Rows: { }
+
+Set 1095:
+	Set: { 23 51 }
+	Rows: { }
+
+Set 1096:
+	Set: { 23 52 }
+	Rows: { }
+
+Set 1097:
+	Set: { 23 53 }
+	Rows: { }
+
+Set 1098:
+	Set: { 23 54 }
+	Rows: { }
+
+Set 1099:
+	Set: { 23 55 }
+	Rows: { }
+
+Set 1100:
+	Set: { 23 56 }
+	Rows: { }
+
+Set 1101:
+	Set: { 23 57 }
+	Rows: { }
+
+Set 1102:
+	Set: { 23 58 }
+	Rows: { }
+
+Set 1103:
+	Set: { 23 59 }
+	Rows: { }
+
+Set 1104:
+	Set: { 23 60 }
+	Rows: { }
+
+Set 1105:
+	Set: { 24 25 }
+	Rows: { }
+
+Set 1106:
+	Set: { 24 26 }
+	Rows: { }
+
+Set 1107:
+	Set: { 24 27 }
+	Rows: { }
+
+Set 1108:
+	Set: { 24 28 }
+	Rows: { }
+
+Set 1109:
+	Set: { 24 29 }
+	Rows: { }
+
+Set 1110:
+	Set: { 24 30 }
+	Rows: { }
+
+Set 1111:
+	Set: { 24 31 }
+	Rows: { }
+
+Set 1112:
+	Set: { 24 32 }
+	Rows: { }
+
+Set 1113:
+	Set: { 24 33 }
+	Rows: { }
+
+Set 1114:
+	Set: { 24 34 }
+	Rows: { }
+
+Set 1115:
+	Set: { 24 35 }
+	Rows: { }
+
+Set 1116:
+	Set: { 24 36 }
+	Rows: { }
+
+Set 1117:
+	Set: { 24 37 }
+	Rows: { }
+
+Set 1118:
+	Set: { 24 38 }
+	Rows: { }
+
+Set 1119:
+	Set: { 24 39 }
+	Rows: { }
+
+Set 1120:
+	Set: { 24 40 }
+	Rows: { }
+
+Set 1121:
+	Set: { 24 41 }
+	Rows: { }
+
+Set 1122:
+	Set: { 24 42 }
+	Rows: { }
+
+Set 1123:
+	Set: { 24 43 }
+	Rows: { }
+
+Set 1124:
+	Set: { 24 44 }
+	Rows: { }
+
+Set 1125:
+	Set: { 24 45 }
+	Rows: { }
+
+Set 1126:
+	Set: { 24 46 }
+	Rows: { }
+
+Set 1127:
+	Set: { 24 47 }
+	Rows: { }
+
+Set 1128:
+	Set: { 24 48 }
+	Rows: { }
+
+Set 1129:
+	Set: { 24 49 }
+	Rows: { }
+
+Set 1130:
+	Set: { 24 50 }
+	Rows: { }
+
+Set 1131:
+	Set: { 24 51 }
+	Rows: { }
+
+Set 1132:
+	Set: { 24 52 }
+	Rows: { }
+
+Set 1133:
+	Set: { 24 53 }
+	Rows: { }
+
+Set 1134:
+	Set: { 24 54 }
+	Rows: { }
+
+Set 1135:
+	Set: { 24 55 }
+	Rows: { }
+
+Set 1136:
+	Set: { 24 56 }
+	Rows: { }
+
+Set 1137:
+	Set: { 24 57 }
+	Rows: { }
+
+Set 1138:
+	Set: { 24 58 }
+	Rows: { }
+
+Set 1139:
+	Set: { 24 59 }
+	Rows: { }
+
+Set 1140:
+	Set: { 24 60 }
+	Rows: { }
+
+Set 1141:
+	Set: { 25 26 }
+	Rows: { }
+
+Set 1142:
+	Set: { 25 27 }
+	Rows: { }
+
+Set 1143:
+	Set: { 25 28 }
+	Rows: { }
+
+Set 1144:
+	Set: { 25 29 }
+	Rows: { }
+
+Set 1145:
+	Set: { 25 30 }
+	Rows: { }
+
+Set 1146:
+	Set: { 25 31 }
+	Rows: { }
+
+Set 1147:
+	Set: { 25 32 }
+	Rows: { }
+
+Set 1148:
+	Set: { 25 33 }
+	Rows: { }
+
+Set 1149:
+	Set: { 25 34 }
+	Rows: { }
+
+Set 1150:
+	Set: { 25 35 }
+	Rows: { }
+
+Set 1151:
+	Set: { 25 36 }
+	Rows: { }
+
+Set 1152:
+	Set: { 25 37 }
+	Rows: { }
+
+Set 1153:
+	Set: { 25 38 }
+	Rows: { }
+
+Set 1154:
+	Set: { 25 39 }
+	Rows: { }
+
+Set 1155:
+	Set: { 25 40 }
+	Rows: { }
+
+Set 1156:
+	Set: { 25 41 }
+	Rows: { }
+
+Set 1157:
+	Set: { 25 42 }
+	Rows: { }
+
+Set 1158:
+	Set: { 25 43 }
+	Rows: { }
+
+Set 1159:
+	Set: { 25 44 }
+	Rows: { }
+
+Set 1160:
+	Set: { 25 45 }
+	Rows: { }
+
+Set 1161:
+	Set: { 25 46 }
+	Rows: { }
+
+Set 1162:
+	Set: { 25 47 }
+	Rows: { }
+
+Set 1163:
+	Set: { 25 48 }
+	Rows: { }
+
+Set 1164:
+	Set: { 25 49 }
+	Rows: { }
+
+Set 1165:
+	Set: { 25 50 }
+	Rows: { }
+
+Set 1166:
+	Set: { 25 51 }
+	Rows: { }
+
+Set 1167:
+	Set: { 25 52 }
+	Rows: { }
+
+Set 1168:
+	Set: { 25 53 }
+	Rows: { }
+
+Set 1169:
+	Set: { 25 54 }
+	Rows: { }
+
+Set 1170:
+	Set: { 25 55 }
+	Rows: { }
+
+Set 1171:
+	Set: { 25 56 }
+	Rows: { }
+
+Set 1172:
+	Set: { 25 57 }
+	Rows: { }
+
+Set 1173:
+	Set: { 25 58 }
+	Rows: { }
+
+Set 1174:
+	Set: { 25 59 }
+	Rows: { }
+
+Set 1175:
+	Set: { 25 60 }
+	Rows: { }
+
+Set 1176:
+	Set: { 26 27 }
+	Rows: { }
+
+Set 1177:
+	Set: { 26 28 }
+	Rows: { }
+
+Set 1178:
+	Set: { 26 29 }
+	Rows: { }
+
+Set 1179:
+	Set: { 26 30 }
+	Rows: { }
+
+Set 1180:
+	Set: { 26 31 }
+	Rows: { }
+
+Set 1181:
+	Set: { 26 32 }
+	Rows: { }
+
+Set 1182:
+	Set: { 26 33 }
+	Rows: { }
+
+Set 1183:
+	Set: { 26 34 }
+	Rows: { }
+
+Set 1184:
 	Set: { 26 35 }
 	Rows: { }
 
-Se
+Set 1185:
+	Set: { 26 36 }
+	Rows: { }
+
+Set 1186:
+	Set: { 26 37 }
+	Rows: { }
+
+Set 1187:
+	Set: { 26 38 }
+	Rows: { }
+
+Set 1188:
+	Set: { 26 39 }
+	Rows: { }
+
+Set 1189:
+	Set: { 26 40 }
+	Rows: { }
+
+Set 1190:
+	Set: { 26 41 }
+	Rows: { }
+
+Set 1191:
+	Set: { 26 42 }
+	Rows: { }
+
+Set 1192:
+	Set: { 26 43 }
+	Rows: { }
+
+Set 1193:
+	Set: { 26 44 }
+	Rows: { }
+
+Set 1194:
+	Set: { 26 45 }
+	Rows: { }
+
+Set 1195:
+	Set: { 26 46 }
+	Rows: { }
+
+Set 1196:
+	Set: { 26 47 }
+	Rows: { }
+
+Set 1197:
+	Set: { 26 48 }
+	Rows: { }
+
+Set 1198:
+	Set: { 26 49 }
+	Rows: { }
+
+Set 1199:
+	Set: { 26 50 }
+	Rows: { }
+
+Set 1200:
+	Set: { 26 51 }
+	Rows: { }
+
+Set 1201:
+	Set: { 26 52 }
+	Rows: { }
+
+Set 1202:
+	Set: { 26 53 }
+	Rows: { }
+
+Set 1203:
+	Set: { 26 54 }
+	Rows: { }
+
+Set 1204:
+	Set: { 26 55 }
+	Rows: { }
+
+Set 1205:
+	Set: { 26 56 }
+	Rows: { }
+
+Set 1206:
+	Set: { 26 57 }
+	Rows: { }
+
+Set 1207:
+	Set: { 26 58 }
+	Rows: { }
+
+Set 1208:
+	Set: { 26 59 }
+	Rows: { }
+
+Set 1209:
+	Set: { 26 60 }
+	Rows: { }
+
+Set 1210:
+	Set: { 27 28 }
+	Rows: { }
+
+Set 1211:
+	Set: { 27 29 }
+	Rows: { }
+
+Set 1212:
+	Set: { 27 30 }
+	Rows: { }
+
+Set 1213:
+	Set: { 27 31 }
+	Rows: { }
+
+Set 1214:
+	Set: { 27 32 }
+	Rows: { }
+
+Set 1215:
+	Set: { 27 33 }
+	Rows: { }
+
+Set 1216:
+	Set: { 27 34 }
+	Rows: { }
+
+Set 1217:
+	Set: { 27 35 }
+	Rows: { }
+
+Set 1218:
+	Set: { 27 36 }
+	Rows: { }
+
+Set 1219:
+	Set: { 27 37 }
+	Rows: { }
+
+Set 1220:
+	Set: { 27 38 }
+	Rows: { }
+
+Set 1221:
+	Set: { 27 39 }
+	Rows: { }
+
+Set 1222:
+	Set: { 27 40 }
+	Rows: { }
+
+Set 1223:
+	Set: { 27 41 }
+	Rows: { }
+
+Set 1224:
+	Set: { 27 42 }
+	Rows: { }
+
+Set 1225:
+	Set: { 27 43 }
+	Rows: { }
+
+Set 1226:
+	Set: { 27 44 }
+	Rows: { }
+
+Set 1227:
+	Set: { 27 45 }
+	Rows: { }
+
+Set 1228:
+	Set: { 27 46 }
+	Rows: { }
+
+Set 1229:
+	Set: { 27 47 }
+	Rows: { }
+
+Set 1230:
+	Set: { 27 48 }
+	Rows: { }
+
+Set 1231:
+	Set: { 27 49 }
+	Rows: { }
+
+Set 1232:
+	Set: { 27 50 }
+	Rows: { }
+
+Set 1233:
+	Set: { 27 51 }
+	Rows: { }
+
+Set 1234:
+	Set: { 27 52 }
+	Rows: { }
+
+Set 1235:
+	Set: { 27 53 }
+	Rows: { }
+
+Set 1236:
+	Set: { 27 54 }
+	Rows: { }
+
+Set 1237:
+	Set: { 27 55 }
+	Rows: { }
+
+Set 1238:
+	Set: { 27 56 }
+	Rows: { }
+
+Set 1239:
+	Set: { 27 57 }
+	Rows: { }
+
+Set 1240:
+	Set: { 27 58 }
+	Rows: { }
+
+Set 1241:
+	Set: { 27 59 }
+	Rows: { }
+
+Set 1242:
+	Set: { 27 60 }
+	Rows: { }
+
+Set 1243:
+	Set: { 28 29 }
+	Rows: { }
+
+Set 1244:
+	Set: { 28 30 }
+	Rows: { }
+
+Set 1245:
+	Set: { 28 31 }
+	Rows: { }
+
+Set 1246:
+	Set: { 28 32 }
+	Rows: { }
+
+Set 1247:
+	Set: { 28 33 }
+	Rows: { }
+
+Set 1248:
+	Set: { 28 34 }
+	Rows: { }
+
+Set 1249:
+	Set: { 28 35 }
+	Rows: { }
+
+Set 1250:
+	Set: { 28 36 }
+	Rows: { }
+
+Set 1251:
+	Set: { 28 37 }
+	Rows: { }
+
+Set 1252:
+	Set: { 28 38 }
+	Rows: { }
+
+Set 1253:
+	Set: { 28 39 }
+	Rows: { }
+
+Set 1254:
+	Set: { 28 40 }
+	Rows: { }
+
+Set 1255:
+	Set: { 28 41 }
+	Rows: { }
+
+Set 1256:
+	Set: { 28 42 }
+	Rows: { }
+
+Set 1257:
+	Set: { 28 43 }
+	Rows: { }
+
+Set 1258:
+	Set: { 28 44 }
+	Rows: { }
+
+Set 1259:
+	Set: { 28 45 }
+	Rows: { }
+
+Set 1260:
+	Set: { 28 46 }
+	Rows: { }
+
+Set 1261:
+	Set: { 28 47 }
+	Rows: { }
+
+Set 1262:
+	Set: { 28 48 }
+	Rows: { }
+
+Set 1263:
+	Set: { 28 49 }
+	Rows: { }
+
+Set 1264:
+	Set: { 28 50 }
+	Rows: { }
+
+Set 1265:
+	Set: { 28 51 }
+	Rows: { }
+
+Set 1266:
+	Set: { 28 52 }
+	Rows: { }
+
+Set 1267:
+	Set: { 28 53 }
+	Rows: { }
+
+Set 1268:
+	Set: { 28 54 }
+	Rows: { }
+
+Set 1269:
+	Set: { 28 55 }
+	Rows: { }
+
+Set 1270:
+	Set: { 28 56 }
+	Rows: { }
+
+Set 1271:
+	Set: { 28 57 }
+	Rows: { }
+
+Set 1272:
+	Set: { 28 58 }
+	Rows: { }
+
+Set 1273:
+	Set: { 28 59 }
+	Rows: { }
+
+Set 1274:
+	Set: { 28 60 }
+	Rows: { }
+
+Set 1275:
+	Set: { 29 30 }
+	Rows: { }
+
+Set 1276:
+	Set: { 29 31 }
+	Rows: { }
+
+Set 1277:
+	Set: { 29 32 }
+	Rows: { }
+
+Set 1278:
+	Set: { 29 33 }
+	Rows: { }
+
+Set 1279:
+	Set: { 29 34 }
+	Rows: { }
+
+Set 1280:
+	Set: { 29 35 }
+	Rows: { }
+
+Set 1281:
+	Set: { 29 36 }
+	Rows: { }
+
+Set 1282:
+	Set: { 29 37 }
+	Rows: { }
+
+Set 1283:
+	Set: { 29 38 }
+	Rows: { }
+
+Set 1284:
+	Set: { 29 39 }
+	Rows: { }
+
+Set 1285:
+	Set: { 29 40 }
+	Rows: { }
+
+Set 1286:
+	Set: { 29 41 }
+	Rows: { }
+
+Set 1287:
+	Set: { 29 42 }
+	Rows: { }
+
+Set 1288:
+	Set: { 29 43 }
+	Rows: { }
+
+Set 1289:
+	Set: { 29 44 }
+	Rows: { }
+
+Set 1290:
+	Set: { 29 45 }
+	Rows: { }
+
+Set 1291:
+	Set: { 29 46 }
+	Rows: { }
+
+Set 1292:
+	Set: { 29 47 }
+	Rows: { }
+
+Set 1293:
+	Set: { 29 48 }
+	Rows: { }
+
+Set 1294:
+	Set: { 29 49 }
+	Rows: { }
+
+Set 1295:
+	Set: { 29 50 }
+	Rows: { }
+
+Set 1296:
+	Set: { 29 51 }
+	Rows: { }
+
+Set 1297:
+	Set: { 29 52 }
+	Rows: { }
+
+Set 1298:
+	Set: { 29 53 }
+	Rows: { }
+
+Set 1299:
+	Set: { 29 54 }
+	Rows: { }
+
+Set 1300:
+	Set: { 29 55 }
+	Rows: { }
+
+Set 1301:
+	Set: { 29 56 }
+	Rows: { }
+
+Set 1302:
+	Set: { 29 57 }
+	Rows: { }
+
+Set 1303:
+	Set: { 29 58 }
+	Rows: { }
+
+Set 1304:
+	Set: { 29 59 }
+	Rows: { }
+
+Set 1305:
+	Set: { 29 60 }
+	Rows: { }
+
+Set 1306:
+	Set: { 30 31 }
+	Rows: { }
+
+Set 1307:
+	Set: { 30 32 }
+	Rows: { }
+
+Set 1308:
+	Set: { 30 33 }
+	Rows: { }
+
+Set 1309:
+	Set: { 30 34 }
+	Rows: { }
+
+Set 1310:
+	Set: { 30 35 }
+	Rows: { }
+
+Set 1311:
+	Set: { 30 36 }
+	Rows: { }
+
+Set 1312:
+	Set: { 30 37 }
+	Rows: { }
+
+Set 1313:
+	Set: { 30 38 }
+	Rows: { }
+
+Set 1314:
+	Set: { 30 39 }
+	Rows: { }
+
+Set 1315:
+	Set: { 30 40 }
+	Rows: { }
+
+Set 1316:
+	Set: { 30 41 }
+	Rows: { }
+
+Set 1317:
+	Set: { 30 42 }
+	Rows: { }
+
+Set 1318:
+	Set: { 30 43 }
+	Rows: { }
+
+Set 1319:
+	Set: { 30 44 }
+	Rows: { }
+
+Set 1320:
+	Set: { 30 45 }
+	Rows: { }
+
+Set 1321:
+	Set: { 30 46 }
+	Rows: { }
+
+Set 1322:
+	Set: { 30 47 }
+	Rows: { }
+
+Set 1323:
+	Set: { 30 48 }
+	Rows: { }
+
+Set 1324:
+	Set: { 30 49 }
+	Rows: { }
+
+Set 1325:
+	Set: { 30 50 }
+	Rows: { }
+
+Set 1326:
+	Set: { 30 51 }
+	Rows: { }
+
+Set 1327:
+	Set: { 30 52 }
+	Rows: { }
+
+Set 1328:
+	Set: { 30 53 }
+	Rows: { }
+
+Set 1329:
+	Set: { 30 54 }
+	Rows: { }
+
+Set 1330:
+	Set: { 30 55 }
+	Rows: { }
+
+Set 1331:
+	Set: { 30 56 }
+	Rows: { }
+
+Set 1332:
+	Set: { 30 57 }
+	Rows: { }
+
+Set 1333:
+	Set: { 30 58 }
+	Rows: { }
+
+Set 1334:
+	Set: { 30 59 }
+	Rows: { }
+
+Set 1335:
+	Set: { 30 60 }
+	Rows: { }
+
+Set 1336:
+	Set: { 31 32 }
+	Rows: { }
+
+Set 1337:
+	Set: { 31 33 }
+	Rows: { }
+
+Set 1338:
+	Set: { 31 34 }
+	Rows: { }
+
+Set 1339:
+	Set: { 31 35 }
+	Rows: { }
+
+Set 1340:
+	Set: { 31 36 }
+	Rows: { }
+
+Set 1341:
+	Set: { 31 37 }
+	Rows: { }
+
+Set 1342:
+	Set: { 31 38 }
+	Rows: { }
+
+Set 1343:
+	Set: { 31 39 }
+	Rows: { }
+
+Set 1344:
+	Set: { 31 40 }
+	Rows: { }
+
+Set 1345:
+	Set: { 31 41 }
+	Rows: { }
+
+Set 1346:
+	Set: { 31 42 }
+	Rows: { }
+
+Set 1347:
+	Set: { 31 43 }
+	Rows: { }
+
+Set 1348:
+	Set: { 31 44 }
+	Rows: { }
+
+Set 1349:
+	Set: { 31 45 }
+	Rows: { }
+
+Set 1350:
+	Set: { 31 46 }
+	Rows: { }
+
+Set 1351:
+	Set: { 31 47 }
+	Rows: { }
+
+Set 1352:
+	Set: { 31 48 }
+	Rows: { }
+
+Set 1353:
+	Set: { 31 49 }
+	Rows: { }
+
+Set 1354:
+	Set: { 31 50 }
+	Rows: { }
+
+Set 1355:
+	Set: { 31 51 }
+	Rows: { }
+
+Set 1356:
+	Set: { 31 52 }
+	Rows: { }
+
+Set 1357:
+	Set: { 31 53 }
+	Rows: { }
+
+Set 1358:
+	Set: { 31 54 }
+	Rows: { }
+
+Set 1359:
+	Set: { 31 55 }
+	Rows: { }
+
+Set 1360:
+	Set: { 31 56 }
+	Rows: { }
+
+Set 1361:
+	Set: { 31 57 }
+	Rows: { }
+
+Set 1362:
+	Set: { 31 58 }
+	Rows: { }
+
+Set 1363:
+	Set: { 31 59 }
+	Rows: { }
+
+Set 1364:
+	Set: { 31 60 }
+	Rows: { }
+
+Set 1365:
+	Set: { 32 33 }
+	Rows: { }
+
+Set 1366:
+	Set: { 32 34 }
+	Rows: { }
+
+Set 1367:
+	Set: { 32 35 }
+	Rows: { }
+
+Set 1368:
+	Set: { 32 36 }
+	Rows: { }
+
+Set 1369:
+	Set: { 32 37 }
+	Rows: { }
+
+Set 1370:
+	Set: { 32 38 }
+	Rows: { }
+
+Set 1371:
+	Set: { 32 39 }
+	Rows: { }
+
+Set 1372:
+	Set: { 32 40 }
+	Rows: { }
+
+Set 1373:
+	Set: { 32 41 }
+	Rows: { }
+
+Set 1374:
+	Set: { 32 42 }
+	Rows: { }
+
+Set 1375:
+	Set: { 32 43 }
+	Rows: { }
+
+Set 1376:
+	Set: { 32 44 }
+	Rows: { }
+
+Set 1377:
+	Set: { 32 45 }
+	Rows: { }
+
+Set 1378:
+	Set: { 32 46 }
+	Rows: { }
+
+Set 1379:
+	Set: { 32 47 }
+	Rows: { }
+
+Set 1380:
+	Set: { 32 48 }
+	Rows: { }
+
+Set 1381:
+	Set: { 32 49 }
+	Rows: { }
+
+Set 1382:
+	Set: { 32 50 }
+	Rows: { }
+
+Set 1383:
+	Set: { 32 51 }
+	Rows: { }
+
+Set 1384:
+	Set: { 32 52 }
+	Rows: { }
+
+Set 1385:
+	Set: { 32 53 }
+	Rows: { }
+
+Set 1386:
+	Set: { 32 54 }
+	Rows: { }
+
+Set 1387:
+	Set: { 32 55 }
+	Rows: { }
+
+Set 1388:
+	Set: { 32 56 }
+	Rows: { }
+
+Set 1389:
+	Set: { 32 57 }
+	Rows: { }
+
+Set 1390:
+	Set: { 32 58 }
+	Rows: { }
+
+Set 1391:
+	Set: { 32 59 }
+	Rows: { }
+
+Set 1392:
+	Set: { 32 60 }
+	Rows: { }
+
+Set 1393:
+	Set: { 33 34 }
+	Rows: { }
+
+Set 1394:
+	Set: { 33 35 }
+	Rows: { }
+
+Set 1395:
+	Set: { 33 36 }
+	Rows: { }
+
+Set 1396:
+	Set: { 33 37 }
+	Rows: { }
+
+Set 1397:
+	Set: { 33 38 }
+	Rows: { }
+
+Set 1398:
+	Set: { 33 39 }
+	Rows: { }
+
+Set 1399:
+	Set: { 33 40 }
+	Rows: { }
+
+Set 1400:
+	Set: { 33 41 }
+	Rows: { }
+
+Set 1401:
+	Set: { 33 42 }
+	Rows: { }
+
+Set 1402:
+	Set: { 33 43 }
+	Rows: { }
+
+Set 1403:
+	Set: { 33 44 }
+	Rows: { }
+
+Set 1404:
+	Set: { 33 45 }
+	Rows: { }
+
+Set 1405:
+	Set: { 33 46 }
+	Rows: { }
+
+Set 1406:
+	Set: { 33 47 }
+	Rows: { }
+
+Set 1407:
+	Set: { 33 48 }
+	Rows: { }
+
+Set 1408:
+	Set: { 33 49 }
+	Rows: { }
+
+Set 1409:
+	Set: { 33 50 }
+	Rows: { }
+
+Set 1410:
+	Set: { 33 51 }
+	Rows: { }
+
+Set 1411:
+	Set: { 33 52 }
+	Rows: { }
+
+Set 1412:
+	Set: { 33 53 }
+	Rows: { }
+
+Set 1413:
+	Set: { 33 54 }
+	Rows: { }
+
+Set 1414:
+	Set: { 33 55 }
+	Rows: { }
+
+Set 1415:
+	Set: { 33 56 }
+	Rows: { }
+
+Set 1416:
+	Set: { 33 57 }
+	Rows: { }
+
+Set 1417:
+	Set: { 33 58 }
+	Rows: { }
+
+Set 1418:
+	Set: { 33 59 }
+	Rows: { }
+
+Set 1419:
+	Set: { 33 60 }
+	Rows: { }
+
+Set 1420:
+	Set: { 34 35 }
+	Rows: { }
+
+Set 1421:
+	Set: { 34 36 }
+	Rows: { }
+
+Set 1422:
+	Set: { 34 37 }
+	Rows: { }
+
+Set 1423:
+	Set: { 34 38 }
+	Rows: { }
+
+Set 1424:
+	Set: { 34 39 }
+	Rows: { }
+
+Set 1425:
+	Set: { 34 40 }
+	Rows: { }
+
+Set 1426:
+	Set: { 34 41 }
+	Rows: { }
+
+Set 1427:
+	Set: { 34 42 }
+	Rows: { }
+
+Set 1428:
+	Set: { 34 43 }
+	Rows: { }
+
+Set 1429:
+	Set: { 34 44 }
+	Rows: { }
+
+Set 1430:
+	Set: { 34 45 }
+	Rows: { }
+
+Set 1431:
+	Set: { 34 46 }
+	Rows: { }
+
+Set 1432:
+	Set: { 34 47 }
+	Rows: { }
+
+Set 1433:
+	Set: { 34 48 }
+	Rows: { }
+
+Set 1434:
+	Set: { 34 49 }
+	Rows: { }
+
+Set 1435:
+	Set: { 34 50 }
+	Rows: { }
+
+Set 1436:
+	Set: { 34 51 }
+	Rows: { }
+
+Set 1437:
+	Set: { 34 52 }
+	Rows: { }
+
+Set 1438:
+	Set: { 34 53 }
+	Rows: { }
+
+Set 1439:
+	Set: { 34 54 }
+	Rows: { }
+
+Set 1440:
+	Set: { 34 55 }
+	Rows: { }
+
+Set 1441:
+	Set: { 34 56 }
+	Rows: { }
+
+Set 1442:
+	Set: { 34 57 }
+	Rows: { }
+
+Set 1443:
+	Set: { 34 58 }
+	Rows: { }
+
+Set 1444:
+	Set: { 34 59 }
+	Rows: { }
+
+Set 1445:
+	Set: { 34 60 }
+	Rows: { }
+
+Set 1446:
+	Set: { 35 36 }
+	Rows: { }
+
+Set 1447:
+	Set: { 35 37 }
+	Rows: { }
+
+Set 1448:
+	Set: { 35 38 }
+	Rows: { }
+
+Set 1449:
+	Set: { 35 39 }
+	Rows: { }
+
+Set 1450:
+	Set: { 35 40 }
+	Rows: { }
+
+Set 1451:
+	Set: { 35 41 }
+	Rows: { }
+
+Set 1452:
+	Set: { 35 42 }
+	Rows: { }
+
+Set 1453:
+	Set: { 35 43 }
+	Rows: { }
+
+Set 1454:
+	Set: { 35 44 }
+	Rows: { }
+
+Set 1455:
+	Set: { 35 45 }
+	Rows: { }
+
+Set 1456:
+	Set: { 35 46 }
+	Rows: { }
+
+Set 1457:
+	Set: { 35 47 }
+	Rows: { }
+
+Set 1458:
+	Set: { 35 48 }
+	Rows: { }
+
+Set 1459:
+	Set: { 35 49 }
+	Rows: { }
+
+Set 1460:
+	Set: { 35 50 }
+	Rows: { }
+
+Set 1461:
+	Set: { 35 51 }
+	Rows: { }
+
+Set 1462:
+	Set: { 35 52 }
+	Rows: { }
+
+Set 1463:
+	Set: { 35 53 }
+	Rows: { }
+
+Set 1464:
+	Set: { 35 54 }
+	Rows: { }
+
+Set 1465:
+	Set: { 35 55 }
+	Rows: { }
+
+Set 1466:
+	Set: { 35 56 }
+	Rows: { }
+
+Set 1467:
+	Set: { 35 57 }
+	Rows: { }
+
+Set 1468:
+	Set: { 35 58 }
+	Rows: { }
+
+Set 1469:
+	Set: { 35 59 }
+	Rows: { }
+
+Set 1470:
+	Set: { 35 60 }
+	Rows: { }
+
+Set 1471:
+	Set: { 36 37 }
+	Rows: { }
+
+Set 1472:
+	Set: { 36 38 }
+	Rows: { }
+
+Set 1473:
+	Set: { 36 39 }
+	Rows: { }
+
+Set 1474:
+	Set: { 36 40 }
+	Rows: { }
+
+Set 1475:
+	Set: { 36 41 }
+	Rows: { }
+
+Set 1476:
+	Set: { 36 42 }
+	Rows: { }
+
+Set 1477:
+	Set: { 36 43 }
+	Rows: { }
+
+Set 1478:
+	Set: { 36 44 }
+	Rows: { }
+
+Set 1479:
+	Set: { 36 45 }
+	Rows: { }
+
+Set 1480:
+	Set: { 36 46 }
+	Rows: { }
+
+Set 1481:
+	Set: { 36 47 }
+	Rows: { }
+
+Set 1482:
+	Set: { 36 48 }
+	Rows: { }
+
+Set 1483:
+	Set: { 36 49 }
+	Rows: { }
+
+Set 1484:
+	Set: { 36 50 }
+	Rows: { }
+
+Set 1485:
+	Set: { 36 51 }
+	Rows: { }
+
+Set 1486:
+	Set: { 36 52 }
+	Rows: { }
+
+Set 1487:
+	Set: { 36 53 }
+	Rows: { }
+
+Set 1488:
+	Set: { 36 54 }
+	Rows: { }
+
+Set 1489:
+	Set: { 36 55 }
+	Rows: { }
+
+Set 1490:
+	Set: { 36 56 }
+	Rows: { }
+
+Set 1491:
+	Set: { 36 57 }
+	Rows: { }
+
+Set 1492:
+	Set: { 36 58 }
+	Rows: { }
+
+Set 1493:
+	Set: { 36 59 }
+	Rows: { }
+
+Set 1494:
+	Set: { 36 60 }
+	Rows: { }
+
+Set 1495:
+	Set: { 37 38 }
+	Rows: { }
+
+Set 1496:
+	Set: { 37 39 }
+	Rows: { }
+
+Set 1497:
+	Set: { 37 40 }
+	Rows: { }
+
+Set 1498:
+	Set: { 37 41 }
+	Rows: { }
+
+Set 1499:
+	Set: { 37 42 }
+	Rows: { }
+
+Set 1500:
+	Set: { 37 43 }
+	Rows: { }
+
+Set 1501:
+	Set: { 37 44 }
+	Rows: { }
+
+Set 1502:
+	Set: { 37 45 }
+	Rows: { }
+
+Set 1503:
+	Set: { 37 46 }
+	Rows: { }
+
+Set 1504:
+	Set: { 37 47 }
+	Rows: { }
+
+Set 1505:
+	Set: { 37 48 }
+	Rows: { }
+
+Set 1506:
+	Set: { 37 49 }
+	Rows: { }
+
+Set 1507:
+	Set: { 37 50 }
+	Rows: { }
+
+Set 1508:
+	Set: { 37 51 }
+	Rows: { }
+
+Set 1509:
+	Set: { 37 52 }
+	Rows: { }
+
+Set 1510:
+	Set: { 37 53 }
+	Rows: { }
+
+Set 1511:
+	Set: { 37 54 }
+	Rows: { }
+
+Set 1512:
+	Set: { 37 55 }
+	Rows: { }
+
+Set 1513:
+	Set: { 37 56 }
+	Rows: { }
+
+Set 1514:
+	Set: { 37 57 }
+	Rows: { }
+
+Set 1515:
+	Set: { 37 58 }
+	Rows: { }
+
+Set 1516:
+	Set: { 37 59 }
+	Rows: { }
+
+Set 1517:
+	Set: { 37 60 }
+	Rows: { }
+
+Set 1518:
+	Set: { 38 39 }
+	Rows: { }
+
+Set 1519:
+	Set: { 38 40 }
+	Rows: { }
+
+Set 1520:
+	Set: { 38 41 }
+	Rows: { }
+
+Set 1521:
+	Set: { 38 42 }
+	Rows: { }
+
+Set 1522:
+	Set: { 38 43 }
+	Rows: { }
+
+Set 1523:
+	Set: { 38 44 }
+	Rows: { }
+
+Set 1524:
+	Set: { 38 45 }
+	Rows: { }
+
+Set 1525:
+	Set: { 38 46 }
+	Rows: { }
+
+Set 1526:
+	Set: { 38 47 }
+	Rows: { }
+
+Set 1527:
+	Set: { 38 48 }
+	Rows: { }
+
+Set 1528:
+	Set: { 38 49 }
+	Rows: { }
+
+Set 1529:
+	Set: { 38 50 }
+	Rows: { }
+
+Set 1530:
+	Set: { 38 51 }
+	Rows: { }
+
+Set 1531:
+	Set: { 38 52 }
+	Rows: { }
+
+Set 1532:
+	Set: { 38 53 }
+	Rows: { }
+
+Set 1533:
+	Set: { 38 54 }
+	Rows: { }
+
+Set 1534:
+	Set: { 38 55 }
+	Rows: { }
+
+Set 1535:
+	Set: { 38 56 }
+	Rows: { }
+
+Set 1536:
+	Set: { 38 57 }
+	Rows: { }
+
+Set 1537:
+	Set: { 38 58 }
+	Rows: { }
+
+Set 1538:
+	Set: { 38 59 }
+	Rows: { }
+
+Set 1539:
+	Set: { 38 60 }
+	Rows: { }
+
+Set 1540:
+	Set: { 39 40 }
+	Rows: { }
+
+Set 1541:
+	Set: { 39 41 }
+	Rows: { }
+
+Set 1542:
+	Set: { 39 42 }
+	Rows: { }
+
+Set 1543:
+	Set: { 39 43 }
+	Rows: { }
+
+Set 1544:
+	Set: { 39 44 }
+	Rows: { }
+
+Set 1545:
+	Set: { 39 45 }
+	Rows: { }
+
+Set 1546:
+	Set: { 39 46 }
+	Rows: { }
+
+Set 1547:
+	Set: { 39 47 }
+	Rows: { }
+
+Set 1548:
+	Set: { 39 48 }
+	Rows: { }
+
+Set 1549:
+	Set: { 39 49 }
+	Rows: { }
+
+Set 1550:
+	Set: { 39 50 }
+	Rows: { }
+
+Set 1551:
+	Set: { 39 51 }
+	Rows: { }
+
+Set 1552:
+	Set: { 39 52 }
+	Rows: { }
+
+Set 1553:
+	Set: { 39 53 }
+	Rows: { }
+
+Set 1554:
+	Set: { 39 54 }
+	Rows: { }
+
+Set 1555:
+	Set: { 39 55 }
+	Rows: { }
+
+Set 1556:
+	Set: { 39 56 }
+	Rows: { }
+
+Set 1557:
+	Set: { 39 57 }
+	Rows: { }
+
+Set 1558:
+	Set: { 39 58 }
+	Rows: { }
+
+Set 1559:
+	Set: { 39 59 }
+	Rows: { }
+
+Set 1560:
+	Set: { 39 60 }
+	Rows: { }
+
+Set 1561:
+	Set: { 40 41 }
+	Rows: { }
+
+Set 1562:
+	Set: { 40 42 }
+	Rows: { }
+
+Set 1563:
+	Set: { 40 43 }
+	Rows: { }
+
+Set 1564:
+	Set: { 40 44 }
+	Rows: { }
+
+Set 1565:
+	Set: { 40 45 }
+	Rows: { }
+
+Set 1566:
+	Set: { 40 46 }
+	Rows: { }
+
+Set 1567:
+	Set: { 40 47 }
+	Rows: { }
+
+Set 1568:
+	Set: { 40 48 }
+	Rows: { }
+
+Set 1569:
+	Set: { 40 49 }
+	Rows: { }
+
+Set 1570:
+	Set: { 40 50 }
+	Rows: { }
+
+Set 1571:
+	Set: { 40 51 }
+	Rows: { }
+
+Set 1572:
+	Set: { 40 52 }
+	Rows: { }
+
+Set 1573:
+	Set: { 40 53 }
+	Rows: { }
+
+Set 1574:
+	Set: { 40 54 }
+	Rows: { }
+
+Set 1575:
+	Set: { 40 55 }
+	Rows: { }
+
+Set 1576:
+	Set: { 40 56 }
+	Rows: { }
+
+Set 1577:
+	Set: { 40 57 }
+	Rows: { }
+
+Set 1578:
+	Set: { 40 58 }
+	Rows: { }
+
+Set 1579:
+	Set: { 40 59 }
+	Rows: { }
+
+Set 1580:
+	Set: { 40 60 }
+	Rows: { }
+
+Set 1581:
+	Set: { 41 42 }
+	Rows: { }
+
+Set 1582:
+	Set: { 41 43 }
+	Rows: { }
+
+Set 1583:
+	Set: { 41 44 }
+	Rows: { }
+
+Set 1584:
+	Set: { 41 45 }
+	Rows: { }
+
+Set 1585:
+	Set: { 41 46 }
+	Rows: { }
+
+Set 1586:
+	Set: { 41 47 }
+	Rows: { }
+
+Set 1587:
+	Set: { 41 48 }
+	Rows: { }
+
+Set 1588:
+	Set: { 41 49 }
+	Rows: { }
+
+Set 1589:
+	Set: { 41 50 }
+	Rows: { }
+
+Set 1590:
+	Set: { 41 51 }
+	Rows: { }
+
+Set 1591:
+	Set: { 41 52 }
+	Rows: { }
+
+Set 1592:
+	Set: { 41 53 }
+	Rows: { }
+
+Set 1593:
+	Set: { 41 54 }
+	Rows: { }
+
+Set 1594:
+	Set: { 41 55 }
+	Rows: { }
+
+Set 1595:
+	Set: { 41 56 }
+	Rows: { }
+
+Set 1596:
+	Set: { 41 57 }
+	Rows: { }
+
+Set 1597:
+	Set: { 41 58 }
+	Rows: { }
+
+Set 1598:
+	Set: { 41 59 }
+	Rows: { }
+
+Set 1599:
+	Set: { 41 60 }
+	Rows: { }
+
+Set 1600:
+	Set: { 42 43 }
+	Rows: { }
+
+Set 1601:
+	Set: { 42 44 }
+	Rows: { }
+
+Set 1602:
+	Set: { 42 45 }
+	Rows: { }
+
+Set 1603:
+	Set: { 42 46 }
+	Rows: { }
+
+Set 1604:
+	Set: { 42 47 }
+	Rows: { }
+
+Set 1605:
+	Set: { 42 48 }
+	Rows: { }
+
+Set 1606:
+	Set: { 42 49 }
+	Rows: { }
+
+Set 1607:
+	Set: { 42 50 }
+	Rows: { }
+
+Set 1608:
+	Set: { 42 51 }
+	Rows: { }
+
+Set 1609:
+	Set: { 42 52 }
+	Rows: { }
+
+Set 1610:
+	Set: { 42 53 }
+	Rows: { }
+
+Set 1611:
+	Set: { 42 54 }
+	Rows: { }
+
+Set 1612:
+	Set: { 42 55 }
+	Rows: { }
+
+Set 1613:
+	Set: { 42 56 }
+	Rows: { }
+
+Set 1614:
+	Set: { 42 57 }
+	Rows: { }
+
+Set 1615:
+	Set: { 42 58 }
+	Rows: { }
+
+Set 1616:
+	Set: { 42 59 }
+	Rows: { }
+
+Set 1617:
+	Set: { 42 60 }
+	Rows: { }
+
+Set 1618:
+	Set: { 43 44 }
+	Rows: { }
+
+Set 1619:
+	Set: { 43 45 }
+	Rows: { }
+
+Set 1620:
+	Set: { 43 46 }
+	Rows: { }
+
+Set 1621:
+	Set: { 43 47 }
+	Rows: { }
+
+Set 1622:
+	Set: { 43 48 }
+	Rows: { }
+
+Set 1623:
+	Set: { 43 49 }
+	Rows: { }
+
+Set 1624:
+	Set: { 43 50 }
+	Rows: { }
+
+Set 1625:
+	Set: { 43 51 }
+	Rows: { }
+
+Set 1626:
+	Set: { 43 52 }
+	Rows: { }
+
+Set 1627:
+	Set: { 43 53 }
+	Rows: { }
+
+Set 1628:
+	Set: { 43 54 }
+	Rows: { }
+
+Set 1629:
+	Set: { 43 55 }
+	Rows: { }
+
+Set 1630:
+	Set: { 43 56 }
+	Rows: { }
+
+Set 1631:
+	Set: { 43 57 }
+	Rows: { }
+
+Set 1632:
+	Set: { 43 58 }
+	Rows: { }
+
+Set 1633:
+	Set: { 43 59 }
+	Rows: { }
+
+Set 1634:
+	Set: { 43 60 }
+	Rows: { }
+
+Set 1635:
+	Set: { 44 45 }
+	Rows: { }
+
+Set 1636:
+	Set: { 44 46 }
+	Rows: { }
+
+Set 1637:
+	Set: { 44 47 }
+	Rows: { }
+
+Set 1638:
+	Set: { 44 48 }
+	Rows: { }
+
+Set 1639:
+	Set: { 44 49 }
+	Rows: { }
+
+Set 1640:
+	Set: { 44 50 }
+	Rows: { }
+
+Set 1641:
+	Set: { 44 51 }
+	Rows: { }
+
+Set 1642:
+	Set: { 44 52 }
+	Rows: { }
+
+Set 1643:
+	Set: { 44 53 }
+	Rows: { }
+
+Set 1644:
+	Set: { 44 54 }
+	Rows: { }
+
+Set 1645:
+	Set: { 44 55 }
+	Rows: { }
+
+Set 1646:
+	Set: { 44 56 }
+	Rows: { }
+
+Set 1647:
+	Set: { 44 57 }
+	Rows: { }
+
+Set 1648:
+	Set: { 44 58 }
+	Rows: { }
+
+Set 1649:
+	Set: { 44 59 }
+	Rows: { }
+
+Set 1650:
+	Set: { 44 60 }
+	Rows: { }
+
+Set 1651:
+	Set: { 45 46 }
+	Rows: { }
+
+Set 1652:
+	Set: { 45 47 }
+	Rows: { }
+
+Set 1653:
+	Set: { 45 48 }
+	Rows: { }
+
+Set 1654:
+	Set: { 45 49 }
+	Rows: { }
+
+Set 1655:
+	Set: { 45 50 }
+	Rows: { }
+
+Set 1656:
+	Set: { 45 51 }
+	Rows: { }
+
+Set 1657:
+	Set: { 45 52 }
+	Rows: { }
+
+Set 1658:
+	Set: { 45 53 }
+	Rows: { }
+
+Set 1659:
+	Set: { 45 54 }
+	Rows: { }
+
+Set 1660:
+	Set: { 45 55 }
+	Rows: { }
+
+Set 1661:
+	Set: { 45 56 }
+	Rows: { }
+
+Set 1662:
+	Set: { 45 57 }
+	Rows: { }
+
+Set 1663:
+	Set: { 45 58 }
+	Rows: { }
+
+Set 1664:
+	Set: { 45 59 }
+	Rows: { }
+
+Set 1665:
+	Set: { 45 60 }
+	Rows: { }
+
+Set 1666:
+	Set: { 46 47 }
+	Rows: { }
+
+Set 1667:
+	Set: { 46 48 }
+	Rows: { }
+
+Set 1668:
+	Set: { 46 49 }
+	Rows: { }
+
+Set 1669:
+	Set: { 46 50 }
+	Rows: { }
+
+Set 1670:
+	Set: { 46 51 }
+	Rows: { }
+
+Set 1671:
+	Set: { 46 52 }
+	Rows: { }
+
+Set 1672:
+	Set: { 46 53 }
+	Rows: { }
+
+Set 1673:
+	Set: { 46 54 }
+	Rows: { }
+
+Set 1674:
+	Set: { 46 55 }
+	Rows: { }
+
+Set 1675:
+	Set: { 46 56 }
+	Rows: { }
+
+Set 1676:
+	Set: { 46 57 }
+	Rows: { }
+
+Set 1677:
+	Set: { 46 58 }
+	Rows: { }
+
+Set 1678:
+	Set: { 46 59 }
+	Rows: { }
+
+Set 1679:
+	Set: { 46 60 }
+	Rows: { }
+
+Set 1680:
+	Set: { 47 48 }
+	Rows: { }
+
+Set 1681:
+	Set: { 47 49 }
+	Rows: { }
+
+Set 1682:
+	Set: { 47 50 }
+	Rows: { }
+
+Set 1683:
+	Set: { 47 51 }
+	Rows: { }
+
+Set 1684:
+	Set: { 47 52 }
+	Rows: { }
+
+Set 1685:
+	Set: { 47 53 }
+	Rows: { }
+
+Set 1686:
+	Set: { 47 54 }
+	Rows: { }
+
+Set 1687:
+	Set: { 47 55 }
+	Rows: { }
+
+Set 1688:
+	Set: { 47 56 }
+	Rows: { }
+
+Set 1689:
+	Set: { 47 57 }
+	Rows: { }
+
+Set 1690:
+	Set: { 47 58 }
+	Rows: { }
+
+Set 1691:
+	Set: { 47 59 }
+	Rows: { }
+
+Set 1692:
+	Set: { 47 60 }
+	Rows: { }
+
+Set 1693:
+	Set: { 48 49 }
+	Rows: { }
+
+Set 1694:
+	Set: { 48 50 }
+	Rows: { }
+
+Set 1695:
+	Set: { 48 51 }
+	Rows: { }
+
+Set 1696:
+	Set: { 48 52 }
+	Rows: { }
+
+Set 1697:
+	Set: { 48 53 }
+	Rows: { }
+
+Set 1698:
+	Set: { 48 54 }
+	Rows: { }
+
+Set 1699:
+	Set: { 48 55 }
+	Rows: { }
+
+Set 1700:
+	Set: { 48 56 }
+	Rows: { }
+
+Set 1701:
+	Set: { 48 57 }
+	Rows: { }
+
+Set 1702:
+	Set: { 48 58 }
+	Rows: { }
+
+Set 1703:
+	Set: { 48 59 }
+	Rows: { }
+
+Set 1704:
+	Set: { 48 60 }
+	Rows: { }
+
+Set 1705:
+	Set: { 49 50 }
+	Rows: { }
+
+Set 1706:
+	Set: { 49 51 }
+	Rows: { }
+
+Set 1707:
+	Set: { 49 52 }
+	Rows: { }
+
+Set 1708:
+	Set: { 49 53 }
+	Rows: { }
+
+Set 1709:
+	Set: { 49 54 }
+	Rows: { }
+
+Set 1710:
+	Set: { 49 55 }
+	Rows: { }
+
+Set 1711:
+	Set: { 49 56 }
+	Rows: { }
+
+Set 1712:
+	Set: { 49 57 }
+	Rows: { }
+
+Set 1713:
+	Set: { 49 58 }
+	Rows: { }
+
+Set 1714:
+	Set: { 49 59 }
+	Rows: { }
+
+Set 1715:
+	Set: { 49 60 }
+	Rows: { }
+
+Set 1716:
+	Set: { 50 51 }
+	Rows: { }
+
+Set 1717:
+	Set: { 50 52 }
+	Rows: { }
+
+Set 1718:
+	Set: { 50 53 }
+	Rows: { }
+
+Set 1719:
+	Set: { 50 54 }
+	Rows: { }
+
+Set 1720:
+	Set: { 50 55 }
+	Rows: { }
+
+Set 1721:
+	Set: { 50 56 }
+	Rows: { }
+
+Set 1722:
+	Set: { 50 57 }
+	Rows: { }
+
+Set 1723:
+	Set: { 50 58 }
+	Rows: { }
+
+Set 1724:
+	Set: { 50 59 }
+	Rows: { }
+
+Set 1725:
+	Set: { 50 60 }
+	Rows: { }
+
+Set 1726:
+	Set: { 51 52 }
+	Rows: { }
+
+Set 1727:
+	Set: { 51 53 }
+	Rows: { }
+
+Set 1728:
+	Set: { 51 54 }
+	Rows: { }
+
+Set 1729:
+	Set: { 51 55 }
+	Rows: { }
+
+Set 1730:
+	Set: { 51 56 }
+	Rows: { }
+
+Set 1731:
+	Set: { 51 57 }
+	Rows: { }
+
+Set 1732:
+	Set: { 51 58 }
+	Rows: { }
+
+Set 1733:
+	Set: { 51 59 }
+	Rows: { }
+
+Set 1734:
+	Set: { 51 60 }
+	Rows: { }
+
+Set 1735:
+	Set: { 52 53 }
+	Rows: { }
+
+Set 1736:
+	Set: { 52 54 }
+	Rows: { }
+
+Set 1737:
+	Set: { 52 55 }
+	Rows: { }
+
+Set 1738:
+	Set: { 52 56 }
+	Rows: { }
+
+Set 1739:
+	Set: { 52 57 }
+	Rows: { }
+
+Set 1740:
+	Set: { 52 58 }
+	Rows: { }
+
+Set 1741:
+	Set: { 52 59 }
+	Rows: { }
+
+Set 1742:
+	Set: { 52 60 }
+	Rows: { }
+
+Set 1743:
+	Set: { 53 54 }
+	Rows: { }
+
+Set 1744:
+	Set: { 53 55 }
+	Rows: { }
+
+Set 1745:
+	Set: { 53 56 }
+	Rows: { }
+
+Set 1746:
+	Set: { 53 57 }
+	Rows: { }
+
+Set 1747:
+	Set: { 53 58 }
+	Rows: { }
+
+Set 1748:
+	Set: { 53 59 }
+	Rows: { }
+
+Set 1749:
+	Set: { 53 60 }
+	Rows: { }
+
+Set 1750:
+	Set: { 54 55 }
+	Rows: { }
+
+Set 1751:
+	Set: { 54 56 }
+	Rows: { }
+
+Set 1752:
+	Set: { 54 57 }
+	Rows: { }
+
+Set 1753:
+	Set: { 54 58 }
+	Rows: { }
+
+Set 1754:
+	Set: { 54 59 }
+	Rows: { }
+
+Set 1755:
+	Set: { 54 60 }
+	Rows: { }
+
+Set 1756:
+	Set: { 55 56 }
+	Rows: { }
+
+Set 1757:
+	Set: { 55 57 }
+	Rows: { }
+
+Set 1758:
+	Set: { 55 58 }
+	Rows: { }
+
+Set 1759:
+	Set: { 55 59 }
+	Rows: { }
+
+Set 1760:
+	Set: { 55 60 }
+	Rows: { }
+
+Set 1761:
+	Set: { 56 57 }
+	Rows: { }
+
+Set 1762:
+	Set: { 56 58 }
+	Rows: { }
+
+Set 1763:
+	Set: { 56 59 }
+	Rows: { }
+
+Set 1764:
+	Set: { 56 60 }
+	Rows: { }
+
+Set 1765:
+	Set: { 57 58 }
+	Rows: { }
+
+Set 1766:
+	Set: { 57 59 }
+	Rows: { }
+
+Set 1767:
+	Set: { 57 60 }
+	Rows: { }
+
+Set 1768:
+	Set: { 58 59 }
+	Rows: { }
+
+Set 1769:
+	Set: { 58 60 }
+	Rows: { }
+
+Set 1770:
+	Set: { 59 60 }
+	Rows: { }
+
+
+DEBUG: Interaction 1 is part of the following sets:
+	--> set 1: {1, 2}
+	--> set 2: {1, 3}
+	--> set 3: {1, 4}
+	--> set 4: {1, 5}
+	--> set 5: {1, 6}
+	--> set 6: {1, 7}
+	--> set 7: {1, 8}
+	--> set 8: {1, 9}
+	--> set 9: {1, 10}
+	--> set 10: {1, 11}
+	--> set 11: {1, 12}
+	--> set 12: {1, 13}
+	--> set 13: {1, 14}
+	--> set 14: {1, 15}
+	--> set 15: {1, 16}
+	--> set 16: {1, 17}
+	--> set 17: {1, 18}
+	--> set 18: {1, 19}
+	--> set 19: {1, 20}
+	--> set 20: {1, 21}
+	--> set 21: {1, 22}
+	--> set 22: {1, 23}
+	--> set 23: {1, 24}
+	--> set 24: {1, 25}
+	--> set 25: {1, 26}
+	--> set 26: {1, 27}
+	--> set 27: {1, 28}
+	--> set 28: {1, 29}
+	--> set 29: {1, 30}
+	--> set 30: {1, 31}
+	--> set 31: {1, 32}
+	--> set 32: {1, 33}
+	--> set 33: {1, 34}
+	--> set 34: {1, 35}
+	--> set 35: {1, 36}
+	--> set 36: {1, 37}
+	--> set 37: {1, 38}
+	--> set 38: {1, 39}
+	--> set 39: {1, 40}
+	--> set 40: {1, 41}
+	--> set 41: {1, 42}
+	--> set 42: {1, 43}
+	--> set 43: {1, 44}
+	--> set 44: {1, 45}
+	--> set 45: {1, 46}
+	--> set 46: {1, 47}
+	--> set 47: {1, 48}
+	--> set 48: {1, 49}
+	--> set 49: {1, 50}
+	--> set 50: {1, 51}
+	--> set 51: {1, 52}
+	--> set 52: {1, 53}
+	--> set 53: {1, 54}
+	--> set 54: {1, 55}
+	--> set 55: {1, 56}
+	--> set 56: {1, 57}
+	--> set 57: {1, 58}
+	--> set 58: {1, 59}
+	--> set 59: {1, 60}
+
+DEBUG: Interaction 2 is part of the following sets:
+	--> set 1: {1, 2}
+	--> set 60: {2, 3}
+	--> set 61: {2, 4}
+	--> set 62: {2, 5}
+	--> set 63: {2, 6}
+	--> set 64: {2, 7}
+	--> set 65: {2, 8}
+	--> set 66: {2, 9}
+	--> set 67: {2, 10}
+	--> set 68: {2, 11}
+	--> set 69: {2, 12}
+	--> set 70: {2, 13}
+	--> set 71: {2, 14}
+	--> set 72: {2, 15}
+	--> set 73: {2, 16}
+	--> set 74: {2, 17}
+	--> set 75: {2, 18}
+	--> set 76: {2, 19}
+	--> set 77: {2, 20}
+	--> set 78: {2, 21}
+	--> set 79: {2, 22}
+	--> set 80: {2, 23}
+	--> set 81: {2, 24}
+	--> set 82: {2, 25}
+	--> set 83: {2, 26}
+	--> set 84: {2, 27}
+	--> set 85: {2, 28}
+	--> set 86: {2, 29}
+	--> set 87: {2, 30}
+	--> set 88: {2, 31}
+	--> set 89: {2, 32}
+	--> set 90: {2, 33}
+	--> set 91: {2, 34}
+	--> set 92: {2, 35}
+	--> set 93: {2, 36}
+	--> set 94: {2, 37}
+	--> set 95: {2, 38}
+	--> set 96: {2, 39}
+	--> set 97: {2, 40}
+	--> set 98: {2, 41}
+	--> set 99: {2, 42}
+	--> set 100: {2, 43}
+	--> set 101: {2, 44}
+	--> set 102: {2, 45}
+	--> set 103: {2, 46}
+	--> set 104: {2, 47}
+	--> set 105: {2, 48}
+	--> set 106: {2, 49}
+	--> set 107: {2, 50}
+	--> set 108: {2, 51}
+	--> set 109: {2, 52}
+	--> set 110: {2, 53}
+	--> set 111: {2, 54}
+	--> set 112: {2, 55}
+	--> set 113: {2, 56}
+	--> set 114: {2, 57}
+	--> set 115: {2, 58}
+	--> set 116: {2, 59}
+	--> set 117: {2, 60}
+
+DEBUG: Interaction 3 is part of the following sets:
+	--> set 2: {1, 3}
+	--> set 60: {2, 3}
+	--> set 118: {3, 4}
+	--> set 119: {3, 5}
+	--> set 120: {3, 6}
+	--> set 121: {3, 7}
+	--> set 122: {3, 8}
+	--> set 123: {3, 9}
+	--> set 124: {3, 10}
+	--> set 125: {3, 11}
+	--> set 126: {3, 12}
+	--> set 127: {3, 13}
+	--> set 128: {3, 14}
+	--> set 129: {3, 15}
+	--> set 130: {3, 16}
+	--> set 131: {3, 17}
+	--> set 132: {3, 18}
+	--> set 133: {3, 19}
+	--> set 134: {3, 20}
+	--> set 135: {3, 21}
+	--> set 136: {3, 22}
+	--> set 137: {3, 23}
+	--> set 138: {3, 24}
+	--> set 139: {3, 25}
+	--> set 140: {3, 26}
+	--> set 141: {3, 27}
+	--> set 142: {3, 28}
+	--> set 143: {3, 29}
+	--> set 144: {3, 30}
+	--> set 145: {3, 31}
+	--> set 146: {3, 32}
+	--> set 147: {3, 33}
+	--> set 148: {3, 34}
+	--> set 149: {3, 35}
+	--> set 150: {3, 36}
+	--> set 151: {3, 37}
+	--> set 152: {3, 38}
+	--> set 153: {3, 39}
+	--> set 154: {3, 40}
+	--> set 155: {3, 41}
+	--> set 156: {3, 42}
+	--> set 157: {3, 43}
+	--> set 158: {3, 44}
+	--> set 159: {3, 45}
+	--> set 160: {3, 46}
+	--> set 161: {3, 47}
+	--> set 162: {3, 48}
+	--> set 163: {3, 49}
+	--> set 164: {3, 50}
+	--> set 165: {3, 51}
+	--> set 166: {3, 52}
+	--> set 167: {3, 53}
+	--> set 168: {3, 54}
+	--> set 169: {3, 55}
+	--> set 170: {3, 56}
+	--> set 171: {3, 57}
+	--> set 172: {3, 58}
+	--> set 173: {3, 59}
+	--> set 174: {3, 60}
+
+DEBUG: Interaction 4 is part of the following sets:
+	--> set 3: {1, 4}
+	--> set 61: {2, 4}
+	--> set 118: {3, 4}
+	--> set 175: {4, 5}
+	--> set 176: {4, 6}
+	--> set 177: {4, 7}
+	--> set 178: {4, 8}
+	--> set 179: {4, 9}
+	--> set 180: {4, 10}
+	--> set 181: {4, 11}
+	--> set 182: {4, 12}
+	--> set 183: {4, 13}
+	--> set 184: {4, 14}
+	--> set 185: {4, 15}
+	--> set 186: {4, 16}
+	--> set 187: {4, 17}
+	--> set 188: {4, 18}
+	--> set 189: {4, 19}
+	--> set 190: {4, 20}
+	--> set 191: {4, 21}
+	--> set 192: {4, 22}
+	--> set 193: {4, 23}
+	--> set 194: {4, 24}
+	--> set 195: {4, 25}
+	--> set 196: {4, 26}
+	--> set 197: {4, 27}
+	--> set 198: {4, 28}
+	--> set 199: {4, 29}
+	--> set 200: {4, 30}
+	--> set 201: {4, 31}
+	--> set 202: {4, 32}
+	--> set 203: {4, 33}
+	--> set 204: {4, 34}
+	--> set 205: {4, 35}
+	--> set 206: {4, 36}
+	--> set 207: {4, 37}
+	--> set 208: {4, 38}
+	--> set 209: {4, 39}
+	--> set 210: {4, 40}
+	--> set 211: {4, 41}
+	--> set 212: {4, 42}
+	--> set 213: {4, 43}
+	--> set 214: {4, 44}
+	--> set 215: {4, 45}
+	--> set 216: {4, 46}
+	--> set 217: {4, 47}
+	--> set 218: {4, 48}
+	--> set 219: {4, 49}
+	--> set 220: {4, 50}
+	--> set 221: {4, 51}
+	--> set 222: {4, 52}
+	--> set 223: {4, 53}
+	--> set 224: {4, 54}
+	--> set 225: {4, 55}
+	--> set 226: {4, 56}
+	--> set 227: {4, 57}
+	--> set 228: {4, 58}
+	--> set 229: {4, 59}
+	--> set 230: {4, 60}
+
+DEBUG: Interaction 5 is part of the following sets:
+	--> set 4: {1, 5}
+	--> set 62: {2, 5}
+	--> set 119: {3, 5}
+	--> set 175: {4, 5}
+	--> set 231: {5, 6}
+	--> set 232: {5, 7}
+	--> set 233: {5, 8}
+	--> set 234: {5, 9}
+	--> set 235: {5, 10}
+	--> set 236: {5, 11}
+	--> set 237: {5, 12}
+	--> set 238: {5, 13}
+	--> set 239: {5, 14}
+	--> set 240: {5, 15}
+	--> set 241: {5, 16}
+	--> set 242: {5, 17}
+	--> set 243: {5, 18}
+	--> set 244: {5, 19}
+	--> set 245: {5, 20}
+	--> set 246: {5, 21}
+	--> set 247: {5, 22}
+	--> set 248: {5, 23}
+	--> set 249: {5, 24}
+	--> set 250: {5, 25}
+	--> set 251: {5, 26}
+	--> set 252: {5, 27}
+	--> set 253: {5, 28}
+	--> set 254: {5, 29}
+	--> set 255: {5, 30}
+	--> set 256: {5, 31}
+	--> set 257: {5, 32}
+	--> set 258: {5, 33}
+	--> set 259: {5, 34}
+	--> set 260: {5, 35}
+	--> set 261: {5, 36}
+	--> set 262: {5, 37}
+	--> set 263: {5, 38}
+	--> set 264: {5, 39}
+	--> set 265: {5, 40}
+	--> set 266: {5, 41}
+	--> set 267: {5, 42}
+	--> set 268: {5, 43}
+	--> set 269: {5, 44}
+	--> set 270: {5, 45}
+	--> set 271: {5, 46}
+	--> set 272: {5, 47}
+	--> set 273: {5, 48}
+	--> set 274: {5, 49}
+	--> set 275: {5, 50}
+	--> set 276: {5, 51}
+	--> set 277: {5, 52}
+	--> set 278: {5, 53}
+	--> set 279: {5, 54}
+	--> set 280: {5, 55}
+	--> set 281: {5, 56}
+	--> set 282: {5, 57}
+	--> set 283: {5, 58}
+	--> set 284: {5, 59}
+	--> set 285: {5, 60}
+
+DEBUG: Interaction 6 is part of the following sets:
+	--> set 5: {1, 6}
+	--> set 63: {2, 6}
+	--> set 120: {3, 6}
+	--> set 176: {4, 6}
+	--> set 231: {5, 6}
+	--> set 286: {6, 7}
+	--> set 287: {6, 8}
+	--> set 288: {6, 9}
+	--> set 289: {6, 10}
+	--> set 290: {6, 11}
+	--> set 291: {6, 12}
+	--> set 292: {6, 13}
+	--> set 293: {6, 14}
+	--> set 294: {6, 15}
+	--> set 295: {6, 16}
+	--> set 296: {6, 17}
+	--> set 297: {6, 18}
+	--> set 298: {6, 19}
+	--> set 299: {6, 20}
+	--> set 300: {6, 21}
+	--> set 301: {6, 22}
+	--> set 302: {6, 23}
+	--> set 303: {6, 24}
+	--> set 304: {6, 25}
+	--> set 305: {6, 26}
+	--> set 306: {6, 27}
+	--> set 307: {6, 28}
+	--> set 308: {6, 29}
+	--> set 309: {6, 30}
+	--> set 310: {6, 31}
+	--> set 311: {6, 32}
+	--> set 312: {6, 33}
+	--> set 313: {6, 34}
+	--> set 314: {6, 35}
+	--> set 315: {6, 36}
+	--> set 316: {6, 37}
+	--> set 317: {6, 38}
+	--> set 318: {6, 39}
+	--> set 319: {6, 40}
+	--> set 320: {6, 41}
+	--> set 321: {6, 42}
+	--> set 322: {6, 43}
+	--> set 323: {6, 44}
+	--> set 324: {6, 45}
+	--> set 325: {6, 46}
+	--> set 326: {6, 47}
+	--> set 327: {6, 48}
+	--> set 328: {6, 49}
+	--> set 329: {6, 50}
+	--> set 330: {6, 51}
+	--> set 331: {6, 52}
+	--> set 332: {6, 53}
+	--> set 333: {6, 54}
+	--> set 334: {6, 55}
+	--> set 335: {6, 56}
+	--> set 336: {6, 57}
+	--> set 337: {6, 58}
+	--> set 338: {6, 59}
+	--> set 339: {6, 60}
+
+DEBUG: Interaction 7 is part of the following sets:
+	--> set 6: {1, 7}
+	--> set 64: {2, 7}
+	--> set 121: {3, 7}
+	--> set 177: {4, 7}
+	--> set 232: {5, 7}
+	--> set 286: {6, 7}
+	--> set 340: {7, 8}
+	--> set 341: {7, 9}
+	--> set 342: {7, 10}
+	--> set 343: {7, 11}
+	--> set 344: {7, 12}
+	--> set 345: {7, 13}
+	--> set 346: {7, 14}
+	--> set 347: {7, 15}
+	--> set 348: {7, 16}
+	--> set 349: {7, 17}
+	--> set 350: {7, 18}
+	--> set 351: {7, 19}
+	--> set 352: {7, 20}
+	--> set 353: {7, 21}
+	--> set 354: {7, 22}
+	--> set 355: {7, 23}
+	--> set 356: {7, 24}
+	--> set 357: {7, 25}
+	--> set 358: {7, 26}
+	--> set 359: {7, 27}
+	--> set 360: {7, 28}
+	--> set 361: {7, 29}
+	--> set 362: {7, 30}
+	--> set 363: {7, 31}
+	--> set 364: {7, 32}
+	--> set 365: {7, 33}
+	--> set 366: {7, 34}
+	--> set 367: {7, 35}
+	--> set 368: {7, 36}
+	--> set 369: {7, 37}
+	--> set 370: {7, 38}
+	--> set 371: {7, 39}
+	--> set 372: {7, 40}
+	--> set 373: {7, 41}
+	--> set 374: {7, 42}
+	--> set 375: {7, 43}
+	--> set 376: {7, 44}
+	--> set 377: {7, 45}
+	--> set 378: {7, 46}
+	--> set 379: {7, 47}
+	--> set 380: {7, 48}
+	--> set 381: {7, 49}
+	--> set 382: {7, 50}
+	--> set 383: {7, 51}
+	--> set 384: {7, 52}
+	--> set 385: {7, 53}
+	--> set 386: {7, 54}
+	--> set 387: {7, 55}
+	--> set 388: {7, 56}
+	--> set 389: {7, 57}
+	--> set 390: {7, 58}
+	--> set 391: {7, 59}
+	--> set 392: {7, 60}
+
+DEBUG: Interaction 8 is part of the following sets:
+	--> set 7: {1, 8}
+	--> set 65: {2, 8}
+	--> set 122: {3, 8}
+	--> set 178: {4, 8}
+	--> set 233: {5, 8}
+	--> set 287: {6, 8}
+	--> set 340: {7, 8}
+	--> set 393: {8, 9}
+	--> set 394: {8, 10}
+	--> set 395: {8, 11}
+	--> set 396: {8, 12}
+	--> set 397: {8, 13}
+	--> set 398: {8, 14}
+	--> set 399: {8, 15}
+	--> set 400: {8, 16}
+	--> set 401: {8, 17}
+	--> set 402: {8, 18}
+	--> set 403: {8, 19}
+	--> set 404: {8, 20}
+	--> set 405: {8, 21}
+	--> set 406: {8, 22}
+	--> set 407: {8, 23}
+	--> set 408: {8, 24}
+	--> set 409: {8, 25}
+	--> set 410: {8, 26}
+	--> set 411: {8, 27}
+	--> set 412: {8, 28}
+	--> set 413: {8, 29}
+	--> set 414: {8, 30}
+	--> set 415: {8, 31}
+	--> set 416: {8, 32}
+	--> set 417: {8, 33}
+	--> set 418: {8, 34}
+	--> set 419: {8, 35}
+	--> set 420: {8, 36}
+	--> set 421: {8, 37}
+	--> set 422: {8, 38}
+	--> set 423: {8, 39}
+	--> set 424: {8, 40}
+	--> set 425: {8, 41}
+	--> set 426: {8, 42}
+	--> set 427: {8, 43}
+	--> set 428: {8, 44}
+	--> set 429: {8, 45}
+	--> set 430: {8, 46}
+	--> set 431: {8, 47}
+	--> set 432: {8, 48}
+	--> set 433: {8, 49}
+	--> set 434: {8, 50}
+	--> set 435: {8, 51}
+	--> set 436: {8, 52}
+	--> set 437: {8, 53}
+	--> set 438: {8, 54}
+	--> set 439: {8, 55}
+	--> set 440: {8, 56}
+	--> set 441: {8, 57}
+	--> set 442: {8, 58}
+	--> set 443: {8, 59}
+	--> set 444: {8, 60}
+
+DEBUG: Interaction 9 is part of the following sets:
+	--> set 8: {1, 9}
+	--> set 66: {2, 9}
+	--> set 123: {3, 9}
+	--> set 179: {4, 9}
+	--> set 234: {5, 9}
+	--> set 288: {6, 9}
+	--> set 341: {7, 9}
+	--> set 393: {8, 9}
+	--> set 445: {9, 10}
+	--> set 446: {9, 11}
+	--> set 447: {9, 12}
+	--> set 448: {9, 13}
+	--> set 449: {9, 14}
+	--> set 450: {9, 15}
+	--> set 451: {9, 16}
+	--> set 452: {9, 17}
+	--> set 453: {9, 18}
+	--> set 454: {9, 19}
+	--> set 455: {9, 20}
+	--> set 456: {9, 21}
+	--> set 457: {9, 22}
+	--> set 458: {9, 23}
+	--> set 459: {9, 24}
+	--> set 460: {9, 25}
+	--> set 461: {9, 26}
+	--> set 462: {9, 27}
+	--> set 463: {9, 28}
+	--> set 464: {9, 29}
+	--> set 465: {9, 30}
+	--> set 466: {9, 31}
+	--> set 467: {9, 32}
+	--> set 468: {9, 33}
+	--> set 469: {9, 34}
+	--> set 470: {9, 35}
+	--> set 471: {9, 36}
+	--> set 472: {9, 37}
+	--> set 473: {9, 38}
+	--> set 474: {9, 39}
+	--> set 475: {9, 40}
+	--> set 476: {9, 41}
+	--> set 477: {9, 42}
+	--> set 478: {9, 43}
+	--> set 479: {9, 44}
+	--> set 480: {9, 45}
+	--> set 481: {9, 46}
+	--> set 482: {9, 47}
+	--> set 483: {9, 48}
+	--> set 484: {9, 49}
+	--> set 485: {9, 50}
+	--> set 486: {9, 51}
+	--> set 487: {9, 52}
+	--> set 488: {9, 53}
+	--> set 489: {9, 54}
+	--> set 490: {9, 55}
+	--> set 491: {9, 56}
+	--> set 492: {9, 57}
+	--> set 493: {9, 58}
+	--> set 494: {9, 59}
+	--> set 495: {9, 60}
+
+DEBUG: Interaction 10 is part of the following sets:
+	--> set 9: {1, 10}
+	--> set 67: {2, 10}
+	--> set 124: {3, 10}
+	--> set 180: {4, 10}
+	--> set 235: {5, 10}
+	--> set 289: {6, 10}
+	--> set 342: {7, 10}
+	--> set 394: {8, 10}
+	--> set 445: {9, 10}
+	--> set 496: {10, 11}
+	--> set 497: {10, 12}
+	--> set 498: {10, 13}
+	--> set 499: {10, 14}
+	--> set 500: {10, 15}
+	--> set 501: {10, 16}
+	--> set 502: {10, 17}
+	--> set 503: {10, 18}
+	--> set 504: {10, 19}
+	--> set 505: {10, 20}
+	--> set 506: {10, 21}
+	--> set 507: {10, 22}
+	--> set 508: {10, 23}
+	--> set 509: {10, 24}
+	--> set 510: {10, 25}
+	--> set 511: {10, 26}
+	--> set 512: {10, 27}
+	--> set 513: {10, 28}
+	--> set 514: {10, 29}
+	--> set 515: {10, 30}
+	--> set 516: {10, 31}
+	--> set 517: {10, 32}
+	--> set 518: {10, 33}
+	--> set 519: {10, 34}
+	--> set 520: {10, 35}
+	--> set 521: {10, 36}
+	--> set 522: {10, 37}
+	--> set 523: {10, 38}
+	--> set 524: {10, 39}
+	--> set 525: {10, 40}
+	--> set 526: {10, 41}
+	--> set 527: {10, 42}
+	--> set 528: {10, 43}
+	--> set 529: {10, 44}
+	--> set 530: {10, 45}
+	--> set 531: {10, 46}
+	--> set 532: {10, 47}
+	--> set 533: {10, 48}
+	--> set 534: {10, 49}
+	--> set 535: {10, 50}
+	--> set 536: {10, 51}
+	--> set 537: {10, 52}
+	--> set 538: {10, 53}
+	--> set 539: {10, 54}
+	--> set 540: {10, 55}
+	--> set 541: {10, 56}
+	--> set 542: {10, 57}
+	--> set 543: {10, 58}
+	--> set 544: {10, 59}
+	--> set 545: {10, 60}
+
+DEBUG: Interaction 11 is part of the following sets:
+	--> set 10: {1, 11}
+	--> set 68: {2, 11}
+	--> set 125: {3, 11}
+	--> set 181: {4, 11}
+	--> set 236: {5, 11}
+	--> set 290: {6, 11}
+	--> set 343: {7, 11}
+	--> set 395: {8, 11}
+	--> set 446: {9, 11}
+	--> set 496: {10, 11}
+	--> set 546: {11, 12}
+	--> set 547: {11, 13}
+	--> set 548: {11, 14}
+	--> set 549: {11, 15}
+	--> set 550: {11, 16}
+	--> set 551: {11, 17}
+	--> set 552: {11, 18}
+	--> set 553: {11, 19}
+	--> set 554: {11, 20}
+	--> set 555: {11, 21}
+	--> set 556: {11, 22}
+	--> set 557: {11, 23}
+	--> set 558: {11, 24}
+	--> set 559: {11, 25}
+	--> set 560: {11, 26}
+	--> set 561: {11, 27}
+	--> set 562: {11, 28}
+	--> set 563: {11, 29}
+	--> set 564: {11, 30}
+	--> set 565: {11, 31}
+	--> set 566: {11, 32}
+	--> set 567: {11, 33}
+	--> set 568: {11, 34}
+	--> set 569: {11, 35}
+	--> set 570: {11, 36}
+	--> set 571: {11, 37}
+	--> set 572: {11, 38}
+	--> set 573: {11, 39}
+	--> set 574: {11, 40}
+	--> set 575: {11, 41}
+	--> set 576: {11, 42}
+	--> set 577: {11, 43}
+	--> set 578: {11, 44}
+	--> set 579: {11, 45}
+	--> set 580: {11, 46}
+	--> set 581: {11, 47}
+	--> set 582: {11, 48}
+	--> set 583: {11, 49}
+	--> set 584: {11, 50}
+	--> set 585: {11, 51}
+	--> set 586: {11, 52}
+	--> set 587: {11, 53}
+	--> set 588: {11, 54}
+	--> set 589: {11, 55}
+	--> set 590: {11, 56}
+	--> set 591: {11, 57}
+	--> set 592: {11, 58}
+	--> set 593: {11, 59}
+	--> set 594: {11, 60}
+
+DEBUG: Interaction 12 is part of the following sets:
+	--> set 11: {1, 12}
+	--> set 69: {2, 12}
+	--> set 126: {3, 12}
+	--> set 182: {4, 12}
+	--> set 237: {5, 12}
+	--> set 291: {6, 12}
+	--> set 344: {7, 12}
+	--> set 396: {8, 12}
+	--> set 447: {9, 12}
+	--> set 497: {10, 12}
+	--> set 546: {11, 12}
+	--> set 595: {12, 13}
+	--> set 596: {12, 14}
+	--> set 597: {12, 15}
+	--> set 598: {12, 16}
+	--> set 599: {12, 17}
+	--> set 600: {12, 18}
+	--> set 601: {12, 19}
+	--> set 602: {12, 20}
+	--> set 603: {12, 21}
+	--> set 604: {12, 22}
+	--> set 605: {12, 23}
+	--> set 606: {12, 24}
+	--> set 607: {12, 25}
+	--> set 608: {12, 26}
+	--> set 609: {12, 27}
+	--> set 610: {12, 28}
+	--> set 611: {12, 29}
+	--> set 612: {12, 30}
+	--> set 613: {12, 31}
+	--> set 614: {12, 32}
+	--> set 615: {12, 33}
+	--> set 616: {12, 34}
+	--> set 617: {12, 35}
+	--> set 618: {12, 36}
+	--> set 619: {12, 37}
+	--> set 620: {12, 38}
+	--> set 621: {12, 39}
+	--> set 622: {12, 40}
+	--> set 623: {12, 41}
+	--> set 624: {12, 42}
+	--> set 625: {12, 43}
+	--> set 626: {12, 44}
+	--> set 627: {12, 45}
+	--> set 628: {12, 46}
+	--> set 629: {12, 47}
+	--> set 630: {12, 48}
+	--> set 631: {12, 49}
+	--> set 632: {12, 50}
+	--> set 633: {12, 51}
+	--> set 634: {12, 52}
+	--> set 635: {12, 53}
+	--> set 636: {12, 54}
+	--> set 637: {12, 55}
+	--> set 638: {12, 56}
+	--> set 639: {12, 57}
+	--> set 640: {12, 58}
+	--> set 641: {12, 59}
+	--> set 642: {12, 60}
+
+DEBUG: Interaction 13 is part of the following sets:
+	--> set 12: {1, 13}
+	--> set 70: {2, 13}
+	--> set 127: {3, 13}
+	--> set 183: {4, 13}
+	--> set 238: {5, 13}
+	--> set 292: {6, 13}
+	--> set 345: {7, 13}
+	--> set 397: {8, 13}
+	--> set 448: {9, 13}
+	--> set 498: {10, 13}
+	--> set 547: {11, 13}
+	--> set 595: {12, 13}
+	--> set 643: {13, 14}
+	--> set 644: {13, 15}
+	--> set 645: {13, 16}
+	--> set 646: {13, 17}
+	--> set 647: {13, 18}
+	--> set 648: {13, 19}
+	--> set 649: {13, 20}
+	--> set 650: {13, 21}
+	--> set 651: {13, 22}
+	--> set 652: {13, 23}
+	--> set 653: {13, 24}
+	--> set 654: {13, 25}
+	--> set 655: {13, 26}
+	--> set 656: {13, 27}
+	--> set 657: {13, 28}
+	--> set 658: {13, 29}
+	--> set 659: {13, 30}
+	--> set 660: {13, 31}
+	--> set 661: {13, 32}
+	--> set 662: {13, 33}
+	--> set 663: {13, 34}
+	--> set 664: {13, 35}
+	--> set 665: {13, 36}
+	--> set 666: {13, 37}
+	--> set 667: {13, 38}
+	--> set 668: {13, 39}
+	--> set 669: {13, 40}
+	--> set 670: {13, 41}
+	--> set 671: {13, 42}
+	--> set 672: {13, 43}
+	--> set 673: {13, 44}
+	--> set 674: {13, 45}
+	--> set 675: {13, 46}
+	--> set 676: {13, 47}
+	--> set 677: {13, 48}
+	--> set 678: {13, 49}
+	--> set 679: {13, 50}
+	--> set 680: {13, 51}
+	--> set 681: {13, 52}
+	--> set 682: {13, 53}
+	--> set 683: {13, 54}
+	--> set 684: {13, 55}
+	--> set 685: {13, 56}
+	--> set 686: {13, 57}
+	--> set 687: {13, 58}
+	--> set 688: {13, 59}
+	--> set 689: {13, 60}
+
+DEBUG: Interaction 14 is part of the following sets:
+	--> set 13: {1, 14}
+	--> set 71: {2, 14}
+	--> set 128: {3, 14}
+	--> set 184: {4, 14}
+	--> set 239: {5, 14}
+	--> set 293: {6, 14}
+	--> set 346: {7, 14}
+	--> set 398: {8, 14}
+	--> set 449: {9, 14}
+	--> set 499: {10, 14}
+	--> set 548: {11, 14}
+	--> set 596: {12, 14}
+	--> set 643: {13, 14}
+	--> set 690: {14, 15}
+	--> set 691: {14, 16}
+	--> set 692: {14, 17}
+	--> set 693: {14, 18}
+	--> set 694: {14, 19}
+	--> set 695: {14, 20}
+	--> set 696: {14, 21}
+	--> set 697: {14, 22}
+	--> set 698: {14, 23}
+	--> set 699: {14, 24}
+	--> set 700: {14, 25}
+	--> set 701: {14, 26}
+	--> set 702: {14, 27}
+	--> set 703: {14, 28}
+	--> set 704: {14, 29}
+	--> set 705: {14, 30}
+	--> set 706: {14, 31}
+	--> set 707: {14, 32}
+	--> set 708: {14, 33}
+	--> set 709: {14, 34}
+	--> set 710: {14, 35}
+	--> set 711: {14, 36}
+	--> set 712: {14, 37}
+	--> set 713: {14, 38}
+	--> set 714: {14, 39}
+	--> set 715: {14, 40}
+	--> set 716: {14, 41}
+	--> set 717: {14, 42}
+	--> set 718: {14, 43}
+	--> set 719: {14, 44}
+	--> set 720: {14, 45}
+	--> set 721: {14, 46}
+	--> set 722: {14, 47}
+	--> set 723: {14, 48}
+	--> set 724: {14, 49}
+	--> set 725: {14, 50}
+	--> set 726: {14, 51}
+	--> set 727: {14, 52}
+	--> set 728: {14, 53}
+	--> set 729: {14, 54}
+	--> set 730: {14, 55}
+	--> set 731: {14, 56}
+	--> set 732: {14, 57}
+	--> set 733: {14, 58}
+	--> set 734: {14, 59}
+	--> set 735: {14, 60}
+
+DEBUG: Interaction 15 is part of the following sets:
+	--> set 14: {1, 15}
+	--> set 72: {2, 15}
+	--> set 129: {3, 15}
+	--> set 185: {4, 15}
+	--> set 240: {5, 15}
+	--> set 294: {6, 15}
+	--> set 347: {7, 15}
+	--> set 399: {8, 15}
+	--> set 450: {9, 15}
+	--> set 500: {10, 15}
+	--> set 549: {11, 15}
+	--> set 597: {12, 15}
+	--> set 644: {13, 15}
+	--> set 690: {14, 15}
+	--> set 736: {15, 16}
+	--> set 737: {15, 17}
+	--> set 738: {15, 18}
+	--> set 739: {15, 19}
+	--> set 740: {15, 20}
+	--> set 741: {15, 21}
+	--> set 742: {15, 22}
+	--> set 743: {15, 23}
+	--> set 744: {15, 24}
+	--> set 745: {15, 25}
+	--> set 746: {15, 26}
+	--> set 747: {15, 27}
+	--> set 748: {15, 28}
+	--> set 749: {15, 29}
+	--> set 750: {15, 30}
+	--> set 751: {15, 31}
+	--> set 752: {15, 32}
+	--> set 753: {15, 33}
+	--> set 754: {15, 34}
+	--> set 755: {15, 35}
+	--> set 756: {15, 36}
+	--> set 757: {15, 37}
+	--> set 758: {15, 38}
+	--> set 759: {15, 39}
+	--> set 760: {15, 40}
+	--> set 761: {15, 41}
+	--> set 762: {15, 42}
+	--> set 763: {15, 43}
+	--> set 764: {15, 44}
+	--> set 765: {15, 45}
+	--> set 766: {15, 46}
+	--> set 767: {15, 47}
+	--> set 768: {15, 48}
+	--> set 769: {15, 49}
+	--> set 770: {15, 50}
+	--> set 771: {15, 51}
+	--> set 772: {15, 52}
+	--> set 773: {15, 53}
+	--> set 774: {15, 54}
+	--> set 775: {15, 55}
+	--> set 776: {15, 56}
+	--> set 777: {15, 57}
+	--> set 778: {15, 58}
+	--> set 779: {15, 59}
+	--> set 780: {15, 60}
+
+DEBUG: Interaction 16 is part of the following sets:
+	--> set 15: {1, 16}
+	--> set 73: {2, 16}
+	--> set 130: {3, 16}
+	--> set 186: {4, 16}
+	--> set 241: {5, 16}
+	--> set 295: {6, 16}
+	--> set 348: {7, 16}
+	--> set 400: {8, 16}
+	--> set 451: {9, 16}
+	--> set 501: {10, 16}
+	--> set 550: {11, 16}
+	--> set 598: {12, 16}
+	--> set 645: {13, 16}
+	--> set 691: {14, 16}
+	--> set 736: {15, 16}
+	--> set 781: {16, 17}
+	--> set 782: {16, 18}
+	--> set 783: {16, 19}
+	--> set 784: {16, 20}
+	--> set 785: {16, 21}
+	--> set 786: {16, 22}
+	--> set 787: {16, 23}
+	--> set 788: {16, 24}
+	--> set 789: {16, 25}
+	--> set 790: {16, 26}
+	--> set 791: {16, 27}
+	--> set 792: {16, 28}
+	--> set 793: {16, 29}
+	--> set 794: {16, 30}
+	--> set 795: {16, 31}
+	--> set 796: {16, 32}
+	--> set 797: {16, 33}
+	--> set 798: {16, 34}
+	--> set 799: {16, 35}
+	--> set 800: {16, 36}
+	--> set 801: {16, 37}
+	--> set 802: {16, 38}
+	--> set 803: {16, 39}
+	--> set 804: {16, 40}
+	--> set 805: {16, 41}
+	--> set 806: {16, 42}
+	--> set 807: {16, 43}
+	--> set 808: {16, 44}
+	--> set 809: {16, 45}
+	--> set 810: {16, 46}
+	--> set 811: {16, 47}
+	--> set 812: {16, 48}
+	--> set 813: {16, 49}
+	--> set 814: {16, 50}
+	--> set 815: {16, 51}
+	--> set 816: {16, 52}
+	--> set 817: {16, 53}
+	--> set 818: {16, 54}
+	--> set 819: {16, 55}
+	--> set 820: {16, 56}
+	--> set 821: {16, 57}
+	--> set 822: {16, 58}
+	--> set 823: {16, 59}
+	--> set 824: {16, 60}
+
+DEBUG: Interaction 17 is part of the following sets:
+	--> set 16: {1, 17}
+	--> set 74: {2, 17}
+	--> set 131: {3, 17}
+	--> set 187: {4, 17}
+	--> set 242: {5, 17}
+	--> set 296: {6, 17}
+	--> set 349: {7, 17}
+	--> set 401: {8, 17}
+	--> set 452: {9, 17}
+	--> set 502: {10, 17}
+	--> set 551: {11, 17}
+	--> set 599: {12, 17}
+	--> set 646: {13, 17}
+	--> set 692: {14, 17}
+	--> set 737: {15, 17}
+	--> set 781: {16, 17}
+	--> set 825: {17, 18}
+	--> set 826: {17, 19}
+	--> set 827: {17, 20}
+	--> set 828: {17, 21}
+	--> set 829: {17, 22}
+	--> set 830: {17, 23}
+	--> set 831: {17, 24}
+	--> set 832: {17, 25}
+	--> set 833: {17, 26}
+	--> set 834: {17, 27}
+	--> set 835: {17, 28}
+	--> set 836: {17, 29}
+	--> set 837: {17, 30}
+	--> set 838: {17, 31}
+	--> set 839: {17, 32}
+	--> set 840: {17, 33}
+	--> set 841: {17, 34}
+	--> set 842: {17, 35}
+	--> set 843: {17, 36}
+	--> set 844: {17, 37}
+	--> set 845: {17, 38}
+	--> set 846: {17, 39}
+	--> set 847: {17, 40}
+	--> set 848: {17, 41}
+	--> set 849: {17, 42}
+	--> set 850: {17, 43}
+	--> set 851: {17, 44}
+	--> set 852: {17, 45}
+	--> set 853: {17, 46}
+	--> set 854: {17, 47}
+	--> set 855: {17, 48}
+	--> set 856: {17, 49}
+	--> set 857: {17, 50}
+	--> set 858: {17, 51}
+	--> set 859: {17, 52}
+	--> set 860: {17, 53}
+	--> set 861: {17, 54}
+	--> set 862: {17, 55}
+	--> set 863: {17, 56}
+	--> set 864: {17, 57}
+	--> set 865: {17, 58}
+	--> set 866: {17, 59}
+	--> set 867: {17, 60}
+
+DEBUG: Interaction 18 is part of the following sets:
+	--> set 17: {1, 18}
+	--> set 75: {2, 18}
+	--> set 132: {3, 18}
+	--> set 188: {4, 18}
+	--> set 243: {5, 18}
+	--> set 297: {6, 18}
+	--> set 350: {7, 18}
+	--> set 402: {8, 18}
+	--> set 453: {9, 18}
+	--> set 503: {10, 18}
+	--> set 552: {11, 18}
+	--> set 600: {12, 18}
+	--> set 647: {13, 18}
+	--> set 693: {14, 18}
+	--> set 738: {15, 18}
+	--> set 782: {16, 18}
+	--> set 825: {17, 18}
+	--> set 868: {18, 19}
+	--> set 869: {18, 20}
+	--> set 870: {18, 21}
+	--> set 871: {18, 22}
+	--> set 872: {18, 23}
+	--> set 873: {18, 24}
+	--> set 874: {18, 25}
+	--> set 875: {18, 26}
+	--> set 876: {18, 27}
+	--> set 877: {18, 28}
+	--> set 878: {18, 29}
+	--> set 879: {18, 30}
+	--> set 880: {18, 31}
+	--> set 881: {18, 32}
+	--> set 882: {18, 33}
+	--> set 883: {18, 34}
+	--> set 884: {18, 35}
+	--> set 885: {18, 36}
+	--> set 886: {18, 37}
+	--> set 887: {18, 38}
+	--> set 888: {18, 39}
+	--> set 889: {18, 40}
+	--> set 890: {18, 41}
+	--> set 891: {18, 42}
+	--> set 892: {18, 43}
+	--> set 893: {18, 44}
+	--> set 894: {18, 45}
+	--> set 895: {18, 46}
+	--> set 896: {18, 47}
+	--> set 897: {18, 48}
+	--> set 898: {18, 49}
+	--> set 899: {18, 50}
+	--> set 900: {18, 51}
+	--> set 901: {18, 52}
+	--> set 902: {18, 53}
+	--> set 903: {18, 54}
+	--> set 904: {18, 55}
+	--> set 905: {18, 56}
+	--> set 906: {18, 57}
+	--> set 907: {18, 58}
+	--> set 908: {18, 59}
+	--> set 909: {18, 60}
+
+DEBUG: Interaction 19 is part of the following sets:
+	--> set 18: {1, 19}
+	--> set 76: {2, 19}
+	--> set 133: {3, 19}
+	--> set 189: {4, 19}
+	--> set 244: {5, 19}
+	--> set 298: {6, 19}
+	--> set 351: {7, 19}
+	--> set 403: {8, 19}
+	--> set 454: {9, 19}
+	--> set 504: {10, 19}
+	--> set 553: {11, 19}
+	--> set 601: {12, 19}
+	--> set 648: {13, 19}
+	--> set 694: {14, 19}
+	--> set 739: {15, 19}
+	--> set 783: {16, 19}
+	--> set 826: {17, 19}
+	--> set 868: {18, 19}
+	--> set 910: {19, 20}
+	--> set 911: {19, 21}
+	--> set 912: {19, 22}
+	--> set 913: {19, 23}
+	--> set 914: {19, 24}
+	--> set 915: {19, 25}
+	--> set 916: {19, 26}
+	--> set 917: {19, 27}
+	--> set 918: {19, 28}
+	--> set 919: {19, 29}
+	--> set 920: {19, 30}
+	--> set 921: {19, 31}
+	--> set 922: {19, 32}
+	--> set 923: {19, 33}
+	--> set 924: {19, 34}
+	--> set 925: {19, 35}
+	--> set 926: {19, 36}
+	--> set 927: {19, 37}
+	--> set 928: {19, 38}
+	--> set 929: {19, 39}
+	--> set 930: {19, 40}
+	--> set 931: {19, 41}
+	--> set 932: {19, 42}
+	--> set 933: {19, 43}
+	--> set 934: {19, 44}
+	--> set 935: {19, 45}
+	--> set 936: {19, 46}
+	--> set 937: {19, 47}
+	--> set 938: {19, 48}
+	--> set 939: {19, 49}
+	--> set 940: {19, 50}
+	--> set 941: {19, 51}
+	--> set 942: {19, 52}
+	--> set 943: {19, 53}
+	--> set 944: {19, 54}
+	--> set 945: {19, 55}
+	--> set 946: {19, 56}
+	--> set 947: {19, 57}
+	--> set 948: {19, 58}
+	--> set 949: {19, 59}
+	--> set 950: {19, 60}
+
+DEBUG: Interaction 20 is part of the following sets:
+	--> set 19: {1, 20}
+	--> set 77: {2, 20}
+	--> set 134: {3, 20}
+	--> set 190: {4, 20}
+	--> set 245: {5, 20}
+	--> set 299: {6, 20}
+	--> set 352: {7, 20}
+	--> set 404: {8, 20}
+	--> set 455: {9, 20}
+	--> set 505: {10, 20}
+	--> set 554: {11, 20}
+	--> set 602: {12, 20}
+	--> set 649: {13, 20}
+	--> set 695: {14, 20}
+	--> set 740: {15, 20}
+	--> set 784: {16, 20}
+	--> set 827: {17, 20}
+	--> set 869: {18, 20}
+	--> set 910: {19, 20}
+	--> set 951: {20, 21}
+	--> set 952: {20, 22}
+	--> set 953: {20, 23}
+	--> set 954: {20, 24}
+	--> set 955: {20, 25}
+	--> set 956: {20, 26}
+	--> set 957: {20, 27}
+	--> set 958: {20, 28}
+	--> set 959: {20, 29}
+	--> set 960: {20, 30}
+	--> set 961: {20, 31}
+	--> set 962: {20, 32}
+	--> set 963: {20, 33}
+	--> set 964: {20, 34}
+	--> set 965: {20, 35}
+	--> set 966: {20, 36}
+	--> set 967: {20, 37}
+	--> set 968: {20, 38}
+	--> set 969: {20, 39}
+	--> set 970: {20, 40}
+	--> set 971: {20, 41}
+	--> set 972: {20, 42}
+	--> set 973: {20, 43}
+	--> set 974: {20, 44}
+	--> set 975: {20, 45}
+	--> set 976: {20, 46}
+	--> set 977: {20, 47}
+	--> set 978: {20, 48}
+	--> set 979: {20, 49}
+	--> set 980: {20, 50}
+	--> set 981: {20, 51}
+	--> set 982: {20, 52}
+	--> set 983: {20, 53}
+	--> set 984: {20, 54}
+	--> set 985: {20, 55}
+	--> set 986: {20, 56}
+	--> set 987: {20, 57}
+	--> set 988: {20, 58}
+	--> set 989: {20, 59}
+	--> set 990: {20, 60}
+
+DEBUG: Interaction 21 is part of the following sets:
+	--> set 20: {1, 21}
+	--> set 78: {2, 21}
+	--> set 135: {3, 21}
+	--> set 191: {4, 21}
+	--> set 246: {5, 21}
+	--> set 300: {6, 21}
+	--> set 353: {7, 21}
+	--> set 405: {8, 21}
+	--> set 456: {9, 21}
+	--> set 506: {10, 21}
+	--> set 555: {11, 21}
+	--> set 603: {12, 21}
+	--> set 650: {13, 21}
+	--> set 696: {14, 21}
+	--> set 741: {15, 21}
+	--> set 785: {16, 21}
+	--> set 828: {17, 21}
+	--> set 870: {18, 21}
+	--> set 911: {19, 21}
+	--> set 951: {20, 21}
+	--> set 991: {21, 22}
+	--> set 992: {21, 23}
+	--> set 993: {21, 24}
+	--> set 994: {21, 25}
+	--> set 995: {21, 26}
+	--> set 996: {21, 27}
+	--> set 997: {21, 28}
+	--> set 998: {21, 29}
+	--> set 999: {21, 30}
+	--> set 1000: {21, 31}
+	--> set 1001: {21, 32}
+	--> set 1002: {21, 33}
+	--> set 1003: {21, 34}
+	--> set 1004: {21, 35}
+	--> set 1005: {21, 36}
+	--> set 1006: {21, 37}
+	--> set 1007: {21, 38}
+	--> set 1008: {21, 39}
+	--> set 1009: {21, 40}
+	--> set 1010: {21, 41}
+	--> set 1011: {21, 42}
+	--> set 1012: {21, 43}
+	--> set 1013: {21, 44}
+	--> set 1014: {21, 45}
+	--> set 1015: {21, 46}
+	--> set 1016: {21, 47}
+	--> set 1017: {21, 48}
+	--> set 1018: {21, 49}
+	--> set 1019: {21, 50}
+	--> set 1020: {21, 51}
+	--> set 1021: {21, 52}
+	--> set 1022: {21, 53}
+	--> set 1023: {21, 54}
+	--> set 1024: {21, 55}
+	--> set 1025: {21, 56}
+	--> set 1026: {21, 57}
+	--> set 1027: {21, 58}
+	--> set 1028: {21, 59}
+	--> set 1029: {21, 60}
+
+DEBUG: Interaction 22 is part of the following sets:
+	--> set 21: {1, 22}
+	--> set 79: {2, 22}
+	--> set 136: {3, 22}
+	--> set 192: {4, 22}
+	--> set 247: {5, 22}
+	--> set 301: {6, 22}
+	--> set 354: {7, 22}
+	--> set 406: {8, 22}
+	--> set 457: {9, 22}
+	--> set 507: {10, 22}
+	--> set 556: {11, 22}
+	--> set 604: {12, 22}
+	--> set 651: {13, 22}
+	--> set 697: {14, 22}
+	--> set 742: {15, 22}
+	--> set 786: {16, 22}
+	--> set 829: {17, 22}
+	--> set 871: {18, 22}
+	--> set 912: {19, 22}
+	--> set 952: {20, 22}
+	--> set 991: {21, 22}
+	--> set 1030: {22, 23}
+	--> set 1031: {22, 24}
+	--> set 1032: {22, 25}
+	--> set 1033: {22, 26}
+	--> set 1034: {22, 27}
+	--> set 1035: {22, 28}
+	--> set 1036: {22, 29}
+	--> set 1037: {22, 30}
+	--> set 1038: {22, 31}
+	--> set 1039: {22, 32}
+	--> set 1040: {22, 33}
+	--> set 1041: {22, 34}
+	--> set 1042: {22, 35}
+	--> set 1043: {22, 36}
+	--> set 1044: {22, 37}
+	--> set 1045: {22, 38}
+	--> set 1046: {22, 39}
+	--> set 1047: {22, 40}
+	--> set 1048: {22, 41}
+	--> set 1049: {22, 42}
+	--> set 1050: {22, 43}
+	--> set 1051: {22, 44}
+	--> set 1052: {22, 45}
+	--> set 1053: {22, 46}
+	--> set 1054: {22, 47}
+	--> set 1055: {22, 48}
+	--> set 1056: {22, 49}
+	--> set 1057: {22, 50}
+	--> set 1058: {22, 51}
+	--> set 1059: {22, 52}
+	--> set 1060: {22, 53}
+	--> set 1061: {22, 54}
+	--> set 1062: {22, 55}
+	--> set 1063: {22, 56}
+	--> set 1064: {22, 57}
+	--> set 1065: {22, 58}
+	--> set 1066: {22, 59}
+	--> set 1067: {22, 60}
+
+DEBUG: Interaction 23 is part of the following sets:
+	--> set 22: {1, 23}
+	--> set 80: {2, 23}
+	--> set 137: {3, 23}
+	--> set 193: {4, 23}
+	--> set 248: {5, 23}
+	--> set 302: {6, 23}
+	--> set 355: {7, 23}
+	--> set 407: {8, 23}
+	--> set 458: {9, 23}
+	--> set 508: {10, 23}
+	--> set 557: {11, 23}
+	--> set 605: {12, 23}
+	--> set 652: {13, 23}
+	--> set 698: {14, 23}
+	--> set 743: {15, 23}
+	--> set 787: {16, 23}
+	--> set 830: {17, 23}
+	--> set 872: {18, 23}
+	--> set 913: {19, 23}
+	--> set 953: {20, 23}
+	--> set 992: {21, 23}
+	--> set 1030: {22, 23}
+	--> set 1068: {23, 24}
+	--> set 1069: {23, 25}
+	--> set 1070: {23, 26}
+	--> set 1071: {23, 27}
+	--> set 1072: {23, 28}
+	--> set 1073: {23, 29}
+	--> set 1074: {23, 30}
+	--> set 1075: {23, 31}
+	--> set 1076: {23, 32}
+	--> set 1077: {23, 33}
+	--> set 1078: {23, 34}
+	--> set 1079: {23, 35}
+	--> set 1080: {23, 36}
+	--> set 1081: {23, 37}
+	--> set 1082: {23, 38}
+	--> set 1083: {23, 39}
+	--> set 1084: {23, 40}
+	--> set 1085: {23, 41}
+	--> set 1086: {23, 42}
+	--> set 1087: {23, 43}
+	--> set 1088: {23, 44}
+	--> set 1089: {23, 45}
+	--> set 1090: {23, 46}
+	--> set 1091: {23, 47}
+	--> set 1092: {23, 48}
+	--> set 1093: {23, 49}
+	--> set 1094: {23, 50}
+	--> set 1095: {23, 51}
+	--> set 1096: {23, 52}
+	--> set 1097: {23, 53}
+	--> set 1098: {23, 54}
+	--> set 1099: {23, 55}
+	--> set 1100: {23, 56}
+	--> set 1101: {23, 57}
+	--> set 1102: {23, 58}
+	--> set 1103: {23, 59}
+	--> set 1104: {23, 60}
+
+DEBUG: Interaction 24 is part of the following sets:
+	--> set 23: {1, 24}
+	--> set 81: {2, 24}
+	--> set 138: {3, 24}
+	--> set 194: {4, 24}
+	--> set 249: {5, 24}
+	--> set 303: {6, 24}
+	--> set 356: {7, 24}
+	--> set 408: {8, 24}
+	--> set 459: {9, 24}
+	--> set 509: {10, 24}
+	--> set 558: {11, 24}
+	--> set 606: {12, 24}
+	--> set 653: {13, 24}
+	--> set 699: {14, 24}
+	--> set 744: {15, 24}
+	--> set 788: {16, 24}
+	--> set 831: {17, 24}
+	--> set 873: {18, 24}
+	--> set 914: {19, 24}
+	--> set 954: {20, 24}
+	--> set 993: {21, 24}
+	--> set 1031: {22, 24}
+	--> set 1068: {23, 24}
+	--> set 1105: {24, 25}
+	--> set 1106: {24, 26}
+	--> set 1107: {24, 27}
+	--> set 1108: {24, 28}
+	--> set 1109: {24, 29}
+	--> set 1110: {24, 30}
+	--> set 1111: {24, 31}
+	--> set 1112: {24, 32}
+	--> set 1113: {24, 33}
+	--> set 1114: {24, 34}
+	--> set 1115: {24, 35}
+	--> set 1116: {24, 36}
+	--> set 1117: {24, 37}
+	--> set 1118: {24, 38}
+	--> set 1119: {24, 39}
+	--> set 1120: {24, 40}
+	--> set 1121: {24, 41}
+	--> set 1122: {24, 42}
+	--> set 1123: {24, 43}
+	--> set 1124: {24, 44}
+	--> set 1125: {24, 45}
+	--> set 1126: {24, 46}
+	--> set 1127: {24, 47}
+	--> set 1128: {24, 48}
+	--> set 1129: {24, 49}
+	--> set 1130: {24, 50}
+	--> set 1131: {24, 51}
+	--> set 1132: {24, 52}
+	--> set 1133: {24, 53}
+	--> set 1134: {24, 54}
+	--> set 1135: {24, 55}
+	--> set 1136: {24, 56}
+	--> set 1137: {24, 57}
+	--> set 1138: {24, 58}
+	--> set 1139: {24, 59}
+	--> set 1140: {24, 60}
+
+DEBUG: Interaction 25 is part of the following sets:
+	--> set 24: {1, 25}
+	--> set 82: {2, 25}
+	--> set 139: {3, 25}
+	--> set 195: {4, 25}
+	--> set 250: {5, 25}
+	--> set 304: {6, 25}
+	--> set 357: {7, 25}
+	--> set 409: {8, 25}
+	--> set 460: {9, 25}
+	--> set 510: {10, 25}
+	--> set 559: {11, 25}
+	--> set 607: {12, 25}
+	--> set 654: {13, 25}
+	--> set 700: {14, 25}
+	--> set 745: {15, 25}
+	--> set 789: {16, 25}
+	--> set 832: {17, 25}
+	--> set 874: {18, 25}
+	--> set 915: {19, 25}
+	--> set 955: {20, 25}
+	--> set 994: {21, 25}
+	--> set 1032: {22, 25}
+	--> set 1069: {23, 25}
+	--> set 1105: {24, 25}
+	--> set 1141: {25, 26}
+	--> set 1142: {25, 27}
+	--> set 1143: {25, 28}
+	--> set 1144: {25, 29}
+	--> set 1145: {25, 30}
+	--> set 1146: {25, 31}
+	--> set 1147: {25, 32}
+	--> set 1148: {25, 33}
+	--> set 1149: {25, 34}
+	--> set 1150: {25, 35}
+	--> set 1151: {25, 36}
+	--> set 1152: {25, 37}
+	--> set 1153: {25, 38}
+	--> set 1154: {25, 39}
+	--> set 1155: {25, 40}
+	--> set 1156: {25, 41}
+	--> set 1157: {25, 42}
+	--> set 1158: {25, 43}
+	--> set 1159: {25, 44}
+	--> set 1160: {25, 45}
+	--> set 1161: {25, 46}
+	--> set 1162: {25, 47}
+	--> set 1163: {25, 48}
+	--> set 1164: {25, 49}
+	--> set 1165: {25, 50}
+	--> set 1166: {25, 51}
+	--> set 1167: {25, 52}
+	--> set 1168: {25, 53}
+	--> set 1169: {25, 54}
+	--> set 1170: {25, 55}
+	--> set 1171: {25, 56}
+	--> set 1172: {25, 57}
+	--> set 1173: {25, 58}
+	--> set 1174: {25, 59}
+	--> set 1175: {25, 60}
+
+DEBUG: Interaction 26 is part of the following sets:
+	--> set 25: {1, 26}
+	--> set 83: {2, 26}
+	--> set 140: {3, 26}
+	--> set 196: {4, 26}
+	--> set 251: {5, 26}
+	--> set 305: {6, 26}
+	--> set 358: {7, 26}
+	--> set 410: {8, 26}
+	--> set 461: {9, 26}
+	--> set 511: {10, 26}
+	--> set 560: {11, 26}
+	--> set 608: {12, 26}
+	--> set 655: {13, 26}
+	--> set 701: {14, 26}
+	--> set 746: {15, 26}
+	--> set 790: {16, 26}
+	--> set 833: {17, 26}
+	--> set 875: {18, 26}
+	--> set 916: {19, 26}
+	--> set 956: {20, 26}
+	--> set 995: {21, 26}
+	--> set 1033: {22, 26}
+	--> set 1070: {23, 26}
+	--> set 1106: {24, 26}
+	--> set 1141: {25, 26}
+	--> set 1176: {26, 27}
+	--> set 1177: {26, 28}
+	--> set 1178: {26, 29}
+	--> set 1179: {26, 30}
+	--> set 1180: {26, 31}
+	--> set 1181: {26, 32}
+	--> set 1182: {26, 33}
+	--> set 1183: {26, 34}
+	--> set 1184: {26, 35}
+	--> set 1185: {26, 36}
+	--> set 1186: {26, 37}
+	--> set 1187: {26, 38}
+	--> set 1188: {26, 39}
+	--> set 1189: {26, 40}
+	--> set 1190: {26, 41}
+	--> set 1191: {26, 42}
+	--> set 1192: {26, 43}
+	--> set 1193: {26, 44}
+	--> set 1194: {26, 45}
+	--> set 1195: {26, 46}
+	--> set 1196: {26, 47}
+	--> set 1197: {26, 48}
+	--> set 1198: {26, 49}
+	--> set 1199: {26, 50}
+	--> set 1200: {26, 51}
+	--> set 1201: {26, 52}
+	--> set 1202: {26, 53}
+	--> set 1203: {26, 54}
+	--> set 1204: {26, 55}
+	--> set 1205: {26, 56}
+	--> set 1206: {26, 57}
+	--> set 1207: {26, 58}
+	--> set 1208: {26, 59}
+	--> set 1209: {26, 60}
+
+DEBUG: Interaction 27 is part of the following sets:
+	--> set 26: {1, 27}
+	--> set 84: {2, 27}
+	--> set 141: {3, 27}
+	--> set 197: {4, 27}
+	--> set 252: {5, 27}
+	--> set 306: {6, 27}
+	--> set 359: {7, 27}
+	--> set 411: {8, 27}
+	--> set 462: {9, 27}
+	--> set 512: {10, 27}
+	--> set 561: {11, 27}
+	--> set 609: {12, 27}
+	--> set 656: {13, 27}
+	--> set 702: {14, 27}
+	--> set 747: {15, 27}
+	--> set 791: {16, 27}
+	--> set 834: {17, 27}
+	--> set 876: {18, 27}
+	--> set 917: {19, 27}
+	--> set 957: {20, 27}
+	--> set 996: {21, 27}
+	--> set 1034: {22, 27}
+	--> set 1071: {23, 27}
+	--> set 1107: {24, 27}
+	--> set 1142: {25, 27}
+	--> set 1176: {26, 27}
+	--> set 1210: {27, 28}
+	--> set 1211: {27, 29}
+	--> set 1212: {27, 30}
+	--> set 1213: {27, 31}
+	--> set 1214: {27, 32}
+	--> set 1215: {27, 33}
+	--> set 1216: {27, 34}
+	--> set 1217: {27, 35}
+	--> set 1218: {27, 36}
+	--> set 1219: {27, 37}
+	--> set 1220: {27, 38}
+	--> set 1221: {27, 39}
+	--> set 1222: {27, 40}
+	--> set 1223: {27, 41}
+	--> set 1224: {27, 42}
+	--> set 1225: {27, 43}
+	--> set 1226: {27, 44}
+	--> set 1227: {27, 45}
+	--> set 1228: {27, 46}
+	--> set 1229: {27, 47}
+	--> set 1230: {27, 48}
+	--> set 1231: {27, 49}
+	--> set 1232: {27, 50}
+	--> set 1233: {27, 51}
+	--> set 1234: {27, 52}
+	--> set 1235: {27, 53}
+	--> set 1236: {27, 54}
+	--> set 1237: {27, 55}
+	--> set 1238: {27, 56}
+	--> set 1239: {27, 57}
+	--> set 1240: {27, 58}
+	--> set 1241: {27, 59}
+	--> set 1242: {27, 60}
+
+DEBUG: Interaction 28 is part of the following sets:
+	--> set 27: {1, 28}
+	--> set 85: {2, 28}
+	--> set 142: {3, 28}
+	--> set 198: {4, 28}
+	--> set 253: {5, 28}
+	--> set 307: {6, 28}
+	--> set 360: {7, 28}
+	--> set 412: {8, 28}
+	--> set 463: {9, 28}
+	--> set 513: {10, 28}
+	--> set 562: {11, 28}
+	--> set 610: {12, 28}
+	--> set 657: {13, 28}
+	--> set 703: {14, 28}
+	--> set 748: {15, 28}
+	--> set 792: {16, 28}
+	--> set 835: {17, 28}
+	--> set 877: {18, 28}
+	--> set 918: {19, 28}
+	--> set 958: {20, 28}
+	--> set 997: {21, 28}
+	--> set 1035: {22, 28}
+	--> set 1072: {23, 28}
+	--> set 1108: {24, 28}
+	--> set 1143: {25, 28}
+	--> set 1177: {26, 28}
+	--> set 1210: {27, 28}
+	--> set 1243: {28, 29}
+	--> set 1244: {28, 30}
+	--> set 1245: {28, 31}
+	--> set 1246: {28, 32}
+	--> set 1247: {28, 33}
+	--> set 1248: {28, 34}
+	--> set 1249: {28, 35}
+	--> set 1250: {28, 36}
+	--> set 1251: {28, 37}
+	--> set 1252: {28, 38}
+	--> set 1253: {28, 39}
+	--> set 1254: {28, 40}
+	--> set 1255: {28, 41}
+	--> set 1256: {28, 42}
+	--> set 1257: {28, 43}
+	--> set 1258: {28, 44}
+	--> set 1259: {28, 45}
+	--> set 1260: {28, 46}
+	--> set 1261: {28, 47}
+	--> set 1262: {28, 48}
+	--> set 1263: {28, 49}
+	--> set 1264: {28, 50}
+	--> set 1265: {28, 51}
+	--> set 1266: {28, 52}
+	--> set 1267: {28, 53}
+	--> set 1268: {28, 54}
+	--> set 1269: {28, 55}
+	--> set 1270: {28, 56}
+	--> set 1271: {28, 57}
+	--> set 1272: {28, 58}
+	--> set 1273: {28, 59}
+	--> set 1274: {28, 60}
+
+DEBUG: Interaction 29 is part of the following sets:
+	--> set 28: {1, 29}
+	--> set 86: {2, 29}
+	--> set 143: {3, 29}
+	--> set 199: {4, 29}
+	--> set 254: {5, 29}
+	--> set 308: {6, 29}
+	--> set 361: {7, 29}
+	--> set 413: {8, 29}
+	--> set 464: {9, 29}
+	--> set 514: {10, 29}
+	--> set 563: {11, 29}
+	--> set 611: {12, 29}
+	--> set 658: {13, 29}
+	--> set 704: {14, 29}
+	--> set 749: {15, 29}
+	--> set 793: {16, 29}
+	--> set 836: {17, 29}
+	--> set 878: {18, 29}
+	--> set 919: {19, 29}
+	--> set 959: {20, 29}
+	--> set 998: {21, 29}
+	--> set 1036: {22, 29}
+	--> set 1073: {23, 29}
+	--> set 1109: {24, 29}
+	--> set 1144: {25, 29}
+	--> set 1178: {26, 29}
+	--> set 1211: {27, 29}
+	--> set 1243: {28, 29}
+	--> set 1275: {29, 30}
+	--> set 1276: {29, 31}
+	--> set 1277: {29, 32}
+	--> set 1278: {29, 33}
+	--> set 1279: {29, 34}
+	--> set 1280: {29, 35}
+	--> set 1281: {29, 36}
+	--> set 1282: {29, 37}
+	--> set 1283: {29, 38}
+	--> set 1284: {29, 39}
+	--> set 1285: {29, 40}
+	--> set 1286: {29, 41}
+	--> set 1287: {29, 42}
+	--> set 1288: {29, 43}
+	--> set 1289: {29, 44}
+	--> set 1290: {29, 45}
+	--> set 1291: {29, 46}
+	--> set 1292: {29, 47}
+	--> set 1293: {29, 48}
+	--> set 1294: {29, 49}
+	--> set 1295: {29, 50}
+	--> set 1296: {29, 51}
+	--> set 1297: {29, 52}
+	--> set 1298: {29, 53}
+	--> set 1299: {29, 54}
+	--> set 1300: {29, 55}
+	--> set 1301: {29, 56}
+	--> set 1302: {29, 57}
+	--> set 1303: {29, 58}
+	--> set 1304: {29, 59}
+	--> set 1305: {29, 60}
+
+DEBUG: Interaction 30 is part of the following sets:
+	--> set 29: {1, 30}
+	--> set 87: {2, 30}
+	--> set 144: {3, 30}
+	--> set 200: {4, 30}
+	--> set 255: {5, 30}
+	--> set 309: {6, 30}
+	--> set 362: {7, 30}
+	--> set 414: {8, 30}
+	--> set 465: {9, 30}
+	--> set 515: {10, 30}
+	--> set 564: {11, 30}
+	--> set 612: {12, 30}
+	--> set 659: {13, 30}
+	--> set 705: {14, 30}
+	--> set 750: {15, 30}
+	--> set 794: {16, 30}
+	--> set 837: {17, 30}
+	--> set 879: {18, 30}
+	--> set 920: {19, 30}
+	--> set 960: {20, 30}
+	--> set 999: {21, 30}
+	--> set 1037: {22, 30}
+	--> set 1074: {23, 30}
+	--> set 1110: {24, 30}
+	--> set 1145: {25, 30}
+	--> set 1179: {26, 30}
+	--> set 1212: {27, 30}
+	--> set 1244: {28, 30}
+	--> set 1275: {29, 30}
+	--> set 1306: {30, 31}
+	--> set 1307: {30, 32}
+	--> set 1308: {30, 33}
+	--> set 1309: {30, 34}
+	--> set 1310: {30, 35}
+	--> set 1311: {30, 36}
+	--> set 1312: {30, 37}
+	--> set 1313: {30, 38}
+	--> set 1314: {30, 39}
+	--> set 1315: {30, 40}
+	--> set 1316: {30, 41}
+	--> set 1317: {30, 42}
+	--> set 1318: {30, 43}
+	--> set 1319: {30, 44}
+	--> set 1320: {30, 45}
+	--> set 1321: {30, 46}
+	--> set 1322: {30, 47}
+	--> set 1323: {30, 48}
+	--> set 1324: {30, 49}
+	--> set 1325: {30, 50}
+	--> set 1326: {30, 51}
+	--> set 1327: {30, 52}
+	--> set 1328: {30, 53}
+	--> set 1329: {30, 54}
+	--> set 1330: {30, 55}
+	--> set 1331: {30, 56}
+	--> set 1332: {30, 57}
+	--> set 1333: {30, 58}
+	--> set 1334: {30, 59}
+	--> set 1335: {30, 60}
+
+DEBUG: Interaction 31 is part of the following sets:
+	--> set 30: {1, 31}
+	--> set 88: {2, 31}
+	--> set 145: {3, 31}
+	--> set 201: {4, 31}
+	--> set 256: {5, 31}
+	--> set 310: {6, 31}
+	--> set 363: {7, 31}
+	--> set 415: {8, 31}
+	--> set 466: {9, 31}
+	--> set 516: {10, 31}
+	--> set 565: {11, 31}
+	--> set 613: {12, 31}
+	--> set 660: {13, 31}
+	--> set 706: {14, 31}
+	--> set 751: {15, 31}
+	--> set 795: {16, 31}
+	--> set 838: {17, 31}
+	--> set 880: {18, 31}
+	--> set 921: {19, 31}
+	--> set 961: {20, 31}
+	--> set 1000: {21, 31}
+	--> set 1038: {22, 31}
+	--> set 1075: {23, 31}
+	--> set 1111: {24, 31}
+	--> set 1146: {25, 31}
+	--> set 1180: {26, 31}
+	--> set 1213: {27, 31}
+	--> set 1245: {28, 31}
+	--> set 1276: {29, 31}
+	--> set 1306: {30, 31}
+	--> set 1336: {31, 32}
+	--> set 1337: {31, 33}
+	--> set 1338: {31, 34}
+	--> set 1339: {31, 35}
+	--> set 1340: {31, 36}
+	--> set 1341: {31, 37}
+	--> set 1342: {31, 38}
+	--> set 1343: {31, 39}
+	--> set 1344: {31, 40}
+	--> set 1345: {31, 41}
+	--> set 1346: {31, 42}
+	--> set 1347: {31, 43}
+	--> set 1348: {31, 44}
+	--> set 1349: {31, 45}
+	--> set 1350: {31, 46}
+	--> set 1351: {31, 47}
+	--> set 1352: {31, 48}
+	--> set 1353: {31, 49}
+	--> set 1354: {31, 50}
+	--> set 1355: {31, 51}
+	--> set 1356: {31, 52}
+	--> set 1357: {31, 53}
+	--> set 1358: {31, 54}
+	--> set 1359: {31, 55}
+	--> set 1360: {31, 56}
+	--> set 1361: {31, 57}
+	--> set 1362: {31, 58}
+	--> set 1363: {31, 59}
+	--> set 1364: {31, 60}
+
+DEBUG: Interaction 32 is part of the following sets:
+	--> set 31: {1, 32}
+	--> set 89: {2, 32}
+	--> set 146: {3, 32}
+	--> set 202: {4, 32}
+	--> set 257: {5, 32}
+	--> set 311: {6, 32}
+	--> set 364: {7, 32}
+	--> set 416: {8, 32}
+	--> set 467: {9, 32}
+	--> set 517: {10, 32}
+	--> set 566: {11, 32}
+	--> set 614: {12, 32}
+	--> set 661: {13, 32}
+	--> set 707: {14, 32}
+	--> set 752: {15, 32}
+	--> set 796: {16, 32}
+	--> set 839: {17, 32}
+	--> set 881: {18, 32}
+	--> set 922: {19, 32}
+	--> set 962: {20, 32}
+	--> set 1001: {21, 32}
+	--> set 1039: {22, 32}
+	--> set 1076: {23, 32}
+	--> set 1112: {24, 32}
+	--> set 1147: {25, 32}
+	--> set 1181: {26, 32}
+	--> set 1214: {27, 32}
+	--> set 1246: {28, 32}
+	--> set 1277: {29, 32}
+	--> set 1307: {30, 32}
+	--> set 1336: {31, 32}
+	--> set 1365: {32, 33}
+	--> set 1366: {32, 34}
+	--> set 1367: {32, 35}
+	--> set 1368: {32, 36}
+	--> set 1369: {32, 37}
+	--> set 1370: {32, 38}
+	--> set 1371: {32, 39}
+	--> set 1372: {32, 40}
+	--> set 1373: {32, 41}
+	--> set 1374: {32, 42}
+	--> set 1375: {32, 43}
+	--> set 1376: {32, 44}
+	--> set 1377: {32, 45}
+	--> set 1378: {32, 46}
+	--> set 1379: {32, 47}
+	--> set 1380: {32, 48}
+	--> set 1381: {32, 49}
+	--> set 1382: {32, 50}
+	--> set 1383: {32, 51}
+	--> set 1384: {32, 52}
+	--> set 1385: {32, 53}
+	--> set 1386: {32, 54}
+	--> set 1387: {32, 55}
+	--> set 1388: {32, 56}
+	--> set 1389: {32, 57}
+	--> set 1390: {32, 58}
+	--> set 1391: {32, 59}
+	--> set 1392: {32, 60}
+
+DEBUG: Interaction 33 is part of the following sets:
+	--> set 32: {1, 33}
+	--> set 90: {2, 33}
+	--> set 147: {3, 33}
+	--> set 203: {4, 33}
+	--> set 258: {5, 33}
+	--> set 312: {6, 33}
+	--> set 365: {7, 33}
+	--> set 417: {8, 33}
+	--> set 468: {9, 33}
+	--> set 518: {10, 33}
+	--> set 567: {11, 33}
+	--> set 615: {12, 33}
+	--> set 662: {13, 33}
+	--> set 708: {14, 33}
+	--> set 753: {15, 33}
+	--> set 797: {16, 33}
+	--> set 840: {17, 33}
+	--> set 882: {18, 33}
+	--> set 923: {19, 33}
+	--> set 963: {20, 33}
+	--> set 1002: {21, 33}
+	--> set 1040: {22, 33}
+	--> set 1077: {23, 33}
+	--> set 1113: {24, 33}
+	--> set 1148: {25, 33}
+	--> set 1182: {26, 33}
+	--> set 1215: {27, 33}
+	--> set 1247: {28, 33}
+	--> set 1278: {29, 33}
+	--> set 1308: {30, 33}
+	--> set 1337: {31, 33}
+	--> set 1365: {32, 33}
+	--> set 1393: {33, 34}
+	--> set 1394: {33, 35}
+	--> set 1395: {33, 36}
+	--> set 1396: {33, 37}
+	--> set 1397: {33, 38}
+	--> set 1398: {33, 39}
+	--> set 1399: {33, 40}
+	--> set 1400: {33, 41}
+	--> set 1401: {33, 42}
+	--> set 1402: {33, 43}
+	--> set 1403: {33, 44}
+	--> set 1404: {33, 45}
+	--> set 1405: {33, 46}
+	--> set 1406: {33, 47}
+	--> set 1407: {33, 48}
+	--> set 1408: {33, 49}
+	--> set 1409: {33, 50}
+	--> set 1410: {33, 51}
+	--> set 1411: {33, 52}
+	--> set 1412: {33, 53}
+	--> set 1413: {33, 54}
+	--> set 1414: {33, 55}
+	--> set 1415: {33, 56}
+	--> set 1416: {33, 57}
+	--> set 1417: {33, 58}
+	--> set 1418: {33, 59}
+	--> set 1419: {33, 60}
+
+DEBUG: Interaction 34 is part of the following sets:
+	--> set 33: {1, 34}
+	--> set 91: {2, 34}
+	--> set 148: {3, 34}
+	--> set 204: {4, 34}
+	--> set 259: {5, 34}
+	--> set 313: {6, 34}
+	--> set 366: {7, 34}
+	--> set 418: {8, 34}
+	--> set 469: {9, 34}
+	--> set 519: {10, 34}
+	--> set 568: {11, 34}
+	--> set 616: {12, 34}
+	--> set 663: {13, 34}
+	--> set 709: {14, 34}
+	--> set 754: {15, 34}
+	--> set 798: {16, 34}
+	--> set 841: {17, 34}
+	--> set 883: {18, 34}
+	--> set 924: {19, 34}
+	--> set 964: {20, 34}
+	--> set 1003: {21, 34}
+	--> set 1041: {22, 34}
+	--> set 1078: {23, 34}
+	--> set 1114: {24, 34}
+	--> set 1149: {25, 34}
+	--> set 1183: {26, 34}
+	--> set 1216: {27, 34}
+	--> set 1248: {28, 34}
+	--> set 1279: {29, 34}
+	--> set 1309: {30, 34}
+	--> set 1338: {31, 34}
+	--> set 1366: {32, 34}
+	--> set 1393: {33, 34}
+	--> set 1420: {34, 35}
+	--> set 1421: {34, 36}
+	--> set 1422: {34, 37}
+	--> set 1423: {34, 38}
+	--> set 1424: {34, 39}
+	--> set 1425: {34, 40}
+	--> set 1426: {34, 41}
+	--> set 1427: {34, 42}
+	--> set 1428: {34, 43}
+	--> set 1429: {34, 44}
+	--> set 1430: {34, 45}
+	--> set 1431: {34, 46}
+	--> set 1432: {34, 47}
+	--> set 1433: {34, 48}
+	--> set 1434: {34, 49}
+	--> set 1435: {34, 50}
+	--> set 1436: {34, 51}
+	--> set 1437: {34, 52}
+	--> set 1438: {34, 53}
+	--> set 1439: {34, 54}
+	--> set 1440: {34, 55}
+	--> set 1441: {34, 56}
+	--> set 1442: {34, 57}
+	--> set 1443: {34, 58}
+	--> set 1444: {34, 59}
+	--> set 1445: {34, 60}
+
+DEBUG: Interaction 35 is part of the following sets:
+	--> set 34: {1, 35}
+	--> set 92: {2, 35}
+	--> set 149: {3, 35}
+	--> set 205: {4, 35}
+	--> set 260: {5, 35}
+	--> set 314: {6, 35}
+	--> set 367: {7, 35}
+	--> set 419: {8, 35}
+	--> set 470: {9, 35}
+	--> set 520: {10, 35}
+	--> set 569: {11, 35}
+	--> set 617: {12, 35}
+	--> set 664: {13, 35}
+	--> set 710: {14, 35}
+	--> set 755: {15, 35}
+	--> set 799: {16, 35}
+	--> set 842: {17, 35}
+	--> set 884: {18, 35}
+	--> set 925: {19, 35}
+	--> set 965: {20, 35}
+	--> set 1004: {21, 35}
+	--> set 1042: {22, 35}
+	--> set 1079: {23, 35}
+	--> set 1115: {24, 35}
+	--> set 1150: {25, 35}
+	--> set 1184: {26, 35}
+	--> set 1217: {27, 35}
+	--> set 1249: {28, 35}
+	--> set 1280: {29, 35}
+	--> set 1310: {30, 35}
+	--> set 1339: {31, 35}
+	--> set 1367: {32, 35}
+	--> set 1394: {33, 35}
+	--> set 1420: {34, 35}
+	--> set 1446: {35, 36}
+	--> set 1447: {35, 37}
+	--> set 1448: {35, 38}
+	--> set 1449: {35, 39}
+	--> set 1450: {35, 40}
+	--> set 1451: {35, 41}
+	--> set 1452: {35, 42}
+	--> set 1453: {35, 43}
+	--> set 1454: {35, 44}
+	--> set 1455: {35, 45}
+	--> set 1456: {35, 46}
+	--> set 1457: {35, 47}
+	--> set 1458: {35, 48}
+	--> set 1459: {35, 49}
+	--> set 1460: {35, 50}
+	--> set 1461: {35, 51}
+	--> set 1462: {35, 52}
+	--> set 1463: {35, 53}
+	--> set 1464: {35, 54}
+	--> set 1465: {35, 55}
+	--> set 1466: {35, 56}
+	--> set 1467: {35, 57}
+	--> set 1468: {35, 58}
+	--> set 1469: {35, 59}
+	--> set 1470: {35, 60}
+
+DEBUG: Interaction 36 is part of the following sets:
+	--> set 35: {1, 36}
+	--> set 93: {2, 36}
+	--> set 150: {3, 36}
+	--> set 206: {4, 36}
+	--> set 261: {5, 36}
+	--> set 315: {6, 36}
+	--> set 368: {7, 36}
+	--> set 420: {8, 36}
+	--> set 471: {9, 36}
+	--> set 521: {10, 36}
+	--> set 570: {11, 36}
+	--> set 618: {12, 36}
+	--> set 665: {13, 36}
+	--> set 711: {14, 36}
+	--> set 756: {15, 36}
+	--> set 800: {16, 36}
+	--> set 843: {17, 36}
+	--> set 885: {18, 36}
+	--> set 926: {19, 36}
+	--> set 966: {20, 36}
+	--> set 1005: {21, 36}
+	--> set 1043: {22, 36}
+	--> set 1080: {23, 36}
+	--> set 1116: {24, 36}
+	--> set 1151: {25, 36}
+	--> set 1185: {26, 36}
+	--> set 1218: {27, 36}
+	--> set 1250: {28, 36}
+	--> set 1281: {29, 36}
+	--> set 1311: {30, 36}
+	--> set 1340: {31, 36}
+	--> set 1368: {32, 36}
+	--> set 1395: {33, 36}
+	--> set 1421: {34, 36}
+	--> set 1446: {35, 36}
+	--> set 1471: {36, 37}
+	--> set 1472: {36, 38}
+	--> set 1473: {36, 39}
+	--> set 1474: {36, 40}
+	--> set 1475: {36, 41}
+	--> set 1476: {36, 42}
+	--> set 1477: {36, 43}
+	--> set 1478: {36, 44}
+	--> set 1479: {36, 45}
+	--> set 1480: {36, 46}
+	--> set 1481: {36, 47}
+	--> set 1482: {36, 48}
+	--> set 1483: {36, 49}
+	--> set 1484: {36, 50}
+	--> set 1485: {36, 51}
+	--> set 1486: {36, 52}
+	--> set 1487: {36, 53}
+	--> set 1488: {36, 54}
+	--> set 1489: {36, 55}
+	--> set 1490: {36, 56}
+	--> set 1491: {36, 57}
+	--> set 1492: {36, 58}
+	--> set 1493: {36, 59}
+	--> set 1494: {36, 60}
+
+DEBUG: Interaction 37 is part of the following sets:
+	--> set 36: {1, 37}
+	--> set 94: {2, 37}
+	--> set 151: {3, 37}
+	--> set 207: {4, 37}
+	--> set 262: {5, 37}
+	--> set 316: {6, 37}
+	--> set 369: {7, 37}
+	--> set 421: {8, 37}
+	--> set 472: {9, 37}
+	--> set 522: {10, 37}
+	--> set 571: {11, 37}
+	--> set 619: {12, 37}
+	--> set 666: {13, 37}
+	--> set 712: {14, 37}
+	--> set 757: {15, 37}
+	--> set 801: {16, 37}
+	--> set 844: {17, 37}
+	--> set 886: {18, 37}
+	--> set 927: {19, 37}
+	--> set 967: {20, 37}
+	--> set 1006: {21, 37}
+	--> set 1044: {22, 37}
+	--> set 1081: {23, 37}
+	--> set 1117: {24, 37}
+	--> set 1152: {25, 37}
+	--> set 1186: {26, 37}
+	--> set 1219: {27, 37}
+	--> set 1251: {28, 37}
+	--> set 1282: {29, 37}
+	--> set 1312: {30, 37}
+	--> set 1341: {31, 37}
+	--> set 1369: {32, 37}
+	--> set 1396: {33, 37}
+	--> set 1422: {34, 37}
+	--> set 1447: {35, 37}
+	--> set 1471: {36, 37}
+	--> set 1495: {37, 38}
+	--> set 1496: {37, 39}
+	--> set 1497: {37, 40}
+	--> set 1498: {37, 41}
+	--> set 1499: {37, 42}
+	--> set 1500: {37, 43}
+	--> set 1501: {37, 44}
+	--> set 1502: {37, 45}
+	--> set 1503: {37, 46}
+	--> set 1504: {37, 47}
+	--> set 1505: {37, 48}
+	--> set 1506: {37, 49}
+	--> set 1507: {37, 50}
+	--> set 1508: {37, 51}
+	--> set 1509: {37, 52}
+	--> set 1510: {37, 53}
+	--> set 1511: {37, 54}
+	--> set 1512: {37, 55}
+	--> set 1513: {37, 56}
+	--> set 1514: {37, 57}
+	--> set 1515: {37, 58}
+	--> set 1516: {37, 59}
+	--> set 1517: {37, 60}
+
+DEBUG: Interaction 38 is part of the following sets:
+	--> set 37: {1, 38}
+	--> set 95: {2, 38}
+	--> set 152: {3, 38}
+	--> set 208: {4, 38}
+	--> set 263: {5, 38}
+	--> set 317: {6, 38}
+	--> set 370: {7, 38}
+	--> set 422: {8, 38}
+	--> set 473: {9, 38}
+	--> set 523: {10, 38}
+	--> set 572: {11, 38}
+	--> set 620: {12, 38}
+	--> set 667: {13, 38}
+	--> set 713: {14, 38}
+	--> set 758: {15, 38}
+	--> set 802: {16, 38}
+	--> set 845: {17, 38}
+	--> set 887: {18, 38}
+	--> set 928: {19, 38}
+	--> set 968: {20, 38}
+	--> set 1007: {21, 38}
+	--> set 1045: {22, 38}
+	--> set 1082: {23, 38}
+	--> set 1118: {24, 38}
+	--> set 1153: {25, 38}
+	--> set 1187: {26, 38}
+	--> set 1220: {27, 38}
+	--> set 1252: {28, 38}
+	--> set 1283: {29, 38}
+	--> set 1313: {30, 38}
+	--> set 1342: {31, 38}
+	--> set 1370: {32, 38}
+	--> set 1397: {33, 38}
+	--> set 1423: {34, 38}
+	--> set 1448: {35, 38}
+	--> set 1472: {36, 38}
+	--> set 1495: {37, 38}
+	--> set 1518: {38, 39}
+	--> set 1519: {38, 40}
+	--> set 1520: {38, 41}
+	--> set 1521: {38, 42}
+	--> set 1522: {38, 43}
+	--> set 1523: {38, 44}
+	--> set 1524: {38, 45}
+	--> set 1525: {38, 46}
+	--> set 1526: {38, 47}
+	--> set 1527: {38, 48}
+	--> set 1528: {38, 49}
+	--> set 1529: {38, 50}
+	--> set 1530: {38, 51}
+	--> set 1531: {38, 52}
+	--> set 1532: {38, 53}
+	--> set 1533: {38, 54}
+	--> set 1534: {38, 55}
+	--> set 1535: {38, 56}
+	--> set 1536: {38, 57}
+	--> set 1537: {38, 58}
+	--> set 1538: {38, 59}
+	--> set 1539: {38, 60}
+
+DEBUG: Interaction 39 is part of the following sets:
+	--> set 38: {1, 39}
+	--> set 96: {2, 39}
+	--> set 153: {3, 39}
+	--> set 209: {4, 39}
+	--> set 264: {5, 39}
+	--> set 318: {6, 39}
+	--> set 371: {7, 39}
+	--> set 423: {8, 39}
+	--> set 474: {9, 39}
+	--> set 524: {10, 39}
+	--> set 573: {11, 39}
+	--> set 621: {12, 39}
+	--> set 668: {13, 39}
+	--> set 714: {14, 39}
+	--> set 759: {15, 39}
+	--> set 803: {16, 39}
+	--> set 846: {17, 39}
+	--> set 888: {18, 39}
+	--> set 929: {19, 39}
+	--> set 969: {20, 39}
+	--> set 1008: {21, 39}
+	--> set 1046: {22, 39}
+	--> set 1083: {23, 39}
+	--> set 1119: {24, 39}
+	--> set 1154: {25, 39}
+	--> set 1188: {26, 39}
+	--> set 1221: {27, 39}
+	--> set 1253: {28, 39}
+	--> set 1284: {29, 39}
+	--> set 1314: {30, 39}
+	--> set 1343: {31, 39}
+	--> set 1371: {32, 39}
+	--> set 1398: {33, 39}
+	--> set 1424: {34, 39}
+	--> set 1449: {35, 39}
+	--> set 1473: {36, 39}
+	--> set 1496: {37, 39}
+	--> set 1518: {38, 39}
+	--> set 1540: {39, 40}
+	--> set 1541: {39, 41}
+	--> set 1542: {39, 42}
+	--> set 1543: {39, 43}
+	--> set 1544: {39, 44}
+	--> set 1545: {39, 45}
+	--> set 1546: {39, 46}
+	--> set 1547: {39, 47}
+	--> set 1548: {39, 48}
+	--> set 1549: {39, 49}
+	--> set 1550: {39, 50}
+	--> set 1551: {39, 51}
+	--> set 1552: {39, 52}
+	--> set 1553: {39, 53}
+	--> set 1554: {39, 54}
+	--> set 1555: {39, 55}
+	--> set 1556: {39, 56}
+	--> set 1557: {39, 57}
+	--> set 1558: {39, 58}
+	--> set 1559: {39, 59}
+	--> set 1560: {39, 60}
+
+DEBUG: Interaction 40 is part of the following sets:
+	--> set 39: {1, 40}
+	--> set 97: {2, 40}
+	--> set 154: {3, 40}
+	--> set 210: {4, 40}
+	--> set 265: {5, 40}
+	--> set 319: {6, 40}
+	--> set 372: {7, 40}
+	--> set 424: {8, 40}
+	--> set 475: {9, 40}
+	--> set 525: {10, 40}
+	--> set 574: {11, 40}
+	--> set 622: {12, 40}
+	--> set 669: {13, 40}
+	--> set 715: {14, 40}
+	--> set 760: {15, 40}
+	--> set 804: {16, 40}
+	--> set 847: {17, 40}
+	--> set 889: {18, 40}
+	--> set 930: {19, 40}
+	--> set 970: {20, 40}
+	--> set 1009: {21, 40}
+	--> set 1047: {22, 40}
+	--> set 1084: {23, 40}
+	--> set 1120: {24, 40}
+	--> set 1155: {25, 40}
+	--> set 1189: {26, 40}
+	--> set 1222: {27, 40}
+	--> set 1254: {28, 40}
+	--> set 1285: {29, 40}
+	--> set 1315: {30, 40}
+	--> set 1344: {31, 40}
+	--> set 1372: {32, 40}
+	--> set 1399: {33, 40}
+	--> set 1425: {34, 40}
+	--> set 1450: {35, 40}
+	--> set 1474: {36, 40}
+	--> set 1497: {37, 40}
+	--> set 1519: {38, 40}
+	--> set 1540: {39, 40}
+	--> set 1561: {40, 41}
+	--> set 1562: {40, 42}
+	--> set 1563: {40, 43}
+	--> set 1564: {40, 44}
+	--> set 1565: {40, 45}
+	--> set 1566: {40, 46}
+	--> set 1567: {40, 47}
+	--> set 1568: {40, 48}
+	--> set 1569: {40, 49}
+	--> set 1570: {40, 50}
+	--> set 1571: {40, 51}
+	--> set 1572: {40, 52}
+	--> set 1573: {40, 53}
+	--> set 1574: {40, 54}
+	--> set 1575: {40, 55}
+	--> set 1576: {40, 56}
+	--> set 1577: {40, 57}
+	--> set 1578: {40, 58}
+	--> set 1579: {40, 59}
+	--> set 1580: {40, 60}
+
+DEBUG: Interaction 41 is part of the following sets:
+	--> set 40: {1, 41}
+	--> set 98: {2, 41}
+	--> set 155: {3, 41}
+	--> set 211: {4, 41}
+	--> set 266: {5, 41}
+	--> set 320: {6, 41}
+	--> set 373: {7, 41}
+	--> set 425: {8, 41}
+	--> set 476: {9, 41}
+	--> set 526: {10, 41}
+	--> set 575: {11, 41}
+	--> set 623: {12, 41}
+	--> set 670: {13, 41}
+	--> set 716: {14, 41}
+	--> set 761: {15, 41}
+	--> set 805: {16, 41}
+	--> set 848: {17, 41}
+	--> set 890: {18, 41}
+	--> set 931: {19, 41}
+	--> set 971: {20, 41}
+	--> set 1010: {21, 41}
+	--> set 1048: {22, 41}
+	--> set 1085: {23, 41}
+	--> set 1121: {24, 41}
+	--> set 1156: {25, 41}
+	--> set 1190: {26, 41}
+	--> set 1223: {27, 41}
+	--> set 1255: {28, 41}
+	--> set 1286: {29, 41}
+	--> set 1316: {30, 41}
+	--> set 1345: {31, 41}
+	--> set 1373: {32, 41}
+	--> set 1400: {33, 41}
+	--> set 1426: {34, 41}
+	--> set 1451: {35, 41}
+	--> set 1475: {36, 41}
+	--> set 1498: {37, 41}
+	--> set 1520: {38, 41}
+	--> set 1541: {39, 41}
+	--> set 1561: {40, 41}
+	--> set 1581: {41, 42}
+	--> set 1582: {41, 43}
+	--> set 1583: {41, 44}
+	--> set 1584: {41, 45}
+	--> set 1585: {41, 46}
+	--> set 1586: {41, 47}
+	--> set 1587: {41, 48}
+	--> set 1588: {41, 49}
+	--> set 1589: {41, 50}
+	--> set 1590: {41, 51}
+	--> set 1591: {41, 52}
+	--> set 1592: {41, 53}
+	--> set 1593: {41, 54}
+	--> set 1594: {41, 55}
+	--> set 1595: {41, 56}
+	--> set 1596: {41, 57}
+	--> set 1597: {41, 58}
+	--> set 1598: {41, 59}
+	--> set 1599: {41, 60}
+
+DEBUG: Interaction 42 is part of the following sets:
+	--> set 41: {1, 42}
+	--> set 99: {2, 42}
+	--> set 156: {3, 42}
+	--> set 212: {4, 42}
+	--> set 267: {5, 42}
+	--> set 321: {6, 42}
+	--> set 374: {7, 42}
+	--> set 426: {8, 42}
+	--> set 477: {9, 42}
+	--> set 527: {10, 42}
+	--> set 576: {11, 42}
+	--> set 624: {12, 42}
+	--> set 671: {13, 42}
+	--> set 717: {14, 42}
+	--> set 762: {15, 42}
+	--> set 806: {16, 42}
+	--> set 849: {17, 42}
+	--> set 891: {18, 42}
+	--> set 932: {19, 42}
+	--> set 972: {20, 42}
+	--> set 1011: {21, 42}
+	--> set 1049: {22, 42}
+	--> set 1086: {23, 42}
+	--> set 1122: {24, 42}
+	--> set 1157: {25, 42}
+	--> set 1191: {26, 42}
+	--> set 1224: {27, 42}
+	--> set 1256: {28, 42}
+	--> set 1287: {29, 42}
+	--> set 1317: {30, 42}
+	--> set 1346: {31, 42}
+	--> set 1374: {32, 42}
+	--> set 1401: {33, 42}
+	--> set 1427: {34, 42}
+	--> set 1452: {35, 42}
+	--> set 1476: {36, 42}
+	--> set 1499: {37, 42}
+	--> set 1521: {38, 42}
+	--> set 1542: {39, 42}
+	--> set 1562: {40, 42}
+	--> set 1581: {41, 42}
+	--> set 1600: {42, 43}
+	--> set 1601: {42, 44}
+	--> set 1602: {42, 45}
+	--> set 1603: {42, 46}
+	--> set 1604: {42, 47}
+	--> set 1605: {42, 48}
+	--> set 1606: {42, 49}
+	--> set 1607: {42, 50}
+	--> set 1608: {42, 51}
+	--> set 1609: {42, 52}
+	--> set 1610: {42, 53}
+	--> set 1611: {42, 54}
+	--> set 1612: {42, 55}
+	--> set 1613: {42, 56}
+	--> set 1614: {42, 57}
+	--> set 1615: {42, 58}
+	--> set 1616: {42, 59}
+	--> set 1617: {42, 60}
+
+DEBUG: Interaction 43 is part of the following sets:
+	--> set 42: {1, 43}
+	--> set 100: {2, 43}
+	--> set 157: {3, 43}
+	--> set 213: {4, 43}
+	--> set 268: {5, 43}
+	--> set 322: {6, 43}
+	--> set 375: {7, 43}
+	--> set 427: {8, 43}
+	--> set 478: {9, 43}
+	--> set 528: {10, 43}
+	--> set 577: {11, 43}
+	--> set 625: {12, 43}
+	--> set 672: {13, 43}
+	--> set 718: {14, 43}
+	--> set 763: {15, 43}
+	--> set 807: {16, 43}
+	--> set 850: {17, 43}
+	--> set 892: {18, 43}
+	--> set 933: {19, 43}
+	--> set 973: {20, 43}
+	--> set 1012: {21, 43}
+	--> set 1050: {22, 43}
+	--> set 1087: {23, 43}
+	--> set 1123: {24, 43}
+	--> set 1158: {25, 43}
+	--> set 1192: {26, 43}
+	--> set 1225: {27, 43}
+	--> set 1257: {28, 43}
+	--> set 1288: {29, 43}
+	--> set 1318: {30, 43}
+	--> set 1347: {31, 43}
+	--> set 1375: {32, 43}
+	--> set 1402: {33, 43}
+	--> set 1428: {34, 43}
+	--> set 1453: {35, 43}
+	--> set 1477: {36, 43}
+	--> set 1500: {37, 43}
+	--> set 1522: {38, 43}
+	--> set 1543: {39, 43}
+	--> set 1563: {40, 43}
+	--> set 1582: {41, 43}
+	--> set 1600: {42, 43}
+	--> set 1618: {43, 44}
+	--> set 1619: {43, 45}
+	--> set 1620: {43, 46}
+	--> set 1621: {43, 47}
+	--> set 1622: {43, 48}
+	--> set 1623: {43, 49}
+	--> set 1624: {43, 50}
+	--> set 1625: {43, 51}
+	--> set 1626: {43, 52}
+	--> set 1627: {43, 53}
+	--> set 1628: {43, 54}
+	--> set 1629: {43, 55}
+	--> set 1630: {43, 56}
+	--> set 1631: {43, 57}
+	--> set 1632: {43, 58}
+	--> set 1633: {43, 59}
+	--> set 1634: {43, 60}
+
+DEBUG: Interaction 44 is part of the following sets:
+	--> set 43: {1, 44}
+	--> set 101: {2, 44}
+	--> set 158: {3, 44}
+	--> set 214: {4, 44}
+	--> set 269: {5, 44}
+	--> set 323: {6, 44}
+	--> set 376: {7, 44}
+	--> set 428: {8, 44}
+	--> set 479: {9, 44}
+	--> set 529: {10, 44}
+	--> set 578: {11, 44}
+	--> set 626: {12, 44}
+	--> set 673: {13, 44}
+	--> set 719: {14, 44}
+	--> set 764: {15, 44}
+	--> set 808: {16, 44}
+	--> set 851: {17, 44}
+	--> set 893: {18, 44}
+	--> set 934: {19, 44}
+	--> set 974: {20, 44}
+	--> set 1013: {21, 44}
+	--> set 1051: {22, 44}
+	--> set 1088: {23, 44}
+	--> set 1124: {24, 44}
+	--> set 1159: {25, 44}
+	--> set 1193: {26, 44}
+	--> set 1226: {27, 44}
+	--> set 1258: {28, 44}
+	--> set 1289: {29, 44}
+	--> set 1319: {30, 44}
+	--> set 1348: {31, 44}
+	--> set 1376: {32, 44}
+	--> set 1403: {33, 44}
+	--> set 1429: {34, 44}
+	--> set 1454: {35, 44}
+	--> set 1478: {36, 44}
+	--> set 1501: {37, 44}
+	--> set 1523: {38, 44}
+	--> set 1544: {39, 44}
+	--> set 1564: {40, 44}
+	--> set 1583: {41, 44}
+	--> set 1601: {42, 44}
+	--> set 1618: {43, 44}
+	--> set 1635: {44, 45}
+	--> set 1636: {44, 46}
+	--> set 1637: {44, 47}
+	--> set 1638: {44, 48}
+	--> set 1639: {44, 49}
+	--> set 1640: {44, 50}
+	--> set 1641: {44, 51}
+	--> set 1642: {44, 52}
+	--> set 1643: {44, 53}
+	--> set 1644: {44, 54}
+	--> set 1645: {44, 55}
+	--> set 1646: {44, 56}
+	--> set 1647: {44, 57}
+	--> set 1648: {44, 58}
+	--> set 1649: {44, 59}
+	--> set 1650: {44, 60}
+
+DEBUG: Interaction 45 is part of the following sets:
+	--> set 44: {1, 45}
+	--> set 102: {2, 45}
+	--> set 159: {3, 45}
+	--> set 215: {4, 45}
+	--> set 270: {5, 45}
+	--> set 324: {6, 45}
+	--> set 377: {7, 45}
+	--> set 429: {8, 45}
+	--> set 480: {9, 45}
+	--> set 530: {10, 45}
+	--> set 579: {11, 45}
+	--> set 627: {12, 45}
+	--> set 674: {13, 45}
+	--> set 720: {14, 45}
+	--> set 765: {15, 45}
+	--> set 809: {16, 45}
+	--> set 852: {17, 45}
+	--> set 894: {18, 45}
+	--> set 935: {19, 45}
+	--> set 975: {20, 45}
+	--> set 1014: {21, 45}
+	--> set 1052: {22, 45}
+	--> set 1089: {23, 45}
+	--> set 1125: {24, 45}
+	--> set 1160: {25, 45}
+	--> set 1194: {26, 45}
+	--> set 1227: {27, 45}
+	--> set 1259: {28, 45}
+	--> set 1290: {29, 45}
+	--> set 1320: {30, 45}
+	--> set 1349: {31, 45}
+	--> set 1377: {32, 45}
+	--> set 1404: {33, 45}
+	--> set 1430: {34, 45}
+	--> set 1455: {35, 45}
+	--> set 1479: {36, 45}
+	--> set 1502: {37, 45}
+	--> set 1524: {38, 45}
+	--> set 1545: {39, 45}
+	--> set 1565: {40, 45}
+	--> set 1584: {41, 45}
+	--> set 1602: {42, 45}
+	--> set 1619: {43, 45}
+	--> set 1635: {44, 45}
+	--> set 1651: {45, 46}
+	--> set 1652: {45, 47}
+	--> set 1653: {45, 48}
+	--> set 1654: {45, 49}
+	--> set 1655: {45, 50}
+	--> set 1656: {45, 51}
+	--> set 1657: {45, 52}
+	--> set 1658: {45, 53}
+	--> set 1659: {45, 54}
+	--> set 1660: {45, 55}
+	--> set 1661: {45, 56}
+	--> set 1662: {45, 57}
+	--> set 1663: {45, 58}
+	--> set 1664: {45, 59}
+	--> set 1665: {45, 60}
+
+DEBUG: Interaction 46 is part of the following sets:
+	--> set 45: {1, 46}
+	--> set 103: {2, 46}
+	--> set 160: {3, 46}
+	--> set 216: {4, 46}
+	--> set 271: {5, 46}
+	--> set 325: {6, 46}
+	--> set 378: {7, 46}
+	--> set 430: {8, 46}
+	--> set 481: {9, 46}
+	--> set 531: {10, 46}
+	--> set 580: {11, 46}
+	--> set 628: {12, 46}
+	--> set 675: {13, 46}
+	--> set 721: {14, 46}
+	--> set 766: {15, 46}
+	--> set 810: {16, 46}
+	--> set 853: {17, 46}
+	--> set 895: {18, 46}
+	--> set 936: {19, 46}
+	--> set 976: {20, 46}
+	--> set 1015: {21, 46}
+	--> set 1053: {22, 46}
+	--> set 1090: {23, 46}
+	--> set 1126: {24, 46}
+	--> set 1161: {25, 46}
+	--> set 1195: {26, 46}
+	--> set 1228: {27, 46}
+	--> set 1260: {28, 46}
+	--> set 1291: {29, 46}
+	--> set 1321: {30, 46}
+	--> set 1350: {31, 46}
+	--> set 1378: {32, 46}
+	--> set 1405: {33, 46}
+	--> set 1431: {34, 46}
+	--> set 1456: {35, 46}
+	--> set 1480: {36, 46}
+	--> set 1503: {37, 46}
+	--> set 1525: {38, 46}
+	--> set 1546: {39, 46}
+	--> set 1566: {40, 46}
+	--> set 1585: {41, 46}
+	--> set 1603: {42, 46}
+	--> set 1620: {43, 46}
+	--> set 1636: {44, 46}
+	--> set 1651: {45, 46}
+	--> set 1666: {46, 47}
+	--> set 1667: {46, 48}
+	--> set 1668: {46, 49}
+	--> set 1669: {46, 50}
+	--> set 1670: {46, 51}
+	--> set 1671: {46, 52}
+	--> set 1672: {46, 53}
+	--> set 1673: {46, 54}
+	--> set 1674: {46, 55}
+	--> set 1675: {46, 56}
+	--> set 1676: {46, 57}
+	--> set 1677: {46, 58}
+	--> set 1678: {46, 59}
+	--> set 1679: {46, 60}
+
+DEBUG: Interaction 47 is part of the following sets:
+	--> set 46: {1, 47}
+	--> set 104: {2, 47}
+	--> set 161: {3, 47}
+	--> set 217: {4, 47}
+	--> set 272: {5, 47}
+	--> set 326: {6, 47}
+	--> set 379: {7, 47}
+	--> set 431: {8, 47}
+	--> set 482: {9, 47}
+	--> set 532: {10, 47}
+	--> set 581: {11, 47}
+	--> set 629: {12, 47}
+	--> set 676: {13, 47}
+	--> set 722: {14, 47}
+	--> set 767: {15, 47}
+	--> set 811: {16, 47}
+	--> set 854: {17, 47}
+	--> set 896: {18, 47}
+	--> set 937: {19, 47}
+	--> set 977: {20, 47}
+	--> set 1016: {21, 47}
+	--> set 1054: {22, 47}
+	--> set 1091: {23, 47}
+	--> set 1127: {24, 47}
+	--> set 1162: {25, 47}
+	--> set 1196: {26, 47}
+	--> set 1229: {27, 47}
+	--> set 1261: {28, 47}
+	--> set 1292: {29, 47}
+	--> set 1322: {30, 47}
+	--> set 1351: {31, 47}
+	--> set 1379: {32, 47}
+	--> set 1406: {33, 47}
+	--> set 1432: {34, 47}
+	--> set 1457: {35, 47}
+	--> set 1481: {36, 47}
+	--> set 1504: {37, 47}
+	--> set 1526: {38, 47}
+	--> set 1547: {39, 47}
+	--> set 1567: {40, 47}
+	--> set 1586: {41, 47}
+	--> set 1604: {42, 47}
+	--> set 1621: {43, 47}
+	--> set 1637: {44, 47}
+	--> set 1652: {45, 47}
+	--> set 1666: {46, 47}
+	--> set 1680: {47, 48}
+	--> set 1681: {47, 49}
+	--> set 1682: {47, 50}
+	--> set 1683: {47, 51}
+	--> set 1684: {47, 52}
+	--> set 1685: {47, 53}
+	--> set 1686: {47, 54}
+	--> set 1687: {47, 55}
+	--> set 1688: {47, 56}
+	--> set 1689: {47, 57}
+	--> set 1690: {47, 58}
+	--> set 1691: {47, 59}
+	--> set 1692: {47, 60}
+
+DEBUG: Interaction 48 is part of the following sets:
+	--> set 47: {1, 48}
+	--> set 105: {2, 48}
+	--> set 162: {3, 48}
+	--> set 218: {4, 48}
+	--> set 273: {5, 48}
+	--> set 327: {6, 48}
+	--> set 380: {7, 48}
+	--> set 432: {8, 48}
+	--> set 483: {9, 48}
+	--> set 533: {10, 48}
+	--> set 582: {11, 48}
+	--> set 630: {12, 48}
+	--> set 677: {13, 48}
+	--> set 723: {14, 48}
+	--> set 768: {15, 48}
+	--> set 812: {16, 48}
+	--> set 855: {17, 48}
+	--> set 897: {18, 48}
+	--> set 938: {19, 48}
+	--> set 978: {20, 48}
+	--> set 1017: {21, 48}
+	--> set 1055: {22, 48}
+	--> set 1092: {23, 48}
+	--> set 1128: {24, 48}
+	--> set 1163: {25, 48}
+	--> set 1197: {26, 48}
+	--> set 1230: {27, 48}
+	--> set 1262: {28, 48}
+	--> set 1293: {29, 48}
+	--> set 1323: {30, 48}
+	--> set 1352: {31, 48}
+	--> set 1380: {32, 48}
+	--> set 1407: {33, 48}
+	--> set 1433: {34, 48}
+	--> set 1458: {35, 48}
+	--> set 1482: {36, 48}
+	--> set 1505: {37, 48}
+	--> set 1527: {38, 48}
+	--> set 1548: {39, 48}
+	--> set 1568: {40, 48}
+	--> set 1587: {41, 48}
+	--> set 1605: {42, 48}
+	--> set 1622: {43, 48}
+	--> set 1638: {44, 48}
+	--> set 1653: {45, 48}
+	--> set 1667: {46, 48}
+	--> set 1680: {47, 48}
+	--> set 1693: {48, 49}
+	--> set 1694: {48, 50}
+	--> set 1695: {48, 51}
+	--> set 1696: {48, 52}
+	--> set 1697: {48, 53}
+	--> set 1698: {48, 54}
+	--> set 1699: {48, 55}
+	--> set 1700: {48, 56}
+	--> set 1701: {48, 57}
+	--> set 1702: {48, 58}
+	--> set 1703: {48, 59}
+	--> set 1704: {48, 60}
+
+DEBUG: Interaction 49 is part of the following sets:
+	--> set 48: {1, 49}
+	--> set 106: {2, 49}
+	--> set 163: {3, 49}
+	--> set 219: {4, 49}
+	--> set 274: {5, 49}
+	--> set 328: {6, 49}
+	--> set 381: {7, 49}
+	--> set 433: {8, 49}
+	--> set 484: {9, 49}
+	--> set 534: {10, 49}
+	--> set 583: {11, 49}
+	--> set 631: {12, 49}
+	--> set 678: {13, 49}
+	--> set 724: {14, 49}
+	--> set 769: {15, 49}
+	--> set 813: {16, 49}
+	--> set 856: {17, 49}
+	--> set 898: {18, 49}
+	--> set 939: {19, 49}
+	--> set 979: {20, 49}
+	--> set 1018: {21, 49}
+	--> set 1056: {22, 49}
+	--> set 1093: {23, 49}
+	--> set 1129: {24, 49}
+	--> set 1164: {25, 49}
+	--> set 1198: {26, 49}
+	--> set 1231: {27, 49}
+	--> set 1263: {28, 49}
+	--> set 1294: {29, 49}
+	--> set 1324: {30, 49}
+	--> set 1353: {31, 49}
+	--> set 1381: {32, 49}
+	--> set 1408: {33, 49}
+	--> set 1434: {34, 49}
+	--> set 1459: {35, 49}
+	--> set 1483: {36, 49}
+	--> set 1506: {37, 49}
+	--> set 1528: {38, 49}
+	--> set 1549: {39, 49}
+	--> set 1569: {40, 49}
+	--> set 1588: {41, 49}
+	--> set 1606: {42, 49}
+	--> set 1623: {43, 49}
+	--> set 1639: {44, 49}
+	--> set 1654: {45, 49}
+	--> set 1668: {46, 49}
+	--> set 1681: {47, 49}
+	--> set 1693: {48, 49}
+	--> set 1705: {49, 50}
+	--> set 1706: {49, 51}
+	--> set 1707: {49, 52}
+	--> set 1708: {49, 53}
+	--> set 1709: {49, 54}
+	--> set 1710: {49, 55}
+	--> set 1711: {49, 56}
+	--> set 1712: {49, 57}
+	--> set 1713: {49, 58}
+	--> set 1714: {49, 59}
+	--> set 1715: {49, 60}
+
+DEBUG: Interaction 50 is part of the following sets:
+	--> set 49: {1, 50}
+	--> set 107: {2, 50}
+	--> set 164: {3, 50}
+	--> set 220: {4, 50}
+	--> set 275: {5, 50}
+	--> set 329: {6, 50}
+	--> set 382: {7, 50}
+	--> set 434: {8, 50}
+	--> set 485: {9, 50}
+	--> set 535: {10, 50}
+	--> set 584: {11, 50}
+	--> set 632: {12, 50}
+	--> set 679: {13, 50}
+	--> set 725: {14, 50}
+	--> set 770: {15, 50}
+	--> set 814: {16, 50}
+	--> set 857: {17, 50}
+	--> set 899: {18, 50}
+	--> set 940: {19, 50}
+	--> set 980: {20, 50}
+	--> set 1019: {21, 50}
+	--> set 1057: {22, 50}
+	--> set 1094: {23, 50}
+	--> set 1130: {24, 50}
+	--> set 1165: {25, 50}
+	--> set 1199: {26, 50}
+	--> set 1232: {27, 50}
+	--> set 1264: {28, 50}
+	--> set 1295: {29, 50}
+	--> set 1325: {30, 50}
+	--> set 1354: {31, 50}
+	--> set 1382: {32, 50}
+	--> set 1409: {33, 50}
+	--> set 1435: {34, 50}
+	--> set 1460: {35, 50}
+	--> set 1484: {36, 50}
+	--> set 1507: {37, 50}
+	--> set 1529: {38, 50}
+	--> set 1550: {39, 50}
+	--> set 1570: {40, 50}
+	--> set 1589: {41, 50}
+	--> set 1607: {42, 50}
+	--> set 1624: {43, 50}
+	--> set 1640: {44, 50}
+	--> set 1655: {45, 50}
+	--> set 1669: {46, 50}
+	--> set 1682: {47, 50}
+	--> set 1694: {48, 50}
+	--> set 1705: {49, 50}
+	--> set 1716: {50, 51}
+	--> set 1717: {50, 52}
+	--> set 1718: {50, 53}
+	--> set 1719: {50, 54}
+	--> set 1720: {50, 55}
+	--> set 1721: {50, 56}
+	--> set 1722: {50, 57}
+	--> set 1723: {50, 58}
+	--> set 1724: {50, 59}
+	--> set 1725: {50, 60}
+
+DEBUG: Interaction 51 is part of the following sets:
+	--> set 50: {1, 51}
+	--> set 108: {2, 51}
+	--> set 165: {3, 51}
+	--> set 221: {4, 51}
+	--> set 276: {5, 51}
+	--> set 330: {6, 51}
+	--> set 383: {7, 51}
+	--> set 435: {8, 51}
+	--> set 486: {9, 51}
+	--> set 536: {10, 51}
+	--> set 585: {11, 51}
+	--> set 633: {12, 51}
+	--> set 680: {13, 51}
+	--> set 726: {14, 51}
+	--> set 771: {15, 51}
+	--> set 815: {16, 51}
+	--> set 858: {17, 51}
+	--> set 900: {18, 51}
+	--> set 941: {19, 51}
+	--> set 981: {20, 51}
+	--> set 1020: {21, 51}
+	--> set 1058: {22, 51}
+	--> set 1095: {23, 51}
+	--> set 1131: {24, 51}
+	--> set 1166: {25, 51}
+	--> set 1200: {26, 51}
+	--> set 1233: {27, 51}
+	--> set 1265: {28, 51}
+	--> set 1296: {29, 51}
+	--> set 1326: {30, 51}
+	--> set 1355: {31, 51}
+	--> set 1383: {32, 51}
+	--> set 1410: {33, 51}
+	--> set 1436: {34, 51}
+	--> set 1461: {35, 51}
+	--> set 1485: {36, 51}
+	--> set 1508: {37, 51}
+	--> set 1530: {38, 51}
+	--> set 1551: {39, 51}
+	--> set 1571: {40, 51}
+	--> set 1590: {41, 51}
+	--> set 1608: {42, 51}
+	--> set 1625: {43, 51}
+	--> set 1641: {44, 51}
+	--> set 1656: {45, 51}
+	--> set 1670: {46, 51}
+	--> set 1683: {47, 51}
+	--> set 1695: {48, 51}
+	--> set 1706: {49, 51}
+	--> set 1716: {50, 51}
+	--> set 1726: {51, 52}
+	--> set 1727: {51, 53}
+	--> set 1728: {51, 54}
+	--> set 1729: {51, 55}
+	--> set 1730: {51, 56}
+	--> set 1731: {51, 57}
+	--> set 1732: {51, 58}
+	--> set 1733: {51, 59}
+	--> set 1734: {51, 60}
+
+DEBUG: Interaction 52 is part of the following sets:
+	--> set 51: {1, 52}
+	--> set 109: {2, 52}
+	--> set 166: {3, 52}
+	--> set 222: {4, 52}
+	--> set 277: {5, 52}
+	--> set 331: {6, 52}
+	--> set 384: {7, 52}
+	--> set 436: {8, 52}
+	--> set 487: {9, 52}
+	--> set 537: {10, 52}
+	--> set 586: {11, 52}
+	--> set 634: {12, 52}
+	--> set 681: {13, 52}
+	--> set 727: {14, 52}
+	--> set 772: {15, 52}
+	--> set 816: {16, 52}
+	--> set 859: {17, 52}
+	--> set 901: {18, 52}
+	--> set 942: {19, 52}
+	--> set 982: {20, 52}
+	--> set 1021: {21, 52}
+	--> set 1059: {22, 52}
+	--> set 1096: {23, 52}
+	--> set 1132: {24, 52}
+	--> set 1167: {25, 52}
+	--> set 1201: {26, 52}
+	--> set 1234: {27, 52}
+	--> set 1266: {28, 52}
+	--> set 1297: {29, 52}
+	--> set 1327: {30, 52}
+	--> set 1356: {31, 52}
+	--> set 1384: {32, 52}
+	--> set 1411: {33, 52}
+	--> set 1437: {34, 52}
+	--> set 1462: {35, 52}
+	--> set 1486: {36, 52}
+	--> set 1509: {37, 52}
+	--> set 1531: {38, 52}
+	--> set 1552: {39, 52}
+	--> set 1572: {40, 52}
+	--> set 1591: {41, 52}
+	--> set 1609: {42, 52}
+	--> set 1626: {43, 52}
+	--> set 1642: {44, 52}
+	--> set 1657: {45, 52}
+	--> set 1671: {46, 52}
+	--> set 1684: {47, 52}
+	--> set 1696: {48, 52}
+	--> set 1707: {49, 52}
+	--> set 1717: {50, 52}
+	--> set 1726: {51, 52}
+	--> set 1735: {52, 53}
+	--> set 1736: {52, 54}
+	--> set 1737: {52, 55}
+	--> set 1738: {52, 56}
+	--> set 1739: {52, 57}
+	--> set 1740: {52, 58}
+	--> set 1741: {52, 59}
+	--> set 1742: {52, 60}
+
+DEBUG: Interaction 53 is part of the following sets:
+	--> set 52: {1, 53}
+	--> set 110: {2, 53}
+	--> set 167: {3, 53}
+	--> set 223: {4, 53}
+	--> set 278: {5, 53}
+	--> set 332: {6, 53}
+	--> set 385: {7, 53}
+	--> set 437: {8, 53}
+	--> set 488: {9, 53}
+	--> set 538: {10, 53}
+	--> set 587: {11, 53}
+	--> set 635: {12, 53}
+	--> set 682: {13, 53}
+	--> set 728: {14, 53}
+	--> set 773: {15, 53}
+	--> set 817: {16, 53}
+	--> set 860: {17, 53}
+	--> set 902: {18, 53}
+	--> set 943: {19, 53}
+	--> set 983: {20, 53}
+	--> set 1022: {21, 53}
+	--> set 1060: {22, 53}
+	--> set 1097: {23, 53}
+	--> set 1133: {24, 53}
+	--> set 1168: {25, 53}
+	--> set 1202: {26, 53}
+	--> set 1235: {27, 53}
+	--> set 1267: {28, 53}
+	--> set 1298: {29, 53}
+	--> set 1328: {30, 53}
+	--> set 1357: {31, 53}
+	--> set 1385: {32, 53}
+	--> set 1412: {33, 53}
+	--> set 1438: {34, 53}
+	--> set 1463: {35, 53}
+	--> set 1487: {36, 53}
+	--> set 1510: {37, 53}
+	--> set 1532: {38, 53}
+	--> set 1553: {39, 53}
+	--> set 1573: {40, 53}
+	--> set 1592: {41, 53}
+	--> set 1610: {42, 53}
+	--> set 1627: {43, 53}
+	--> set 1643: {44, 53}
+	--> set 1658: {45, 53}
+	--> set 1672: {46, 53}
+	--> set 1685: {47, 53}
+	--> set 1697: {48, 53}
+	--> set 1708: {49, 53}
+	--> set 1718: {50, 53}
+	--> set 1727: {51, 53}
+	--> set 1735: {52, 53}
+	--> set 1743: {53, 54}
+	--> set 1744: {53, 55}
+	--> set 1745: {53, 56}
+	--> set 1746: {53, 57}
+	--> set 1747: {53, 58}
+	--> set 1748: {53, 59}
+	--> set 1749: {53, 60}
+
+DEBUG: Interaction 54 is part of the following sets:
+	--> set 53: {1, 54}
+	--> set 111: {2, 54}
+	--> set 168: {3, 54}
+	--> set 224: {4, 54}
+	--> set 279: {5, 54}
+	--> set 333: {6, 54}
+	--> set 386: {7, 54}
+	--> set 438: {8, 54}
+	--> set 489: {9, 54}
+	--> set 539: {10, 54}
+	--> set 588: {11, 54}
+	--> set 636: {12, 54}
+	--> set 683: {13, 54}
+	--> set 729: {14, 54}
+	--> set 774: {15, 54}
+	--> set 818: {16, 54}
+	--> set 861: {17, 54}
+	--> set 903: {18, 54}
+	--> set 944: {19, 54}
+	--> set 984: {20, 54}
+	--> set 1023: {21, 54}
+	--> set 1061: {22, 54}
+	--> set 1098: {23, 54}
+	--> set 1134: {24, 54}
+	--> set 1169: {25, 54}
+	--> set 1203: {26, 54}
+	--> set 1236: {27, 54}
+	--> set 1268: {28, 54}
+	--> set 1299: {29, 54}
+	--> set 1329: {30, 54}
+	--> set 1358: {31, 54}
+	--> set 1386: {32, 54}
+	--> set 1413: {33, 54}
+	--> set 1439: {34, 54}
+	--> set 1464: {35, 54}
+	--> set 1488: {36, 54}
+	--> set 1511: {37, 54}
+	--> set 1533: {38, 54}
+	--> set 1554: {39, 54}
+	--> set 1574: {40, 54}
+	--> set 1593: {41, 54}
+	--> set 1611: {42, 54}
+	--> set 1628: {43, 54}
+	--> set 1644: {44, 54}
+	--> set 1659: {45, 54}
+	--> set 1673: {46, 54}
+	--> set 1686: {47, 54}
+	--> set 1698: {48, 54}
+	--> set 1709: {49, 54}
+	--> set 1719: {50, 54}
+	--> set 1728: {51, 54}
+	--> set 1736: {52, 54}
+	--> set 1743: {53, 54}
+	--> set 1750: {54, 55}
+	--> set 1751: {54, 56}
+	--> set 1752: {54, 57}
+	--> set 1753: {54, 58}
+	--> set 1754: {54, 59}
+	--> set 1755: {54, 60}
+
+DEBUG: Interaction 55 is part of the following sets:
+	--> set 54: {1, 55}
+	--> set 112: {2, 55}
+	--> set 169: {3, 55}
+	--> set 225: {4, 55}
+	--> set 280: {5, 55}
+	--> set 334: {6, 55}
+	--> set 387: {7, 55}
+	--> set 439: {8, 55}
+	--> set 490: {9, 55}
+	--> set 540: {10, 55}
+	--> set 589: {11, 55}
+	--> set 637: {12, 55}
+	--> set 684: {13, 55}
+	--> set 730: {14, 55}
+	--> set 775: {15, 55}
+	--> set 819: {16, 55}
+	--> set 862: {17, 55}
+	--> set 904: {18, 55}
+	--> set 945: {19, 55}
+	--> set 985: {20, 55}
+	--> set 1024: {21, 55}
+	--> set 1062: {22, 55}
+	--> set 1099: {23, 55}
+	--> set 1135: {24, 55}
+	--> set 1170: {25, 55}
+	--> set 1204: {26, 55}
+	--> set 1237: {27, 55}
+	--> set 1269: {28, 55}
+	--> set 1300: {29, 55}
+	--> set 1330: {30, 55}
+	--> set 1359: {31, 55}
+	--> set 1387: {32, 55}
+	--> set 1414: {33, 55}
+	--> set 1440: {34, 55}
+	--> set 1465: {35, 55}
+	--> set 1489: {36, 55}
+	--> set 1512: {37, 55}
+	--> set 1534: {38, 55}
+	--> set 1555: {39, 55}
+	--> set 1575: {40, 55}
+	--> set 1594: {41, 55}
+	--> set 1612: {42, 55}
+	--> set 1629: {43, 55}
+	--> set 1645: {44, 55}
+	--> set 1660: {45, 55}
+	--> set 1674: {46, 55}
+	--> set 1687: {47, 55}
+	--> set 1699: {48, 55}
+	--> set 1710: {49, 55}
+	--> set 1720: {50, 55}
+	--> set 1729: {51, 55}
+	--> set 1737: {52, 55}
+	--> set 1744: {53, 55}
+	--> set 1750: {54, 55}
+	--> set 1756: {55, 56}
+	--> set 1757: {55, 57}
+	--> set 1758: {55, 58}
+	--> set 1759: {55, 59}
+	--> set 1760: {55, 60}
+
+DEBUG: Interaction 56 is part of the following sets:
+	--> set 55: {1, 56}
+	--> set 113: {2, 56}
+	--> set 170: {3, 56}
+	--> set 226: {4, 56}
+	--> set 281: {5, 56}
+	--> set 335: {6, 56}
+	--> set 388: {7, 56}
+	--> set 440: {8, 56}
+	--> set 491: {9, 56}
+	--> set 541: {10, 56}
+	--> set 590: {11, 56}
+	--> set 638: {12, 56}
+	--> set 685: {13, 56}
+	--> set 731: {14, 56}
+	--> set 776: {15, 56}
+	--> set 820: {16, 56}
+	--> set 863: {17, 56}
+	--> set 905: {18, 56}
+	--> set 946: {19, 56}
+	--> set 986: {20, 56}
+	--> set 1025: {21, 56}
+	--> set 1063: {22, 56}
+	--> set 1100: {23, 56}
+	--> set 1136: {24, 56}
+	--> set 1171: {25, 56}
+	--> set 1205: {26, 56}
+	--> set 1238: {27, 56}
+	--> set 1270: {28, 56}
+	--> set 1301: {29, 56}
+	--> set 1331: {30, 56}
+	--> set 1360: {31, 56}
+	--> set 1388: {32, 56}
+	--> set 1415: {33, 56}
+	--> set 1441: {34, 56}
+	--> set 1466: {35, 56}
+	--> set 1490: {36, 56}
+	--> set 1513: {37, 56}
+	--> set 1535: {38, 56}
+	--> set 1556: {39, 56}
+	--> set 1576: {40, 56}
+	--> set 1595: {41, 56}
+	--> set 1613: {42, 56}
+	--> set 1630: {43, 56}
+	--> set 1646: {44, 56}
+	--> set 1661: {45, 56}
+	--> set 1675: {46, 56}
+	--> set 1688: {47, 56}
+	--> set 1700: {48, 56}
+	--> set 1711: {49, 56}
+	--> set 1721: {50, 56}
+	--> set 1730: {51, 56}
+	--> set 1738: {52, 56}
+	--> set 1745: {53, 56}
+	--> set 1751: {54, 56}
+	--> set 1756: {55, 56}
+	--> set 1761: {56, 57}
+	--> set 1762: {56, 58}
+	--> set 1763: {56, 59}
+	--> set 1764: {56, 60}
+
+DEBUG: Interaction 57 is part of the following sets:
+	--> set 56: {1, 57}
+	--> set 114: {2, 57}
+	--> set 171: {3, 57}
+	--> set 227: {4, 57}
+	--> set 282: {5, 57}
+	--> set 336: {6, 57}
+	--> set 389: {7, 57}
+	--> set 441: {8, 57}
+	--> set 492: {9, 57}
+	--> set 542: {10, 57}
+	--> set 591: {11, 57}
+	--> set 639: {12, 57}
+	--> set 686: {13, 57}
+	--> set 732: {14, 57}
+	--> set 777: {15, 57}
+	--> set 821: {16, 57}
+	--> set 864: {17, 57}
+	--> set 906: {18, 57}
+	--> set 947: {19, 57}
+	--> set 987: {20, 57}
+	--> set 1026: {21, 57}
+	--> set 1064: {22, 57}
+	--> set 1101: {23, 57}
+	--> set 1137: {24, 57}
+	--> set 1172: {25, 57}
+	--> set 1206: {26, 57}
+	--> set 1239: {27, 57}
+	--> set 1271: {28, 57}
+	--> set 1302: {29, 57}
+	--> set 1332: {30, 57}
+	--> set 1361: {31, 57}
+	--> set 1389: {32, 57}
+	--> set 1416: {33, 57}
+	--> set 1442: {34, 57}
+	--> set 1467: {35, 57}
+	--> set 1491: {36, 57}
+	--> set 1514: {37, 57}
+	--> set 1536: {38, 57}
+	--> set 1557: {39, 57}
+	--> set 1577: {40, 57}
+	--> set 1596: {41, 57}
+	--> set 1614: {42, 57}
+	--> set 1631: {43, 57}
+	--> set 1647: {44, 57}
+	--> set 1662: {45, 57}
+	--> set 1676: {46, 57}
+	--> set 1689: {47, 57}
+	--> set 1701: {48, 57}
+	--> set 1712: {49, 57}
+	--> set 1722: {50, 57}
+	--> set 1731: {51, 57}
+	--> set 1739: {52, 57}
+	--> set 1746: {53, 57}
+	--> set 1752: {54, 57}
+	--> set 1757: {55, 57}
+	--> set 1761: {56, 57}
+	--> set 1765: {57, 58}
+	--> set 1766: {57, 59}
+	--> set 1767: {57, 60}
+
+DEBUG: Interaction 58 is part of the following sets:
+	--> set 57: {1, 58}
+	--> set 115: {2, 58}
+	--> set 172: {3, 58}
+	--> set 228: {4, 58}
+	--> set 283: {5, 58}
+	--> set 337: {6, 58}
+	--> set 390: {7, 58}
+	--> set 442: {8, 58}
+	--> set 493: {9, 58}
+	--> set 543: {10, 58}
+	--> set 592: {11, 58}
+	--> set 640: {12, 58}
+	--> set 687: {13, 58}
+	--> set 733: {14, 58}
+	--> set 778: {15, 58}
+	--> set 822: {16, 58}
+	--> set 865: {17, 58}
+	--> set 907: {18, 58}
+	--> set 948: {19, 58}
+	--> set 988: {20, 58}
+	--> set 1027: {21, 58}
+	--> set 1065: {22, 58}
+	--> set 1102: {23, 58}
+	--> set 1138: {24, 58}
+	--> set 1173: {25, 58}
+	--> set 1207: {26, 58}
+	--> set 1240: {27, 58}
+	--> set 1272: {28, 58}
+	--> set 1303: {29, 58}
+	--> set 1333: {30, 58}
+	--> set 1362: {31, 58}
+	--> set 1390: {32, 58}
+	--> set 1417: {33, 58}
+	--> set 1443: {34, 58}
+	--> set 1468: {35, 58}
+	--> set 1492: {36, 58}
+	--> set 1515: {37, 58}
+	--> set 1537: {38, 58}
+	--> set 1558: {39, 58}
+	--> set 1578: {40, 58}
+	--> set 1597: {41, 58}
+	--> set 1615: {42, 58}
+	--> set 1632: {43, 58}
+	--> set 1648: {44, 58}
+	--> set 1663: {45, 58}
+	--> set 1677: {4

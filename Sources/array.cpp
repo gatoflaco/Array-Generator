@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 07/06/2022
+Last updated 07/14/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -21,8 +21,6 @@ static void print_singles(Factor **factors, uint64_t num_factors);
 static void print_interactions(std::vector<Interaction*> interactions);
 static void print_sets(std::vector<T*> sets);
 static void print_debug(Factor **factors, uint64_t num_factors);
-
-static uint8_t no_change_counter = 0;   // TODO: delete this eventually; only for debugging
 
 /* CONSTRUCTOR - initializes the object
  * - overloaded: this is the default with no parameters, and should not be used
@@ -119,7 +117,6 @@ Array::Array()
 */
 Array::Array(Parser *in) : Array::Array()
 {
-    pa = in;    // TODO: DELETE THIS, IT IS ONLY FOR DEBUGGING
     srand(time(nullptr));   // seed rand() using current time
     d = in->d; t = in->t; delta = in->delta;
     v = in->v; o = in->o; p = in->p;
@@ -128,21 +125,8 @@ Array::Array(Parser *in) : Array::Array()
     dont_cares = new prop_mode[num_factors]{none};
     permutation = new int[num_factors];
     for (uint64_t col = 0; col < num_factors; col++) permutation[col] = col;
-
-    if(d <= 0) {
-        printf("NOTE: bad value for d, continuing with d = 1\n");
-        d = 1;
-    }
-    if(t <= 0 || t > num_factors) {
-        printf("NOTE: bad value for t, continuing with t = 2\n");
-        t = 2;
-    }
-    if(delta <= 0) {
-        printf("NOTE: bad value for δ, continuing with δ = 1\n");
-        delta = 1;
-    }
+    
     if (o != silent) printf("Building internal data structures....\n\n");
-
     try {
         // build all Singles, associated with an array of Factors
         factors = new Factor*[num_factors];
@@ -172,8 +156,7 @@ Array::Array(Parser *in) : Array::Array()
         if (p != all) return;   // can skip the following stuff if not doing detection
 
         // build all Interactions' maps of detection issues to their deltas (row difference magnitudes)
-        for (Interaction *i : interactions) {// for all Interactions in the array
-            printf("\nDEBUG: Interaction %d is part of the following sets:\n", i->id);
+        for (Interaction *i : interactions) {   // for all Interactions in the array
             for (T *t_set : sets)   {// for every T set this Interaction is NOT part of
                 if (i->sets.find(t_set) == i->sets.end()) {
                     i->deltas.insert({t_set, 0});
@@ -182,11 +165,6 @@ Array::Array(Parser *in) : Array::Array()
                         total_problems += delta;
                         score += delta;
                     }
-                } else {    // TODO: get rid of this else, it is for debugging only
-                    std::string my_str("\t--> set " + std::to_string(t_set->id) + ": {");
-                    for (Interaction *i2 : t_set->interactions) my_str += std::to_string(i2->id) + ", ";
-                    my_str = my_str.substr(0, my_str.size()-2) + "}";
-                    printf("%s\n", my_str.c_str());
                 }
             }
         }
@@ -351,44 +329,6 @@ void Array::add_row()
     tweak_row(new_row, &row_interactions);  // next, go and score this decision, modifying values as needed
     row_interactions.clear(); build_row_interactions(new_row, &row_interactions, 0, t, ""); // rebuild
     update_array(new_row, &row_interactions);
-
-    // TODO: get rid of this and the following lines, they are for debugging only
-    if (score == prev_score) no_change_counter++;
-    else no_change_counter = 0;
-    if (no_change_counter > 5) {
-        print_debug(factors, num_factors);
-        printf("DEBUG: There are %lu T sets with an unsolved location problem\n", location_problems);
-        //print_singles(factors, num_factors);
-        print_interactions(interactions);
-        //print_sets(sets);
-        printf("Is the array covering? --> %s\nIs the array locating? --> %s\nIs the array detecting? --> %s\n",
-            is_covering ? "true" : "false", is_locating ? "true" : "false", is_detecting ? "true" : "false");
-        /*
-        for (Interaction *i : interactions) {
-            if (v == v_off || i->is_detectable) continue;
-            printf("\nFor interaction %d, the following sets are not delta-separated:\n", i->id);
-            for (auto& kv : i->deltas) {
-                if (kv.second >= static_cast<int64_t>(delta)) continue;
-                std::string my_str("\t--> set " + std::to_string(kv.first->id) + ": {");
-                for (Interaction *i2 : kv.first->interactions) my_str += std::to_string(i2->id) + ", ";
-                my_str = my_str.substr(0, my_str.size()-2) + "}";
-                printf("%s - delta %lu\n", my_str.c_str(), kv.second);
-            }
-        }//*/
-        for (T* t1 : sets) {
-            if (v == v_off || t1->is_locatable) continue;
-            printf("\nFor set %d, the following sets are in conflict:\n", t1->id);
-            for (T *t2 : t1->location_conflicts) {
-                printf("\t--> %d\n", t2->id);
-            }
-        }
-    }
-    //
-    if (no_change_counter == 10) {
-        pa->out.open(pa->out_filename.c_str(), std::ofstream::out);
-        pa->out.write(to_string().c_str(), static_cast<std::streamsize>(to_string().size()));
-        pa->out.close();
-    }//*/
 }
 
 /* SUB METHOD: add_random_row - adds a randomly generated row to the array without scoring it
@@ -399,16 +339,23 @@ void Array::add_row()
 */
 void Array::add_random_row()
 {
-    printf("DEBUG: There are %lu T sets with an unsolved location problem\n", location_problems);
-    int *new_row = new int[num_factors];
-
-    // simply randomly generate each value
-    for (uint64_t i = 0; i < num_factors; i++)
-        new_row[i] = static_cast<uint64_t>(rand()) % factors[i]->level;
-    
+    int *new_row = get_random_row();
     std::set<Interaction*> row_interactions;
     build_row_interactions(new_row, &row_interactions, 0, t, "");
     update_array(new_row, &row_interactions);
+}
+
+/* HELPER METHOD: get_random_row - creates a randomly generated row without any logic to tweak it
+ * 
+ * returns:
+ * - a pointer to the first element in the array that represents the row
+*/
+int *Array::get_random_row()
+{
+    int *new_row = new int[num_factors];
+    for (uint64_t i = 0; i < num_factors; i++)
+        new_row[i] = static_cast<uint64_t>(rand()) % factors[i]->level;
+    return new_row;
 }
 
 /* SUB METHOD: update_array - updates data structures to reflect changes caused by adding a new row
@@ -509,13 +456,13 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
                     if (row_sets.find(t2) == row_sets.end()) {  // if the conflicting set is not in this row,
                         temp.erase(t2); // it is no longer an issue for the current T
                         solved++;
-                        if (t2->location_conflicts.erase(t1) == 1) {
-                            for (Single *s : t2->singles) {
+                        if (t2->location_conflicts.erase(t1) == 1) {    // vice versa:
+                            for (Single *s : t2->singles) { // conflicting T also had a location issue solved
                                 s->l_issues--;
                                 score--;
                             }
-                            if (t2->location_conflicts.size() == 0) {   // if true, this T just became locatable
-                                t2->is_locatable = true;
+                            if (t2->location_conflicts.size() == 0) {   // if true,
+                                t2->is_locatable = true;    // conflicting T just became locatable
                                 score--;    // array score improves for the solved location problem
                                 location_problems--;
                                 if (location_problems == 0) is_locating = true;
@@ -527,27 +474,12 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
                     score -= solved;
                 }
                 t1->location_conflicts = temp;  // mutating completed, can update original now
-                if (t1->location_conflicts.size() == 0) {   // if true, this T just became locatable
-                    t1->is_locatable = true;
+                if (t1->location_conflicts.size() == 0) {   // if true,
+                    t1->is_locatable = true;    // this T just became locatable
                     score--;    // array score improves for the solved location problem
                     location_problems--;
                     if (location_problems == 0) is_locating = true;
                 }
-                /* next, check if the presence of this T set solved any others' location issues
-                for (T *t2 : sets) {
-                    if (t1 == t2 || t2->is_locatable || row_sets.find(t2) != row_sets.end() ||
-                        t2->location_conflicts.size() == 0 || t2->location_conflicts.erase(t1) == 0) continue;
-                    for (Single *s: t2->singles) {  // update scores
-                        s->l_issues--;
-                        score--;
-                    }
-                    if (t2->location_conflicts.size() == 0) {   // if true, this T just became locatable
-                        t2->is_locatable = true;
-                        score--;    // array score improves for the solved location problem
-                        location_problems--;
-                        if (location_problems == 0) is_locating = true;
-                    }
-                }//*/
             }
         }
     }
@@ -585,12 +517,6 @@ std::string Array::to_string()
 */
 Array::~Array()
 {
-    //print_debug(factors, num_factors);  // TODO: delete these line entirely, it is only for debugging
-    //print_singles(factors, num_factors);
-    //print_interactions(interactions);
-    //print_sets(sets);
-    printf("Is the array covering? --> %s\nIs the array locating? --> %s\nIs the array detecting? --> %s\n",
-        is_covering ? "true" : "false", is_locating ? "true" : "false", is_detecting ? "true" : "false");
     for (uint64_t i = 0; i < num_tests; i++) delete[] rows[i];
     for (uint64_t i = 0; i < num_factors; i++) delete factors[i];
     delete[] factors;

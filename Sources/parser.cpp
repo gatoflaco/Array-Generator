@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 06/13/2022
+Last updated 07/14/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -10,6 +10,11 @@ Last updated 06/13/2022
 #include <sstream>
 #include <iostream>
 #include <algorithm>
+
+// method forward declarations
+bool bad_t(uint64_t t, uint64_t num_cols);
+bool bad_d(uint64_t d, uint64_t t, std::vector<uint64_t> *levels, prop_mode p);
+bool bad_delta(uint64_t d, uint64_t t, uint64_t delta);
 
 /* CONSTRUCTOR - initializes the object
  * - overloaded: this is the default with no parameters, and should not be used
@@ -129,6 +134,9 @@ int Parser::process_input()
     }
 
     in.close();
+    if (bad_t(t, num_cols)) return -1;
+    if (bad_d(d, t, &levels, p)) return -1;
+    if (bad_delta(d, t, delta)) return -1;
     return 0;
 }
 
@@ -173,51 +181,69 @@ void Parser::syntax_error(int lineno, std::string expected, std::string actual, 
     printf("\n");
 }
 
-/* HELPER METHOD: semantic_error - prints an error message regarding array format
- * 
- * parameters:
- * - lineno: line number on which the array format was violated
- * - row: row number of the array in which the array format was violated
- * - col: column number of the array in which the array format was violated
- * - level: factor level corresponding to the column in which the array format was violated
- * - value: the array value which violated expected format
- * - verbose: whether to print extra error output (true by default)
- * 
- * returns:
- * - void (caller should decide whether to quit or continue)
-*/
-void Parser::semantic_error(int lineno, int row, int col, int level, int value, bool verbose)
-{
-    printf("\t-- ERROR --\n\tArray format violated at row %d, column %d, on line %d.\n", row, col, lineno);
-    if (value < 0)
-        printf("\tArray values should not be negative. Value in array was %d.\n", value);
-    else
-        printf("\tLevel for that factor was given as %d, but value in array was %d which is too large.\n",
-            level, value);
-    if (verbose) printf("\tFor formatting details, please check the README.\n");
-    printf("\n");
-}
-
-/* HELPER METHOD: other_error - prints a general error message
- *
- * parameters:
- * - lineno: line number on which the error occurred
- * - line: the entire line which caused the error
- * - verbose: whether to print extra error output (true by default)
- * 
- * returns:
- * - void (caller should decide whether to quit or continue)
-*/
-void Parser::other_error(int lineno, std::string line, bool verbose)
-{
-    printf("\t-- ERROR --\n\tError with line %d: \"%s\".\n", lineno, line.c_str());
-    if (verbose) printf("\tFor formatting details, please check the README.\n");
-    printf("\n");
-}
-
 /* DECONSTRUCTOR - frees memory
 */
 Parser::~Parser()
 {
     for (uint64_t *row : array) delete[] row;
+}
+
+// ==============================   LOCAL HELPER METHODS BELOW THIS POINT   ============================== //
+
+bool bad_t(uint64_t t, uint64_t num_cols)
+{
+    if (t > num_cols) {
+        printf("\t-- ERROR --\n");
+        printf("\tImpossible to generate array with higher interaction strength than number of factors.\n");
+        printf("\tstrength          --> %lu\n", t);
+        printf("\tnumber of factors --> %lu\n", num_cols);
+        return true;
+    }
+    if (t == 0) {
+        printf("\t-- ERROR --\n\tt cannot be 0.\n");
+        return true;
+    }
+    return false;
+}
+
+bool bad_d(uint64_t d, uint64_t t, std::vector<uint64_t> *levels, prop_mode p)
+{
+    if (p == all || p == c_and_l) { // location
+        uint64_t count = 0;
+        for (uint64_t level : *levels) {
+            if (level < d) {
+                printf("\t-- ERROR --\n");
+                printf("\tImpossible to generate (%lu-%lu)-locating array ", d, t);
+                printf("when any factor has less than %lu possible levels.\n", d);
+                return true;
+            }
+            if (level == d) {
+                count++;
+                // I'm not yet sure of the math behind this, so leaving it commented out for now.
+                if (count >= 2) {
+                    printf("\t-- ERROR --\n\tImpossible to generate (%lu-%lu)-locating array ", d, t);
+                    printf("when 2 or more factors have exactly %lu possible levels.\n", d);
+                }//*/
+            }
+        }
+    }
+    return false;
+}
+
+bool bad_delta(uint64_t d, uint64_t t, uint64_t delta)
+{
+    if (delta == 0) {
+        printf("\t-- ERROR --\n\tδ cannot be 0.\n");
+        return true;
+    }
+    /* TODO: figure out if there is a way to see in advance that detection would not be possible
+    if (p == all) { // detection
+        for (uint64_t level : *levels) {
+            if (level == d) {
+
+            }
+        }
+        
+    }//*/
+    return false;
 }

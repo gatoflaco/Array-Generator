@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 07/07/2022
+Last updated 07/14/2022
 
 |===========================================================================================================|
 |   (to be written)                                                                                         |
@@ -69,31 +69,19 @@ class Array
         uint64_t d;         // this is the size of the sets of t-way interactions
         uint64_t t;         // this is the strength of interest
         uint64_t delta;     // this is the desired separation of the array
+        bool is_covering;   // checks whether the array is t-covering
+        bool is_locating;   // checks whether the array is (d, t)-locating
+        bool is_detecting;  // tracks whether the array is (d, t, δ)-detecting
 
         void add_row();             // adds a row to the array based on scoring
         void add_random_row();      // adds a random row to the array
-        void add_row_debug(int val);
-
         std::string to_string();                // returns a string representing all rows
-
-        // checks whether the array is covering; this means that every interaction of strength t occurs in
-        // the array at least 1 time (TODO: extend this to at least δ times for (t, δ)-coverage)
-        bool is_covering;
-
-        // checks whether the array is (d, t)-locating; this means that for every pair of size-d sets of
-        // t-way interactions, the rows covered by those sets are not equal
-        bool is_locating;
-
-        // checks whether the array is (d, t, δ)-detecting; this checks for all t-way interactions, for all
-        // size-d sets, T is a member of the set OR T's rows minus the set's rows has >= δ elements
-        bool is_detecting;
 
         Array();    // default constructor, don't use this
         Array(Parser *in);  // constructor with an initialized Parser object
         ~Array();   // deconstructor
 
     private:
-        Parser *pa; // TODO: GET RID OF THIS, IT IS FOR DEBUGGING ONLY
         uint64_t total_problems;        // the array's score starts off as this value
         uint64_t coverage_problems;     // subset of total_issues representing just coverage
         uint64_t location_problems;     // subset of total_issues representing just location
@@ -125,7 +113,8 @@ class Array
         // from a given row to fill out a set of interactions representing those that appear in the row
         void build_row_interactions(int *row, std::set<Interaction*> *row_interactions,
             uint64_t start, uint64_t t_cur, std::string key);
-        
+
+        int *get_random_row();  // gets a randomly generated row        
         void tweak_row(int *row, std::set<Interaction*> *row_interactions); // improves a decision for a row
 
         // define more of these as needed; they are for deciding what needs changing

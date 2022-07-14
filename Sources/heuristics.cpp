@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 07/07/2022
+Last updated 07/13/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods belonging to the Array class which are declared in array.h.  |
@@ -213,10 +213,17 @@ void Array::heuristic_all(int *row)
     std::vector<int*> best_rows;
     int64_t best_score = 0;
     heuristic_all_helper(row, 0, &best_rows, &best_score);
+    if (best_rows.size() == 0) {    // recover from corner case where the helper finds nothing promising
+        int *random_row = get_random_row();
+        for (uint64_t col = 0; col < num_factors; col++) row[col] = random_row[col];
+        delete[] random_row;
+        return;
+    }
 
     // after heuristic_all_helper() finishes, best_rows holds one or more optimal choices for a row
-    for (unsigned long int col = 0; col < num_factors; col++)   // break ties randomly
-        row[col] = best_rows.at(static_cast<uint64_t>(rand()) % best_rows.size())[col];
+    int choice = static_cast<uint64_t>(rand()) % best_rows.size();
+    for (uint64_t col = 0; col < num_factors; col++)   // break ties randomly
+        row[col] = best_rows.at(choice)[col];
     
     // free memory
     for (int *r : best_rows) delete[] r;
@@ -227,6 +234,21 @@ void Array::heuristic_all_helper(int *row, uint64_t cur_col,
 {
     // base case: row represents a unique combination and is ready for scoring
     if (cur_col == num_factors) {
+        // First, check if this exact row has already been added to array at least δ times.
+        // If so, do not bother inspecting this row, for it will definitely add nothing
+        uint64_t count = 0;
+        for (int *array_row : rows) {
+            bool matched = true;
+            for (uint64_t i = 0; i < num_factors; i++) {
+                if (row[i] != array_row[i]) {
+                    matched = false;
+                    break;
+                }
+            }
+            if (matched) count++;
+        }
+        if (count == delta) return;
+
         std::set<Interaction*> row_interactions;
         build_row_interactions(row, &row_interactions, 0, t, "");
         std::set<T*> affected_t_sets;   // may be more than just the T sets appearing in this row
@@ -268,7 +290,7 @@ void Array::heuristic_all_helper(int *row, uint64_t cur_col,
             uint64_t weight = (factors[s->factor]->level);  // higher level factors hold more weight
             Prev_S_Data *x = prev_singles.at(s);
             row_score += static_cast<int64_t>(weight*(x->c_issues - s->c_issues));
-            if (s->l_issues < x->l_issues) row_score += weight*(x->l_issues - s->l_issues);
+            if (s->l_issues < x->l_issues) row_score += 2*weight*(x->l_issues - s->l_issues);
             row_score += static_cast<int64_t>(3*weight*(x->d_issues - s->d_issues));
         }
         
@@ -280,7 +302,7 @@ void Array::heuristic_all_helper(int *row, uint64_t cur_col,
                 best_rows->clear();
             }   // or, if it tied, continue to track the previous best row(s) it is tied with
             int *new_row = new int[num_factors];
-            for (unsigned long int col = 0; col < num_factors; col++) new_row[col] = row[col];
+            for (uint64_t col = 0; col < num_factors; col++) new_row[col] = row[col];
             best_rows->push_back(new_row);  // happens whether row_score > or =
         }
         
