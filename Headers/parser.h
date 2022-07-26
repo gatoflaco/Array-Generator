@@ -1,8 +1,15 @@
 /* Array-Generator by Isaac Jung
-Last updated 06/13/2022
+Last updated 07/20/2022
 
 |===========================================================================================================|
-|   (to be written)                                                                                         |
+|   This header contains a class used for processing input. Should the input format change, this class can  |
+| be updated accordingly. The way this class is used is to have the main code instantiate a single Parser   |
+| object, then call the process_input() method. This will handle basic syntax and semantic checking on the  |
+| input read from the provided input file (see README.md for details on expected command line calls). If no |
+| errors are found, the process_input() method should also assign to the Parser's other public fields based |
+| on command line arguments and the input read. The parser should attempt to stop the user when the user    |
+| makes an impossible request, but this is a complicated task and currently a work in progress. This header |
+| also contains enumeration typedefs used by other modules.                                                 |
 |===========================================================================================================|
 */
 

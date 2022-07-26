@@ -1,8 +1,20 @@
 /* Array-Generator by Isaac Jung
-Last updated 06/22/2022
+Last updated 07/22/2022
 
 |===========================================================================================================|
-|   (to be written)                                                                                         |
+|   This header contains classes used for organizing data associated with the Array class. There should be  |
+| no need for any module other than the Array to use these classes. The Single class is used to represent a |
+| single (factor, value) pair; that is, for a single element in a single given row of the Array, both the   |
+| column in which the element occurs, and its actual value, are tracked. However, if on another row, that   |
+| same value occurs in the same column, it is useful to consider both of those occurrences to be related.   |
+| To this end, JUST ONE SINGLE OBJECT SHOULD BE INSTANTIATED PER UNIQUE (factor, value) PAIR, and then for  |
+| any row in which that (factor, value) appears, the same object in memory can be accessed, and its rows    |
+| attribute can be updated to reflect the fact that it shows up in 1 or more places in the Array. To assist |
+| with this accessing, the Factor class exists to associate columns with their levels, as well as with an   |
+| array of pointers to the Singles whose factor matches. I.e., the nth column will have access to a list of |
+| all Singles of the form (n, v_i), where v_i is some value in valid range of the nth column's levels.      |
+| Please note that this module does not handle the building of data structures such that this property is   |
+| maintained; the Array module must guarantee it as it instantiates Single and Factor objects.              |
 |===========================================================================================================|
 */
 

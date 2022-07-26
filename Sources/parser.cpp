@@ -1,8 +1,9 @@
 /* Array-Generator by Isaac Jung
-Last updated 07/14/2022
+Last updated 07/20/2022
 
 |===========================================================================================================|
-|   (to be written)                                                                                         |
+|   This file contains definitions for methods used to process input via an Parser class. Should the input  |
+| format change, these methods can be updated accordingly.                                                  |
 |===========================================================================================================|
 */
 
@@ -23,6 +24,7 @@ Parser::Parser()
 {
     d = 1; t = 2; delta = 1;
     v = v_off; o = normal; p = all;
+    in_filename = ""; out_filename = "";
 }
 
 /* CONSTRUCTOR - initializes the object
@@ -97,6 +99,7 @@ int Parser::process_input()
     if (o != silent) printf("Reading input....\n\n");
     try {
         in.open(in_filename.c_str(), std::ifstream::in);
+        if (!in.is_open()) throw 0;
     } catch ( ... ) {
         printf("\t-- ERROR --\n\tUnable to open file with path name <%s>.\n", in_filename.c_str());
         printf("\tFor usage details, please check the README.\n");
@@ -196,11 +199,11 @@ bool bad_t(uint64_t t, uint64_t num_cols)
         printf("\t-- ERROR --\n");
         printf("\tImpossible to generate array with higher interaction strength than number of factors.\n");
         printf("\tstrength          --> %lu\n", t);
-        printf("\tnumber of factors --> %lu\n", num_cols);
+        printf("\tnumber of factors --> %lu\n\n", num_cols);
         return true;
     }
     if (t == 0) {
-        printf("\t-- ERROR --\n\tt cannot be 0.\n");
+        printf("\t-- ERROR --\n\tt cannot be 0.\n\n");
         return true;
     }
     return false;
@@ -214,16 +217,16 @@ bool bad_d(uint64_t d, uint64_t t, std::vector<uint64_t> *levels, prop_mode p)
             if (level < d) {
                 printf("\t-- ERROR --\n");
                 printf("\tImpossible to generate (%lu-%lu)-locating array ", d, t);
-                printf("when any factor has less than %lu possible levels.\n", d);
+                printf("when any factor has less than %lu possible levels.\n\n", d);
                 return true;
             }
             if (level == d) {
                 count++;
-                // I'm not yet sure of the math behind this, so leaving it commented out for now.
                 if (count >= 2) {
                     printf("\t-- ERROR --\n\tImpossible to generate (%lu-%lu)-locating array ", d, t);
-                    printf("when 2 or more factors have exactly %lu possible levels.\n", d);
-                }//*/
+                    printf("when 2 or more factors have exactly %lu possible levels.\n\n", d);
+                    return true;
+                }
             }
         }
     }
@@ -233,7 +236,7 @@ bool bad_d(uint64_t d, uint64_t t, std::vector<uint64_t> *levels, prop_mode p)
 bool bad_delta(uint64_t d, uint64_t t, uint64_t delta)
 {
     if (delta == 0) {
-        printf("\t-- ERROR --\n\tδ cannot be 0.\n");
+        printf("\t-- ERROR --\n\tδ cannot be 0.\n\n");
         return true;
     }
     /* TODO: figure out if there is a way to see in advance that detection would not be possible
@@ -243,7 +246,6 @@ bool bad_delta(uint64_t d, uint64_t t, uint64_t delta)
 
             }
         }
-        
     }//*/
     return false;
 }

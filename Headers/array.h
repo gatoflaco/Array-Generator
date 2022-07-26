@@ -1,8 +1,14 @@
 /* Array-Generator by Isaac Jung
-Last updated 07/14/2022
+Last updated 07/20/2022
 
 |===========================================================================================================|
-|   (to be written)                                                                                         |
+|   This header contains classes for managing the array in an automated fashion. The Interaction and T      |
+| classes are used to represent fundamental covering/locating/detecting array concepts that guide scoring   |
+| decisions during array generation. They are used only by the Array class and should not be instantiated   |
+| by any source file other than the one associated with this header. The Array class is the interface with  |
+| which other source files should work. It contains a constructor that builds all the internal data         |
+| structures, thereby allowing the instantiator to immediately call other methods which carry out random    |
+| row generation based on this data. See check.cpp for an example.                                          |
 |===========================================================================================================|
 */
 

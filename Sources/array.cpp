@@ -1,8 +1,19 @@
 /* Array-Generator by Isaac Jung
-Last updated 07/14/2022
+Last updated 07/21/2022
 
 |===========================================================================================================|
-|   (to be written)                                                                                         |
+|   This file contains the meat of the project's logic. The constructor for the Array class takes a pointer |
+| to a Parser object which should have already called its process_input() method. Using that, the Array     |
+| object under construction is able to organize the data structures that support the generation of an array |
+| with the desired properties. The add_row() method can then be called repeatedly, with the score property  |
+| reflecting how close the array is to satisfying the desired properties. When the Array's score is 0, it   |
+| means that all desired properties are satisfied. Note that the add_row() method assumes there is at least |
+| one row already added to the Array; then, the module in charge of calling add_row() should add at least   |
+| one row by some other method before entering any loop that calls add_row(), if randomness is desired.     |
+| For this reason, there is an add_random_row() method that adds a completely random row without scoring    |
+| the goodness of the choice. This method should only be called for adding the first row of the Array.      |
+| All scoring and tracking of data structures, counts, etc. which influence decisions is self-contained;    |
+| the user of the Array object need not concern itself with these details.                                  |
 |===========================================================================================================|
 */
 

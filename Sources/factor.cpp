@@ -1,8 +1,11 @@
 /* Array-Generator by Isaac Jung
-Last updated 06/13/2022
+Last updated 07/25/2022
 
 |===========================================================================================================|
-|   (to be written)                                                                                         |
+|   This file contains mostly just constructors and deconstructors for the Single and Factor classes. The   |
+| Single class also has a to_string() method, used for building reconstructable keys into a map used by the |
+| Array module (see array.cpp for more details). The purpose of Single and Factor objects is described in   |
+| this module's header file, factor.h.
 |===========================================================================================================|
 */
 
@@ -14,7 +17,7 @@ Last updated 06/13/2022
 */
 Single::Single()
 {
-    c_issues = 0; l_issues = 0; d_issues = 0;
+    c_issues = 0; l_issues = 0; d_issues = 0;   // to be incremented later
     factor = 0;
     value = 0;
 }
@@ -22,9 +25,8 @@ Single::Single()
 /* CONSTRUCTOR - initializes the object
  * - overloaded: this version can set its fields based on parameters
 */
-Single::Single(uint64_t f, uint64_t v)
+Single::Single(uint64_t f, uint64_t v) : Single::Single()
 {
-    c_issues = 0; l_issues = 0; d_issues = 0;   // to be incremented later
     factor = f;
     value = v;
     // rows will be built later
