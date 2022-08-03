@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 07/13/2022
+Last updated 08/01/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods belonging to the Array class which are declared in array.h.  |
@@ -58,6 +58,15 @@ class Prev_T_Data
         bool is_locatable;
 };
 
+/* SUB METHOD: tweak_row - chooses a heuristic to use for modifying a row based on current state of the Array
+ * 
+ * parameters:
+ * - row: integer array representing a row being considered for adding to the array
+ * - row_interactions: set containing all Interactions present in the row
+ * 
+ * returns:
+ * - void, but after the method finishes, the row may be modified in an attempt to satisfy more issues
+*/
 void Array::tweak_row(int *row, std::set<Interaction*> *row_interactions)
 {
     float ratio = static_cast<float>(score)/total_problems;
@@ -85,6 +94,18 @@ void Array::tweak_row(int *row, std::set<Interaction*> *row_interactions)
     heuristic_c_only(row, row_interactions);
 }
 
+/* SUB METHOD: heuristic_c_only - lightweight heuristic that only concerns itself with coverage
+ * - in the tradeoff between speed and optimal row choice, this heuristic is towards the speed extreme
+ * - should only be used very early on in array construction
+ * --> can do well for longer when the desired array is simpler (i.e., covering as opposed to detecting)
+ * 
+ * parameters:
+ * - row: integer array representing a row being considered for adding to the array
+ * - row_interactions: set containing all Interactions present in the row
+ * 
+ * returns:
+ * - void, but after the method finishes, the row may be modified in an attempt to satisfy more issues
+*/
 void Array::heuristic_c_only(int *row, std::set<Interaction*> *row_interactions)
 {
     int *problems = new int[num_factors]{0};    // for counting how many "problems" each factor has
@@ -169,6 +190,16 @@ void Array::heuristic_c_only(int *row, std::set<Interaction*> *row_interactions)
     delete[] problems;
 }
 
+/* HELPER METHOD: heuristic_c_helper - performs redundant work for heuristic_c_only()
+ * 
+ * parameters:
+ * - row: integer array representing a row being considered for adding to the array
+ * - row_interactions: set containing all Interactions present in the row
+ * - problems: pointer to start of array associating each column in the row with a score of sorts
+ * 
+ * returns:
+ * - int representing the largest value in the problems array after scoring
+*/
 int Array::heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions, int *problems)
 {
     for (Interaction *i : *row_interactions) {
@@ -211,7 +242,7 @@ int Array::heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions
 void Array::heuristic_all(int *row)
 {
     std::vector<int*> best_rows;
-    int64_t best_score = 0;
+    int64_t best_score = INT64_MIN;
     heuristic_all_helper(row, 0, &best_rows, &best_score);
     if (best_rows.size() == 0) {    // recover from corner case where the helper finds nothing promising
         int *random_row = get_random_row();
@@ -229,6 +260,25 @@ void Array::heuristic_all(int *row)
     for (int *r : best_rows) delete[] r;
 }
 
+/* HELPER METHOD: heuristic_all_helper - performs top-down recursive logic for heuristic_all()
+ * - heuristic_all() does the auxilary work to start the recursion, and handle the result
+ * - this method uses recursion to form all possible combinations; its base case scores a given combination
+ * 
+ * parameters:
+ * - row: integer array representing a row being considered for adding to the array
+ * - cur_col: which column should have its levels looped over in the recursive case
+ * --> overhead caller should pass 0 to this method initially
+ * --> value should increment by 1 with each recursive call
+ * --> triggers the base case when value is equal to the total number of columns
+ * - best_rows: pointer to a vector containing pointers to arrays representing possible row configurations
+ * --> overhead caller should pass the address of an empty vector to this method initially
+ * - best_score: pointer to an integer holding the current best score across all recursive calls
+ * --> overhead caller should pass a large negative number to this method initially
+ * 
+ * returns:
+ * - none, but best_rows will be modified to contain whichever row(s) scored best
+ * --> also, best_score will be modified, but this value will likely not be needed by the caller
+*/
 void Array::heuristic_all_helper(int *row, uint64_t cur_col,
     std::vector<int*> *best_rows, int64_t *best_score)
 {
