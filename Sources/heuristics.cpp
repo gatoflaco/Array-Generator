@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 08/01/2022
+Last updated 09/01/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods belonging to the Array class which are declared in array.h.  |
@@ -9,54 +9,6 @@ Last updated 08/01/2022
 */
 
 #include "array.h"
-
-// class used by heuristic_all_helper()
-class Prev_S_Data
-{
-    public:
-        uint64_t c_issues;
-        int64_t l_issues;
-        uint64_t d_issues;
-        Prev_S_Data(uint64_t c, int64_t l, uint64_t d) {
-            c_issues = c; l_issues = l; d_issues = d;
-        }
-        void restore(Single *s) {   // replace fields of s with those stored in this object
-            s->c_issues = c_issues; s->l_issues = l_issues; s->d_issues = d_issues;
-        }
-};
-
-// class used by heuristic_all_helper()
-class Prev_I_Data
-{
-    public:
-        Prev_I_Data(bool c, std::map<T*, int64_t> r, bool d) {
-            is_covered = c; deltas = r; is_detectable = d;
-        }
-        void restore(Interaction *i) {   // replace fields of i with those stored in this object
-            i->is_covered = is_covered; i->deltas = deltas; i->is_detectable = is_detectable;
-        }
-
-    private:
-        bool is_covered;
-        std::map<T*, int64_t> deltas;
-        bool is_detectable;
-};
-
-// class used by heuristic_all_helper()
-class Prev_T_Data
-{
-    public:
-        Prev_T_Data(std::set<T*> c, bool l) {
-            location_conflicts = c; is_locatable = l;
-        }
-        void restore(T *t_set) {    // replace fields of t_set with those stored in this object
-            t_set->location_conflicts = location_conflicts; t_set->is_locatable = is_locatable;
-        }
-
-    private:
-        std::set<T*> location_conflicts;
-        bool is_locatable;
-};
 
 /* SUB METHOD: tweak_row - chooses a heuristic to use for modifying a row based on current state of the Array
  * 
@@ -235,25 +187,33 @@ int Array::heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions
  * - row: integer array representing a row up for consideration for appending to the array
  * 
  * returns:
- * - none, but the row will be altered such that it is subjectively as optimal as possible
+ * - none, but the row will be altered such that it solves as many problems singlehandedly as possible
  *  --> note that this does not mean that running this for the whole array will guarantee the smallest array;
  *      this is still a greedy algorithm for the current row, without any lookahead to future rows
 */
 void Array::heuristic_all(int *row)
 {
-    std::vector<int*> best_rows;
+    // get scores for all relevant possible rows
+    std::map<int*, int64_t> scores;
+    heuristic_all_helper(row, 0, &scores);
+    //TODO: wait for all child processes to terminate (once threading has been implemented)
+
+    // inspect the scores for the best one(s)
     int64_t best_score = INT64_MIN;
-    heuristic_all_helper(row, 0, &best_rows, &best_score);
-    if (best_rows.size() == 0) {    // recover from corner case where the helper finds nothing promising
-        int *random_row = get_random_row();
-        for (uint64_t col = 0; col < num_factors; col++) row[col] = random_row[col];
-        delete[] random_row;
-        return;
+    std::vector<int*> best_rows;    // there could be ties for the best
+    for (auto& kv : scores) {
+        if (kv.second >= best_score) {  // it was better or it tied
+            if (kv.second > best_score) {   // for an even better choice, can stop tracking the previous best
+                best_score = kv.second;
+                best_rows.clear();
+            }
+            best_rows.push_back(kv.first);  // whether it was better or only a tie, keep track of this row
+        } else delete[] kv.first;
     }
 
-    // after heuristic_all_helper() finishes, best_rows holds one or more optimal choices for a row
-    int choice = static_cast<uint64_t>(rand()) % best_rows.size();
-    for (uint64_t col = 0; col < num_factors; col++)   // break ties randomly
+    // choose the row that scored the best (for ties, choose randomly from among those tied for the best)
+    int choice = static_cast<uint64_t>(rand()) % best_rows.size(); // for breaking ties randomly
+    for (uint64_t col = 0; col < num_factors; col++)
         row[col] = best_rows.at(choice)[col];
     
     // free memory
@@ -270,22 +230,26 @@ void Array::heuristic_all(int *row)
  * --> overhead caller should pass 0 to this method initially
  * --> value should increment by 1 with each recursive call
  * --> triggers the base case when value is equal to the total number of columns
- * - best_rows: pointer to a vector containing pointers to arrays representing possible row configurations
- * --> overhead caller should pass the address of an empty vector to this method initially
- * - best_score: pointer to an integer holding the current best score across all recursive calls
- * --> overhead caller should pass a large negative number to this method initially
+ * - scores: pointer to a map whose keys are pointers to rows and whose values are the scores of those rows
+ * --> overhead caller should pass the address of an empty map to this method initially
+ * --> for each row inspected by the base case, a separate thread should handle the scoring and map updating
  * 
  * returns:
- * - none, but best_rows will be modified to contain whichever row(s) scored best
- * --> also, best_score will be modified, but this value will likely not be needed by the caller
+ * - none, but scores will be modified to contain all the rows inspected and their scores
 */
-void Array::heuristic_all_helper(int *row, uint64_t cur_col,
-    std::vector<int*> *best_rows, int64_t *best_score)
+void Array::heuristic_all_helper(int *row, uint64_t cur_col, std::map<int*, int64_t> *scores)
 {
     // base case: row represents a unique combination and is ready for scoring
     if (cur_col == num_factors) {
+        /*
         // First, check if this exact row has already been added to array at least δ times.
         // If so, do not bother inspecting this row, for it will definitely add nothing
+        //
+        if (DEBUG_FLAG) {
+            printf("\tDEBUG: row { ");
+            for (uint64_t i = 0; i < num_factors; i++) printf("%d ", row[i]);
+            printf("} ");
+        }
         uint64_t count = 0;
         for (int *array_row : rows) {
             bool matched = true;
@@ -297,99 +261,69 @@ void Array::heuristic_all_helper(int *row, uint64_t cur_col,
             }
             if (matched) count++;
         }
-        if (count == delta) return;
+        if (count >= delta) {
+            if (DEBUG_FLAG) printf("skipped\n");
+            return;
+        }//*/
 
-        std::set<Interaction*> row_interactions;
-        build_row_interactions(row, &row_interactions, 0, t, "");
-        std::set<T*> affected_t_sets;   // may be more than just the T sets appearing in this row
-        std::set<Single*> affected_singles; // may be more than just the Singles appearing in this row
-
-        // store current state of the array and other data structures; they are about to be modified
-        uint64_t prev_score = score;
-        uint64_t prev_c = coverage_problems, prev_l = location_problems, prev_d = detection_problems;
-        bool prev_covering = is_covering, prev_locating = is_locating, prev_detecting = is_detecting;
-        std::map<Single*, Prev_S_Data*> prev_singles;   // for restoring changed Single data
-        std::map<Interaction*, Prev_I_Data*> prev_interactions; // for restoring changed Interaction data
-        std::map<T*, Prev_T_Data*> prev_t_sets;  // for restoring changed T set data
-        for (Interaction *i : row_interactions) {
-            for (T *t1 : i->sets) {
-                affected_t_sets.insert(t1);
-                for (Single *s : t1->singles) affected_singles.insert(s);
-                for (T *t2 : t1->location_conflicts) {
-                    affected_t_sets.insert(t2);
-                    for (Single *s : t2->singles) affected_singles.insert(s);
-                }
-            }
-            Prev_I_Data *x = new Prev_I_Data(i->is_covered, i->deltas, i->is_detectable);
-            prev_interactions.insert({i, x});
-        }
-        for (Single *s : affected_singles) {
-            Prev_S_Data *x = new Prev_S_Data(s->c_issues, s->l_issues, s->d_issues);
-            prev_singles.insert({s, x});
-        }
-        for (T *t_set : affected_t_sets) {
-            Prev_T_Data *x = new Prev_T_Data(t_set->location_conflicts, t_set->is_locatable);
-            prev_t_sets.insert({t_set, x});
-        }
-
-        update_array(row, &row_interactions, false);    // see how all scores, etc., would change
-
-        // define the row score to be the combination of net changes below, weighted by importance
-        int64_t row_score = 0; //= prev_score - static_cast<int64_t>(score);
-        for (Single *s : affected_singles) {    // improve the score based on individual Single improvement
-            uint64_t weight = (factors[s->factor]->level);  // higher level factors hold more weight
-            Prev_S_Data *x = prev_singles.at(s);
-            row_score += static_cast<int64_t>(weight*(x->c_issues - s->c_issues));
-            if (s->l_issues < x->l_issues) row_score += 2*weight*(x->l_issues - s->l_issues);
-            row_score += static_cast<int64_t>(3*weight*(x->d_issues - s->d_issues));
-        }
-        
-        // decide what to do with this row based on its score compared to best_score
-        if (row_score >= *best_score) { // it was better or it tied; either way, keep track of this row
-            if (row_score > *best_score) {  // for an even better choice, can stop tracking the previous best
-                *best_score = row_score;
-                for (int *r : *best_rows) delete[] r;   // free memory; about to clear best_rows
-                best_rows->clear();
-            }   // or, if it tied, continue to track the previous best row(s) it is tied with
-            int *new_row = new int[num_factors];
-            for (uint64_t col = 0; col < num_factors; col++) new_row[col] = row[col];
-            best_rows->push_back(new_row);  // happens whether row_score > or =
-        }
-        
-        // restore the original state of the array and data structures, and free memory
-        score = prev_score;
-        coverage_problems = prev_c, location_problems = prev_l, detection_problems = prev_d;
-        is_covering = prev_covering; is_locating = prev_locating; is_detecting = prev_detecting;
-        for (Single *s : affected_singles) {
-            Prev_S_Data *x = prev_singles.at(s);
-            x->restore(s);
-            delete x;
-        }
-        for (T *t_set : affected_t_sets) {
-            Prev_T_Data *x = prev_t_sets.at(t_set);
-            x->restore(t_set);
-            delete x;
-        }
-        for (Interaction *i : row_interactions) {
-            Prev_I_Data *x = prev_interactions.at(i);
-            x->restore(i);
-            delete x;
-        }
+        int *row_copy = new int[num_factors];   // must be deleted by heuristic_all() later
+        for (uint64_t col = 0; col < num_factors; col++) row_copy[col] = row[col];
+        heuristic_all_scorer(row_copy, scores);
         return;
     }
 
     // recursive case: need to introduce another loop for the next factor
-    if ((p == all && dont_cares[permutation[cur_col]] == all) ||
+    /*if ((p == all && dont_cares[permutation[cur_col]] == all) ||
         (p == c_and_l && dont_cares[permutation[cur_col]] == c_and_l) ||
         (p == c_only && dont_cares[permutation[cur_col]] == c_only)) {
         heuristic_all_helper(row, cur_col+1, best_rows, best_score);
         return;
-    }
+    }//*/
     for (uint64_t offset = 0; offset < factors[permutation[cur_col]]->level; offset++) {
         int temp = row[permutation[cur_col]];
         row[permutation[cur_col]] = (row[permutation[cur_col]] + static_cast<int>(offset)) %
             static_cast<int>(factors[permutation[cur_col]]->level); // try every value for this factor
-        heuristic_all_helper(row, cur_col+1, best_rows, best_score);
+        heuristic_all_helper(row, cur_col+1, scores);
         row[permutation[cur_col]] = temp;
     }
+}
+
+/* HELPER METHOD: heuristic_all_scorer - scores a given row by testing what would change if it was added
+ * - should be called in a unique thread
+ * - heuristic_all() should await the termination of all sub threads before inspecting scores
+ * 
+ * parameters:
+ * - row_v: a vector representing the row to be scored
+ *  --> cannot be a pointer to the row being modified by heuristic_all_helper() (would result in data races)
+ * - scores: pointer to 
+ * 
+ * returns:
+ * - none, but best_rows will be modified to contain whichever row(s) scored best
+ * --> also, best_score will be modified, but this value will likely not be needed by the caller
+*/
+void Array::heuristic_all_scorer(int *row, std::map<int*, int64_t> *scores)
+{
+    // current thread will work with unique copies of the data structures being modified
+    Array *copy = clone();
+    std::set<Interaction*> row_interactions;
+    copy->build_row_interactions(row, &row_interactions, 0, t, "");
+
+    copy->update_array(row, &row_interactions, false);  // see how all scores, etc., would change
+
+    // define the row score to be the combination of net changes below, weighted by importance
+    int64_t row_score = 0; //= prev_score - static_cast<int64_t>(score);
+    for (Single *this_s : singles) { // improve the score based on individual Single improvement
+        Single *copy_s = copy->single_map.at(this_s->to_string());
+        uint64_t weight = (factors[this_s->factor]->level); // higher level factors hold more weight
+        row_score += static_cast<int64_t>(weight*(this_s->c_issues - copy_s->c_issues));
+        row_score += 2*weight*(this_s->l_issues - copy_s->l_issues);
+        row_score += static_cast<int64_t>(3*weight*(this_s->d_issues - copy_s->d_issues));
+    }
+
+    scores_mutex.lock();
+    scores->insert({row, row_score});
+    scores_mutex.unlock();
+
+    delete copy;
+    // note: do not delete row here, as heuristic_all() will need to reference it
 }

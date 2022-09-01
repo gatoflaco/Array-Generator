@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 07/20/2022
+Last updated 09/01/2022
 
 |===========================================================================================================|
 |   This header contains classes for managing the array in an automated fashion. The Interaction and T      |
@@ -15,32 +15,41 @@ Last updated 07/20/2022
 #include "parser.h"
 #include "factor.h"
 #include <map>
+#include <mutex>
 
 class T;    // forward declaration because Interaction and T have circular references
 
 class Interaction
 {
     public:
-        int id; // used only in verbose mode, to have some id associated with the interaction
+        // used only in verbose mode, to have some id associated with the interaction
+        int id;
 
-        std::set<Single*> singles;   // the actual list of (factor, value) tuples
+        // the actual list of (factor, value) tuples
+        std::set<Single*> singles;
 
         // this tracks the set of tests (represented as row numbers) in which this interaction occurs;
-        std::set<int> rows; // this row coverage is vital to analyzing the array's properties
-        bool is_covered;    // easy lookup bool to cut down on redundant checks
+        // this row coverage is vital to analyzing the array's properties
+        std::set<int> rows;
+
+        // easy lookup bool to cut down on redundant checks
+        bool is_covered;
 
         // this tracks all the T sets in which this interaction occurs; using this, one can obtain all the
-        std::set<T*> sets;  // relevant sets when a new row with this interaction is added
+        // relevant sets when a new row with this interaction is added
+        std::set<T*> sets;  
 
         // this tracks the set differences between the set of rows in which this Interaction occurs and the
         // sets of rows in which relevant T sets this Interaction is not part of occur; that is, this is
-        std::map<T*, int64_t> deltas;   // a field to map detection issues to their delta values
-        bool is_detectable; // easy lookup bool to cut down on redundant checks
+        // a field to map detection issues to their delta values
+        std::map<T*, int64_t> deltas;
+
+        // easy lookup bool to cut down on redundant checks
+        bool is_detectable;
 
         std::string to_string();    // returns a string representing all Singles in the interaction
-
-        Interaction();   // default constructor, don't use this
-        Interaction(std::vector<Single*> *temp);   // constructor with a premade vector of Single pointers
+        Interaction();  // default constructor, don't use this
+        Interaction(std::vector<Single*> *temp);    // constructor with a premade vector of Single pointers
 };
 
 // I wasn't sure what to name this, except after the formal parameter used in Dr. Colbourn's definitions
@@ -49,62 +58,128 @@ class Interaction
 class T
 {
     public:
-        int id; // used only in verbose mode, to have some id associated with the T set
+        // used only in verbose mode, to have some id associated with the T set
+        int id;
 
-        std::vector<Single*> singles;           // for easier access to the singles themselves
-        std::set<Interaction*> interactions;    // for easier access to the interactions themselves
+        // for easier access to the singles themselves
+        std::vector<Single*> singles;
+
+        // for easier access to the interactions themselves
+        std::set<Interaction*> interactions;
 
         // each interaction in a given T set has its own version of this; the ρ associated with a T is simply
-        std::set<int> rows;  // the union of the ρ's for each interaction in that T
+        // the union of the ρ's for each interaction in that T
+        std::set<int> rows;
 
         // this tracks all the T sets which occur in the same set of rows as this instance; when adding a
         // row to the array, each T set occurring in the row must be compared to every other T set to see
         // if their sets of rows are disjoint yet; if so, there is no longer a conflict; when the size of
         // "location_conflicts" becomes 0 while the above set, "rows", is greater than 0, this T becomes
-        std::set<T*> location_conflicts;    // locatable within the array
-        bool is_locatable;  // easy lookup bool to cut down on redundant checks
+        // locatable within the array
+        std::set<T*> location_conflicts;
 
-        T();    // default constructor, don't use this
-        T(std::vector<Interaction*> *temp);    // constructor with a premade vector of Interaction pointers
+        // easy lookup bool to cut down on redundant checks
+        bool is_locatable;
+
+        std::string to_string();    // returns a string representing all Interactions in the set
+        T();    // default constructor, don't use this      
+        T(std::vector<Interaction*> *temp); // constructor with a premade vector of Interaction pointers
 };
 
 class Array
 {
     public:
-        uint64_t score;     // this is a measure of how close the array is to complete; 0 is complete
-        uint64_t d;         // this is the size of the sets of t-way interactions
-        uint64_t t;         // this is the strength of interest
-        uint64_t delta;     // this is the desired separation of the array
-        bool is_covering;   // checks whether the array is t-covering
-        bool is_locating;   // checks whether the array is (d, t)-locating
-        bool is_detecting;  // tracks whether the array is (d, t, δ)-detecting
+        // for debugging only
+        bool DEBUG_FLAG;
+
+        // this is a measure of how close the array is to complete; 0 is complete
+        uint64_t score;
+
+        // this is the size of the sets of t-way interactions
+        uint64_t d;
+
+        // this is the strength of interest
+        uint64_t t;
+
+        // this is the desired separation of the array
+        uint64_t delta;
+        
+        // tracks whether the array is t-covering
+        bool is_covering;
+
+        // tracks whether the array is (d, t)-locating
+        bool is_locating;
+
+        // tracks whether the array is (d, t, δ)-detecting
+        bool is_detecting;
+
+        // list of all individual Single (factor, value) pairs
+        std::vector<Single*> singles;
+
+        // list of all individual t-way interactions
+        std::vector<Interaction*> interactions;
+
+        // list of all size-d sets of t-way interactions
+        std::vector<T*> sets;
+
+        // really only needed by heuristic_all()
+        std::map<std::string, Single*> single_map;
+
+        // used by build_row_interactions()
+        std::map<std::string, Interaction*> interaction_map;
+
+        // really only needed by heuristic_all()
+        std::map<std::string, T*> t_set_map;
 
         void add_row();             // adds a row to the array based on scoring
         void add_random_row();      // adds a random row to the array
-        std::string to_string();                // returns a string representing all rows
-
+        std::string to_string();    // returns a string representing all rows
         Array();    // default constructor, don't use this
         Array(Parser *in);  // constructor with an initialized Parser object
+        Array(uint64_t total_problems, uint64_t coverage_problems, uint64_t location_problems,
+            uint64_t detection_problems, std::vector<int*> *rows, uint64_t num_tests, uint64_t num_factors,
+            Factor **factors, verb_mode v, out_mode o, prop_mode p);    // constructor for clone()
         ~Array();   // deconstructor
 
     private:
-        uint64_t total_problems;        // the array's score starts off as this value
-        uint64_t coverage_problems;     // subset of total_issues representing just coverage
-        uint64_t location_problems;     // subset of total_issues representing just location
-        uint64_t detection_problems;    // subset of total_issues representing just detection
-        std::map<std::string, Interaction*> interaction_map;    // used by build_row_interactions()
-        verb_mode v;    // this makes the program print out the data structures when enabled
-        out_mode o;     // this dictates how much output should be printed; see parser.h for typedef
-        prop_mode p;    // this is used to avoid building sets if it won't be needed anyway
-        std::vector<int*> rows;         // list of the rows themselves, as a vector of int arrays
-        uint64_t num_tests;     // field to reference the upper bound on iterating through rows
-        uint64_t num_factors;   // field to reference the upper bound on iterating through columns
-        Factor **factors;    // pointer to the start of an array of pointers to Factor objects
-        std::vector<Interaction*> interactions; // list of all individual t-way interactions
-        std::vector<T*> sets;   // list of all size-d sets of t-way interactions
+        // the array's score starts off as this value
+        uint64_t total_problems;
 
-        prop_mode *dont_cares;  // for tracking which factors have solved all issues of which categories
-        int *permutation;   // for dictating order of iteration; should be regularly shuffled
+        // subset of total_issues representing just coverage
+        uint64_t coverage_problems;
+
+        // subset of total_issues representing just location
+        uint64_t location_problems;
+
+        // subset of total_issues representing just detection
+        uint64_t detection_problems;
+        
+        // list of the rows themselves, as a vector of int arrays
+        std::vector<int*> rows;
+
+        // field to reference the upper bound on iterating through rows
+        uint64_t num_tests;
+
+        // field to reference the upper bound on iterating through columns
+        uint64_t num_factors;
+
+        // pointer to the start of an array of pointers to Factor objects
+        Factor **factors;
+
+        // for tracking which factors have solved all issues of which categories
+        prop_mode *dont_cares;
+
+        // for dictating order of iteration; should be regularly shuffled
+        int *permutation;
+
+        // this makes the program print out the data structures when enabled
+        verb_mode v;
+
+        // this dictates how much output should be printed; see parser.h for typedef
+        out_mode o;
+
+        // this tracks what type of array is under construction; decides work to be done in several places
+        prop_mode p;
 
         // this utility method is called in the constructor to fill out the vector of all interactions
         // almost certainly needs to be recursive in order to handle arbitrary values of t
@@ -128,9 +203,12 @@ class Array
         int heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions, int *problems);
         // TODO: make a somewhere-in-the-middle heuristic
         void heuristic_all(int *row);
-        void heuristic_all_helper(int *row, uint64_t cur_col,
-            std::vector<int*> *best_rows, int64_t *best_score);
+        void heuristic_all_helper(int *row, uint64_t cur_col, std::map<int*, int64_t> *scores);
+        void heuristic_all_scorer(int *row, std::map<int*, int64_t> *scores);
+        std::mutex scores_mutex;    // needed by heuristic_all_scorer to update scores in threads safely
 
         // updates the internal data structures - counts, scores, rows, etc. - based on the row being added
         void update_array(int *row, std::set<Interaction*> *row_interactions, bool keep = true);
+
+        Array *clone(); // for getting a copy of this, including deep copying of object references
 };

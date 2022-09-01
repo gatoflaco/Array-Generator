@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 07/07/2022
+Last updated 09/01/2022
 
 |===========================================================================================================|
 |   This file contains the main() method which reflects the high level flow of the program. It starts by    |
@@ -24,10 +24,7 @@ Last updated 07/07/2022
 | - Single: simple struct-like class for use by the Array object, representing a (factor, value)            |
 | - Factor: another struct-like class that associates lists of Singles with their corresponding factors     |
 | - Interaction: struct-like class to group Singles together, fundamental to the defining of coverage       |
-| - T: struct-like class to group Interactions together, fundamental to defining location and detection     | 
-| - Prev_S_Data: struct-like class to hold previous state information regarding a Single                    |
-| - Prev_I_Data: struct-like class to hold previous state information regarding an Interaction              |
-| - Prev_T_Data: struct-like class to hold previous state information regarding a T                         |
+| - T: struct-like class to group Interactions together, fundamental to defining location and detection     |
 |===========================================================================================================|
 */
 
@@ -89,8 +86,12 @@ int main(int argc, char *argv[])
         prev_score = array.score;
         if (om != silent) printf("Array score is currently %lu, adding row %lu.\n", array.score, ++row_count);
         array.add_row();
-        if (array.score == prev_score) no_change_counter++;
+        if (array.score == prev_score) {
+            no_change_counter++;
+            array.DEBUG_FLAG = false;
+        }
         else no_change_counter = 0;
+        if (no_change_counter == 5) array.DEBUG_FLAG = true;
         if (no_change_counter > 10) break;
     }
     return print_results(&p, &array, row_count, (no_change_counter == 0));
