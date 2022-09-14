@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 09/01/2022
+Last updated 09/14/2022
 
 |===========================================================================================================|
 |   This header contains classes for managing the array in an automated fashion. The Interaction and T      |
@@ -26,7 +26,7 @@ class Interaction
         int id;
 
         // the actual list of (factor, value) tuples
-        std::set<Single*> singles;
+        std::vector<Single*> singles;
 
         // this tracks the set of tests (represented as row numbers) in which this interaction occurs;
         // this row coverage is vital to analyzing the array's properties
@@ -65,7 +65,7 @@ class T
         std::vector<Single*> singles;
 
         // for easier access to the interactions themselves
-        std::set<Interaction*> interactions;
+        std::vector<Interaction*> interactions;
 
         // each interaction in a given T set has its own version of this; the ρ associated with a T is simply
         // the union of the ρ's for each interaction in that T
@@ -138,7 +138,7 @@ class Array
         Array(Parser *in);  // constructor with an initialized Parser object
         Array(uint64_t total_problems, uint64_t coverage_problems, uint64_t location_problems,
             uint64_t detection_problems, std::vector<int*> *rows, uint64_t num_tests, uint64_t num_factors,
-            Factor **factors, verb_mode v, out_mode o, prop_mode p);    // constructor for clone()
+            Factor **factors, verb_mode v, out_mode o, prop_mode p, uint64_t d, uint64_t t, uint64_t delta);
         ~Array();   // deconstructor
 
     private:

@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 09/01/2022
+Last updated 09/14/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods belonging to the Array class which are declared in array.h.  |
@@ -241,30 +241,6 @@ void Array::heuristic_all_helper(int *row, uint64_t cur_col, std::map<int*, int6
 {
     // base case: row represents a unique combination and is ready for scoring
     if (cur_col == num_factors) {
-        /*
-        // First, check if this exact row has already been added to array at least δ times.
-        // If so, do not bother inspecting this row, for it will definitely add nothing
-        //
-        if (DEBUG_FLAG) {
-            printf("\tDEBUG: row { ");
-            for (uint64_t i = 0; i < num_factors; i++) printf("%d ", row[i]);
-            printf("} ");
-        }
-        uint64_t count = 0;
-        for (int *array_row : rows) {
-            bool matched = true;
-            for (uint64_t i = 0; i < num_factors; i++) {
-                if (row[i] != array_row[i]) {
-                    matched = false;
-                    break;
-                }
-            }
-            if (matched) count++;
-        }
-        if (count >= delta) {
-            if (DEBUG_FLAG) printf("skipped\n");
-            return;
-        }//*/
 
         int *row_copy = new int[num_factors];   // must be deleted by heuristic_all() later
         for (uint64_t col = 0; col < num_factors; col++) row_copy[col] = row[col];
@@ -306,7 +282,7 @@ void Array::heuristic_all_scorer(int *row, std::map<int*, int64_t> *scores)
     // current thread will work with unique copies of the data structures being modified
     Array *copy = clone();
     std::set<Interaction*> row_interactions;
-    copy->build_row_interactions(row, &row_interactions, 0, t, "");
+    copy->build_row_interactions(row, &row_interactions, 0, copy->t, "");
 
     copy->update_array(row, &row_interactions, false);  // see how all scores, etc., would change
 

@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 09/01/2022
+Last updated 09/14/2022
 
 |===========================================================================================================|
 |   This file contains the meat of the project's logic. The constructor for the Array class takes a pointer |
@@ -49,12 +49,12 @@ Interaction::Interaction()
 Interaction::Interaction(std::vector<Single*> *temp) : Interaction::Interaction()
 {
     // fencepost start: let the Interaction be the strength 1 interaction involving just the 0th Single in temp
-    singles.insert(temp->at(0));
+    singles.push_back(temp->at(0));
     rows = temp->at(0)->rows;
 
     // fencepost loop: for any t > 1, rows of the Interaction is the intersection of each Single's rows
     for (uint64_t i = 1; i < temp->size(); i++) {
-      singles.insert(temp->at(i));
+      singles.push_back(temp->at(i));
       std::set<int> temp_set;
       std::set_intersection(rows.begin(), rows.end(),
         temp->at(i)->rows.begin(), temp->at(i)->rows.end(), std::inserter(temp_set, temp_set.begin()));
@@ -89,12 +89,12 @@ T::T()
 T::T(std::vector<Interaction*> *temp) : T::T()
 {
     // fencepost start: let the Interaction be the strength 1 interaction involving just the 0th Single in s
-    interactions.insert(temp->at(0));
+    interactions.push_back(temp->at(0));
     rows = temp->at(0)->rows;
 
     // fencepost loop: for any t > 1, rows of the Interaction is the intersection of each Single's rows
     for (uint64_t i = 1; i < temp->size(); i++) {
-      interactions.insert(temp->at(i));
+      interactions.push_back(temp->at(i));
       std::set<int> temp_set;
       std::set_union(rows.begin(), rows.end(),
         temp->at(i)->rows.begin(), temp->at(i)->rows.end(), std::inserter(temp_set, temp_set.begin()));
@@ -169,23 +169,24 @@ Array::Array(Parser *in) : Array::Array()
         std::vector<Single*> temp_singles;
         build_t_way_interactions(0, t, &temp_singles);
         if (v == v_on) print_interactions(interactions);
-        total_problems += interactions.size();  // to account for all the coverage issues
+        total_problems += interactions.size();  // to account for all the coverage problems
         coverage_problems += interactions.size();
-        score += interactions.size();   // the array is considered completed when this reaches 0
+        score += total_problems;    // the array is considered completed when this reaches 0
         if (p == c_only) return;    // no need to spend effort building Ts if they won't be used
 
         // build all Ts
         std::vector<Interaction*> temp_interactions;
         build_size_d_sets(0, d, &temp_interactions);
         if (v == v_on) print_sets(sets);
-        total_problems += sets.size();  // to account for all the location issues
-        location_problems += sets.size();
-        for (Single *s : singles) {
-            total_problems += sets.size();
-            s->l_issues += sets.size();
-            score += sets.size();
+        for (T *t_set : sets) {
+            for (Single *s : t_set->singles) {
+                total_problems += sets.size();
+                s->l_issues += sets.size();
+            }
         }
-        score += sets.size();   // need to update this
+        total_problems += sets.size();  // to account for all the location problems
+        location_problems += sets.size();
+        score = total_problems; // need to update this
         if (p != all) return;   // can skip the following stuff if not doing detection
 
         // build all Interactions' maps of detection issues to their deltas (row difference magnitudes)
@@ -215,17 +216,25 @@ Array::Array(Parser *in) : Array::Array()
  * - overloaded: this version can set its private fields based on existing data
  *  --> intended to be used ONLY BY Array::clone()
 */
-Array::Array(uint64_t total_problems, uint64_t coverage_problems, uint64_t location_problems,
-    uint64_t detection_problems, std::vector<int*> *rows, uint64_t num_tests, uint64_t num_factors,
-    Factor **factors, verb_mode v, out_mode o, prop_mode p): Array::Array()
+Array::Array(uint64_t total_problems_o, uint64_t coverage_problems_o, uint64_t location_problems_o,
+    uint64_t detection_problems_o, std::vector<int*> *rows_o, uint64_t num_tests_o, uint64_t num_factors_o,
+    Factor **factors_o, verb_mode v_o, out_mode o_o, prop_mode p_o, uint64_t d_o, uint64_t t_o,
+    uint64_t delta_o): Array::Array()
 {
-    this->factors = new Factor*[num_factors];
+    total_problems = total_problems_o;
+    coverage_problems = coverage_problems_o;
+    location_problems = location_problems_o;
+    detection_problems = detection_problems_o;
+    d = d_o; t = t_o; delta = delta_o;
+    num_tests = num_tests_o; num_factors = num_factors_o;
+    v = v_o; o = o_o; p = p_o;
+    factors = new Factor*[num_factors];
     for (uint64_t i = 0; i < num_factors; i++) {
-        this->factors[i] = new Factor(i, factors[i]->level, new Single*[factors[i]->level]);
+        factors[i] = new Factor(i, factors_o[i]->level, new Single*[factors_o[i]->level]);
         for (uint64_t j = 0; j < factors[i]->level; j++) {
-            this->factors[i]->singles[j] = new Single(i, j);
-            singles.push_back(this->factors[i]->singles[j]);
-            single_map.insert({this->factors[i]->singles[j]->to_string(), factors[i]->singles[j]});
+            factors[i]->singles[j] = new Single(i, j);
+            singles.push_back(factors[i]->singles[j]);
+            single_map.insert({factors[i]->singles[j]->to_string(), factors[i]->singles[j]});
         }
     }
     std::vector<Single*> temp_singles;
@@ -233,18 +242,15 @@ Array::Array(uint64_t total_problems, uint64_t coverage_problems, uint64_t locat
     if (p == c_only) return;
     std::vector<Interaction*> temp_interactions;
     build_size_d_sets(0, d, &temp_interactions);
-    for (Interaction *i : interactions)
-        for (T *t_set : sets)
-            if (i->sets.find(t_set) == i->sets.end())
-                i->deltas.insert({t_set, 0});
-    this->total_problems = total_problems;
-    this->coverage_problems = coverage_problems;
-    this->location_problems = location_problems;
-    this->detection_problems = detection_problems;
-    for (int* row : *rows) this->rows.push_back(row);
-    this->num_tests = num_tests;
-    this->num_factors = num_factors;
-    this->v = v; this->o = o; this->p = p;
+    //for (Interaction *i : interactions)
+    //    for (T *t_set : sets)
+    //        if (i->sets.find(t_set) == i->sets.end())
+    //            i->deltas.insert({t_set, 0});
+    for (int* row_o : *rows_o) {
+        int* row = new int[num_factors];
+        for (uint64_t col = 0; col < num_factors; col++) row[col] = row_o[col];
+        rows.push_back(row);
+    }
 }
 
 /* HELPER METHOD: build_t_way_interactions - initializes the interactions vector recursively
@@ -354,7 +360,6 @@ void Array::build_row_interactions(int *row, std::set<Interaction*> *row_interac
 */
 void Array::add_row()
 {
-    uint64_t prev_score = score;
     int *new_row = new int[num_factors]{0};
     for (uint64_t size = num_factors; size > 0; size--) {
         int rand_idx = rand() % static_cast<int>(size);
@@ -521,17 +526,20 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
         for (T *t1 : row_sets) {    // for every T set in this row,
             if (t1->is_locatable) continue;
             if (t1->rows.size() == 1) {   // if true, this is the first time the set has been added, so
+                for (Single *s : t1->singles) {
+                    s->l_issues -= sets.size();
+                    score -= sets.size();
+                }
                 for (T *t2 : row_sets) {    // for every other T set in this row,
                     if (t1 == t2 || t2->rows.size() > 1) continue;  // (skip when either of these is true)
                     t1->location_conflicts.insert(t2);  // can assume there is a location conflict
                     for (Single *s: t1->singles) {  // scores actually worsen here
                         s->l_issues++;
                         score++;
-                        total_problems++;
                     }
                 }
             } else {    // need to check if location issues were solved
-                std::set<T*> temp = t1->location_conflicts; // make a deep copy (for mutating), and
+                std::set<T*> temp = t1->location_conflicts; // make a shallow copy (for mutating), and
                 uint64_t solved = 0;
                 std::set<T*> others;
                 for (T *t2 : t1->location_conflicts)    // for every T set in the current T's conflicts,
@@ -547,8 +555,14 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
                                 t2->is_locatable = true;    // conflicting T just became locatable
                                 score--;    // array score improves for the solved location problem
                                 location_problems--;
-                                if (location_problems == 0) is_locating = true;
+                                if (location_problems == 0) {
+                                    printf("ERROR: Unexpected behavior here, rerun in debug mode\n");
+                                    exit(-1);
+                                }
                             }
+                        } else {
+                            printf("ERROR: Unexpected behavior here, rerun in debug mode\n");
+                            exit(-1);
                         }
                     }
                 for (Single *s: t1->singles) {  // update scores
@@ -556,12 +570,12 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
                     score -= solved;
                 }
                 t1->location_conflicts = temp;  // mutating completed, can update original now
-                if (t1->location_conflicts.size() == 0) {   // if true,
-                    t1->is_locatable = true;    // this T just became locatable
-                    score--;    // array score improves for the solved location problem
-                    location_problems--;
-                    if (location_problems == 0) is_locating = true;
-                }
+            }
+            if (t1->location_conflicts.size() == 0) {   // if true,
+                t1->is_locatable = true;    // this T just became locatable
+                score--;    // array score improves for the solved location problem
+                location_problems--;
+                if (location_problems == 0) is_locating = true;
             }
         }
     }
@@ -583,9 +597,8 @@ Array *Array::clone()
 {
     // instantiate with private fields, copy public fields manually
     Array *clone = new Array(total_problems, coverage_problems, location_problems, detection_problems,
-        &rows, num_tests, num_factors, factors, v, o, p);
+        &rows, num_tests, num_factors, factors, v, o, p, d, t, delta);
     clone->score = score;
-    clone->d = d; clone->t = t; clone->delta = delta;
     clone->is_covering = is_covering;
     clone->is_locating = is_locating;
     clone->is_detecting = is_detecting;
@@ -599,17 +612,25 @@ Array *Array::clone()
         clone_s->d_issues = this_s->d_issues;
     }
     for (Interaction *this_i : interactions) {
+        // DEBUG point
         Interaction *clone_i = clone->interaction_map.at(this_i->to_string());
         clone_i->rows = this_i->rows;
         clone_i->is_covered = this_i->is_covered;
         clone_i->is_detectable = this_i->is_detectable;
-        for (auto& kv : this_i->deltas) clone_i->deltas.at(kv.first) = kv.second;
+        for (auto& kv : this_i->deltas) {
+            T *clone_t = clone->t_set_map.at(kv.first->to_string());
+            //clone_i->deltas.at(clone_t) = kv.second;
+            clone_i->deltas.insert({clone_t, kv.second});
+        }
     }
     for (T *this_t : sets) {
         T *clone_t = clone->t_set_map.at(this_t->to_string());
         clone_t->rows = this_t->rows;
         clone_t->is_locatable = this_t->is_locatable;
-        for (T *other_t : this_t->location_conflicts) clone_t->location_conflicts.insert(other_t);
+        for (T *other_t : this_t->location_conflicts) {
+            T *clone_other_t = clone->t_set_map.at(other_t->to_string());
+            clone_t->location_conflicts.insert(clone_other_t);
+        }
     }
 
     return clone;
