@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 09/14/2022
+Last updated 09/20/2022
 
 |===========================================================================================================|
 |   This header contains classes for managing the array in an automated fashion. The Interaction and T      |
@@ -89,9 +89,6 @@ class T
 class Array
 {
     public:
-        // for debugging only
-        bool DEBUG_FLAG;
-
         // this is a measure of how close the array is to complete; 0 is complete
         uint64_t score;
 
@@ -113,6 +110,9 @@ class Array
         // tracks whether the array is (d, t, δ)-detecting
         bool is_detecting;
 
+        // field to track the current number of rows
+        uint64_t num_tests;
+
         // list of all individual Single (factor, value) pairs
         std::vector<Single*> singles;
 
@@ -131,6 +131,7 @@ class Array
         // really only needed by heuristic_all()
         std::map<std::string, T*> t_set_map;
 
+        void print_stats(bool initial = false); // prints current stats such as score
         void add_row();             // adds a row to the array based on scoring
         void add_random_row();      // adds a random row to the array
         std::string to_string();    // returns a string representing all rows
@@ -138,7 +139,7 @@ class Array
         Array(Parser *in);  // constructor with an initialized Parser object
         Array(uint64_t total_problems, uint64_t coverage_problems, uint64_t location_problems,
             uint64_t detection_problems, std::vector<int*> *rows, uint64_t num_tests, uint64_t num_factors,
-            Factor **factors, verb_mode v, out_mode o, prop_mode p, uint64_t d, uint64_t t, uint64_t delta);
+            Factor **factors, prop_mode p, uint64_t d, uint64_t t, uint64_t delta);
         ~Array();   // deconstructor
 
     private:
@@ -157,9 +158,6 @@ class Array
         // list of the rows themselves, as a vector of int arrays
         std::vector<int*> rows;
 
-        // field to reference the upper bound on iterating through rows
-        uint64_t num_tests;
-
         // field to reference the upper bound on iterating through columns
         uint64_t num_factors;
 
@@ -172,7 +170,10 @@ class Array
         // for dictating order of iteration; should be regularly shuffled
         int *permutation;
 
-        // this makes the program print out the data structures when enabled
+        // this makes the program print out data structures and program flow when enabled
+        debug_mode debug;
+
+        // this makes the program print out a score breakdown when enabled
         verb_mode v;
 
         // this dictates how much output should be printed; see parser.h for typedef

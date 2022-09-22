@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 07/20/2022
+Last updated 09/20/2022
 
 |===========================================================================================================|
 |   This header contains a class used for processing input. Should the input format change, this class can  |
@@ -21,9 +21,17 @@ Last updated 07/20/2022
 #include <vector>
 #include <fstream>
 
+// typedef representing whether debug mode is set
+// - d_off is normal
+// - d_on causes the program to output data structure and flow control info to console
+typedef enum {
+    d_off   = 0,
+    d_on    = 1
+} debug_mode;
+
 // typedef representing whether verbose mode is set
 // - v_off is normal
-// - v_on means more detail should be shown in output
+// - v_on breaks down the score to individual factors and shows the current completion percentage
 typedef enum {
     v_off   = 0,
     v_on    = 1
@@ -31,8 +39,8 @@ typedef enum {
 
 // typedef representing what sections of output to show
 // - normal displays everything
-// - halfway indicates what checks are happening but doesn't print any issues found
-// - silent only shows the final conclusion(s)
+// - halfway excludes the lines that state what row was added
+// - silent only shows the final results or nothing at all if an output file was specified
 typedef enum {
     normal  = 0,
     halfway = 1,
@@ -70,9 +78,10 @@ class Parser
         uint64_t delta; // desired separation
 
         // flags
-        verb_mode v;    // verbose mode, v_off by default
-        out_mode o;     // output mode, normal by default
-        prop_mode p;    // properties mode, all by default
+        debug_mode debug;   // debug mode, d_off by default
+        verb_mode v;        // verbose mode, v_off by default
+        out_mode o;         // output mode, normal by default
+        prop_mode p;        // properties mode, all by default
 
         // array stuff
         uint64_t num_rows = 0;          // rows, or tests, in the array

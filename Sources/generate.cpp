@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 09/01/2022
+Last updated 09/20/2022
 
 |===========================================================================================================|
 |   This file contains the main() method which reflects the high level flow of the program. It starts by    |
@@ -37,17 +37,18 @@ Last updated 09/01/2022
 
 // ================================v=v=v== static global variables ==v=v=v================================ //
 
-static verb_mode vm; // verbose mode
-static out_mode om;  // output mode
-static prop_mode pm; // property mode
+static debug_mode dm;   // debug mode
+static verb_mode vm;    // verbose mode
+static out_mode om;     // output mode
+static prop_mode pm;    // property mode
 
 // ================================^=^=^== static global variables ==^=^=^================================ //
 
 
 // =========================v=v=v== static methods - forward declarations ==v=v=v========================= //
 
-static int print_results(Parser *p, Array *array, uint64_t row_count, bool success);
-static void verbose_print(int d, int t, int delta);
+static int print_results(Parser *p, Array *array, bool success);
+static void debug_print(int d, int t, int delta);
 
 // =========================^=^=^== static methods - forward declarations ==^=^=^========================= //
 
@@ -65,11 +66,11 @@ static void verbose_print(int d, int t, int delta);
 int main(int argc, char *argv[])
 {
     Parser p(argc, argv);           // create Parser object, immediately processes arguments and flags
-    vm = p.v; om = p.o; pm = p.p;   // update flags based on those processed by the Parser
+    dm = p.debug; vm = p.v; om = p.o; pm = p.p; // update flags based on those processed by the Parser
     
-	int status = p.process_input(); // read in and process the array
-    if (vm == v_on) verbose_print(p.d, p.t, p.delta);   // print status when verbose mode enabled
-    if (status == -1) return 1;     // exit immediately if there is a basic syntactic or semantic error
+	int status = p.process_input();                 // read in and process the array
+    if (dm == d_on) debug_print(p.d, p.t, p.delta); // print status when verbose mode enabled
+    if (status == -1) return 1;        // exit immediately if there is a basic syntactic or semantic error
     
     Array array(&p);    // create Array object that immediately builds appropriate data structures
     if (array.score == 0) {
@@ -77,24 +78,19 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    uint64_t row_count = 0; // for tracking how many rows have been added to the array
-    if (om != silent) printf("Array score is currently %lu, adding row %lu.\n", array.score, ++row_count);
-    array.add_random_row();
-    uint64_t prev_score;    // for comparing to current score to see if nothing is changing
+    array.print_stats(true);        // report initial state of array
+    array.add_random_row();         // add a completely random row to start
+    uint64_t prev_score;            // for comparing to current score to see if nothing is changing
     uint8_t no_change_counter = 0;  // need this to stop an infinite loop if the array cannot be completed
-    while (array.score > 0) {   // add rows until the array is complete
-        prev_score = array.score;
-        if (om != silent) printf("Array score is currently %lu, adding row %lu.\n", array.score, ++row_count);
-        array.add_row();
-        if (array.score == prev_score) {
-            no_change_counter++;
-            array.DEBUG_FLAG = false;
-        }
+    while (array.score > 0) {       // add rows until the array is complete
+        prev_score = array.score;   // needed for catching impossible scenarios
+        array.print_stats();        // report current state of array
+        array.add_row();            // add another row
+        if (array.score == prev_score) no_change_counter++;
         else no_change_counter = 0;
-        if (no_change_counter == 5) array.DEBUG_FLAG = true;
         if (no_change_counter > 10) break;
     }
-    return print_results(&p, &array, row_count, (no_change_counter == 0));
+    return print_results(&p, &array, (no_change_counter == 0));
 }
 
 /* SUB METHOD: print_results - prints the completion status after the array is finished being generated
@@ -108,14 +104,14 @@ int main(int argc, char *argv[])
  * returns:
  * - exit code representing the state of the program (0 means the program finished successfully)
 */
-static int print_results(Parser *p, Array *array, uint64_t row_count, bool success)
+static int print_results(Parser *p, Array *array, bool success)
 {
     if (!success) {
         printf("WARNING: It appears impossible to complete array with requested properties.\n");
         if (vm == v_off) printf("\tTry rerunning in verbose mode for details (by including -v flag).\n");
         printf("\nCancelling array generation....\n");
     }
-    else if (om != silent) printf("Completed array with %lu rows.\n\n", row_count);
+    else if (om != silent) printf("Completed array with %lu rows.\n\n", array->num_tests);
 
     if (p->out_filename.empty()) {
         if (!success) printf("The array up to this point was:\n");
@@ -147,7 +143,7 @@ static int print_results(Parser *p, Array *array, uint64_t row_count, bool succe
     return 0;
 }
 
-/* HELPER METHOD: verbose_print - prints the introductory status when verbose mode is enabled
+/* HELPER METHOD: debug_print - prints the introductory status when debug mode is enabled
  * 
  * parameters:
  * - d: value of d read from the command line (default should be 1)
@@ -157,9 +153,11 @@ static int print_results(Parser *p, Array *array, uint64_t row_count, bool succe
  * returns:
  * - void; simply prints to console
 */
-static void verbose_print(int d, int t, int delta) {
+static void debug_print(int d, int t, int delta) {
     int pid = getpid();
-    printf("==%d== Verbose mode enabled\n", pid);
+    printf("==%d== Debug mode is enabled. Look for liness preceeded by the PID.\n", pid);
+    if (vm == v_off) printf("==%d== Verbose mode: disabled\n", pid);
+    else if (vm == v_on) printf("==%d== Verbose mode: enabled\n", pid);
     if (om == normal) printf("==%d== Output mode: normal\n", pid);
     else if (om == halfway) printf("==%d== Output mode: halfway\n", pid);
     else if (om == silent) printf("==%d== Output mode: silent\n", pid);

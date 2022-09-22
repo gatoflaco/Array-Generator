@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 09/14/2022
+Last updated 09/21/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods belonging to the Array class which are declared in array.h.  |
@@ -60,6 +60,7 @@ void Array::tweak_row(int *row, std::set<Interaction*> *row_interactions)
 */
 void Array::heuristic_c_only(int *row, std::set<Interaction*> *row_interactions)
 {
+    if (v == v_on) printf("\t- Using heuristic_c_only.\n");
     int *problems = new int[num_factors]{0};    // for counting how many "problems" each factor has
     int max_problems;   // largest value among all in the problems[] array created above
     int cur_max;    // for comparing to max_problems to see if there is an improvement
@@ -88,6 +89,7 @@ void Array::heuristic_c_only(int *row, std::set<Interaction*> *row_interactions)
         if (problems[col] > max_problems) max_problems = problems[col];
     if (max_problems == 0) {    // row is good enough as is
         delete[] problems;
+        delete[] dont_cares_c;
         return;
     }
     
@@ -138,8 +140,8 @@ void Array::heuristic_c_only(int *row, std::set<Interaction*> *row_interactions)
         if (improved) continue;
         row[permutation[col]] = static_cast<uint64_t>(rand()) % factors[permutation[col]]->level;
     }
-    delete[] dont_cares_c;
     delete[] problems;
+    delete[] dont_cares_c;
 }
 
 /* HELPER METHOD: heuristic_c_helper - performs redundant work for heuristic_c_only()
@@ -193,6 +195,7 @@ int Array::heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions
 */
 void Array::heuristic_all(int *row)
 {
+    if (v == v_on) printf("\t- Using heuristic_all.\n");
     // get scores for all relevant possible rows
     std::map<int*, int64_t> scores;
     heuristic_all_helper(row, 0, &scores);
@@ -204,6 +207,7 @@ void Array::heuristic_all(int *row)
     for (auto& kv : scores) {
         if (kv.second >= best_score) {  // it was better or it tied
             if (kv.second > best_score) {   // for an even better choice, can stop tracking the previous best
+                for (int *r : best_rows) delete[] r;
                 best_score = kv.second;
                 best_rows.clear();
             }
@@ -249,10 +253,11 @@ void Array::heuristic_all_helper(int *row, uint64_t cur_col, std::map<int*, int6
     }
 
     // recursive case: need to introduce another loop for the next factor
-    /*if ((p == all && dont_cares[permutation[cur_col]] == all) ||
+    /*
+    if ((p == all && dont_cares[permutation[cur_col]] == all) ||
         (p == c_and_l && dont_cares[permutation[cur_col]] == c_and_l) ||
         (p == c_only && dont_cares[permutation[cur_col]] == c_only)) {
-        heuristic_all_helper(row, cur_col+1, best_rows, best_score);
+        heuristic_all_helper(row, cur_col+1, scores);
         return;
     }//*/
     for (uint64_t offset = 0; offset < factors[permutation[cur_col]]->level; offset++) {

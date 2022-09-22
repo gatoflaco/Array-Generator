@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 07/20/2022
+Last updated 09/20/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods used to process input via an Parser class. Should the input  |
@@ -23,7 +23,7 @@ bool bad_delta(uint64_t d, uint64_t t, uint64_t delta);
 Parser::Parser()
 {
     d = 1; t = 2; delta = 1;
-    v = v_off; o = normal; p = all;
+    debug = d_off; v = v_off; o = normal; p = all;
     in_filename = ""; out_filename = "";
 }
 
@@ -39,14 +39,19 @@ Parser::Parser(int argc, char *argv[]) : Parser()
         if (arg.at(0) == '-') { // flags
             for (char c : arg.substr(1, arg.length() - 1)) {
                 switch(c) {
+                    case 'd':
+                        if (o != silent) debug = d_on;
+                        break;
                     case 'v':
-                        v = v_on;
+                        if (o != silent) v = v_on;
                         break;
                     case 'h':
                         o = halfway;
                         break;
                     case 's':
                         o = silent;
+                        debug = d_off;
+                        v = v_off;
                         break;
                     default:
                         try {

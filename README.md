@@ -52,13 +52,23 @@ Reading input....
 
 Building internal data structures....
 
-[Array score is currently x_i, adding row n_i]*
+There are x_0 total problems to solve.
+Adding row #1.
+> Pushed row: v_11 v_12 ... v_1C
+
+[
+Array score is currently x_i.
+Adding row #n_i.
+> Pushed row: v_i1 v_i2 ... v_iC
+]*
+
 Comleted array with n rows.
 
 [Wrote array into file with path name <output_filepath>|The finished array is:]
 [ARRAY|]
 ```
-- `x_i` begins at a relatively large positive number and fluctuates, generally decreasing, until 0.
+- The values of `v_i1` through `v_iC` describe the row that was chosen and added to the array.
+- `x_i` begins at a relatively large positive number and decreases until 0.
 - `n_i` begins at 1 and increments by 1 for every additional line. The final `n_i` will be equal to the `n` displayed on the `Completed array with n rows` line.  
 - If an output file was specified, the final line of output will be `Wrote array into file with path name <output_filepath>`. If not, then it will be `The finished array is:` followed by the entire array.
 - The output may be made more or less verbose than this using various [flags](#flags) on the command line. 
@@ -83,18 +93,24 @@ t: an integer bounded between 1 and the number of factors, inclusive
 - Represents separation.
 - If not given, desired property is assumed to be (d, t)-locating, or even just t-covering when d is also not given.
 ### Flags
-v: verbose
+d: debug
 - States what flags are set, as well as the relevant values of d, t, and δ, prior to reading input.
 - Displys the state of all internal single (factor, value) pairs, t-way interactions, and, if more than coverage is requested, size-d sets of t-way interactions. Due to the nature of generation happening from scratch, the sets of rows on which these occur should always be empty at this point.
-- Shows each row that is added as it goes.
+- States when a row becomes any type of "don't care". Don't cares are categorized into coverage, location, and detection. E.g., if factor 2 is "don't care" type location, then no matter what value is chosen for that factor, no more coverage or location problems will be solved.
+
+v: verbose
+- Breaks down the `Array score is currently x_i` line into sub scores for coverage, location, and detection individually, as applicable.
+- States what heuristic is being used to choose the current row.
 
 h: halfway
-- Currently does not do anything different than when not specified. Plans underway to make it reduce the overall output.
+- Reduces output by condensing to one line per row added.
+- Gets rid of the `> Pushed row: v_i1 v_i2 ... v_iC` line altogether.
 - Mutually exclusive with the s flag; if both are specified, the last one seen takes priority.
 
 s: silent
 - Does not produce any output, except for the finished array when no output file was specified.
 - Mutually exclusive with the h flag; if both are specified, the last one seen takes priority.
+- Higher priority than the d and v flags; if d and/or v is specified along with s, both d and v will be disabled.
 
 ## Details and Definitions
 The program begins by interpreting command line arguments and flags to set state variables, then getting input from the specified input file. It passes all of this info to an Array object constructor, which sets up a lot of internal vectors and sets for organizing data and tracking scores, etc. When this is done, the main program adds the first row, which is completely randomly generated within the constraints provided. After the first row, the program then enters a loop in which it calls a method that adds a row based on scoring heuristics. It does this until the array is completed with the requested properties. After every row added, even the first, the array object updates its internal data structures. This is important for making scoring decisions in the heuristics that decide what rows to add, and for tracking the overall progress of the array generation. An overall score based on the total "problems" to solve determines when the array is completed; the number starts off large and decreases as problems are solved. When the overall score is 0, all problems are solved and the array is completed with the requested properties.
@@ -113,7 +129,7 @@ The most interesting part of this program is the problem of scoring a potential 
   This heuristic aims to solve missing detection under the assumption that coverage and location are low priority. This heuristic is still in design phase.
 
 4. heuristic_all:
-  This heuristic can be used to solve all types of missing properties. The way it works is to pretend that the row up for consideration is going to be added; that is, it literally adds the row and calls the method that updates internal data structures, comparing the states of things before and after. In order to do this, the previous state of the array must be saved to memory, which has a high cost in space. A top-down recursive helper method is called to go through all non-"don't care" factors' levels and indiscriminately test the result of adding such a row. After the row is added, the new state of the array is compared to the saved state and a score is assigned based on a combination of the covering, locating, and detecting progress (including weights assigned to each category). The best score is kept track of, and when a given row outscores the previous best, its levels are saved to a vector for remembering what achieved this. When a row ties the current best score, it is appended to the vector, as opposed to overriding it. In this way, if at the end there are multiple best choices, the heuristic can randomly choose from among them. After every row that is tested, the helper method then removes the row and restores the saved state of the array. Iterating through all viable combinations of levels and doing this has a high cost in time. So, overall, this method is extremely expensive in computational resources, and should be saved for last, when the array is close to complete. However, it guarantees a best decision at the scope of a single row.
+  This heuristic can be used to solve all types of missing properties with great efficacy. The way it works is to pretend that the row up for consideration is going to be added; that is, it literally adds the row and calls the method that updates internal data structures, comparing the states of things before and after. In order to do this, a thread is started on the scoring method, which begins by creating a copy of all relevant internal data. It is important to perform the addition of the row on this clone of the array, so that after making the comparison to the original and noting the score, the clone can simply be deleted, the original remaining unchanged. This way, when another row is considered, the same steps may be followed. This also lends itself to the possibility of multithreading; since every thread can make its own local copy of the original array without modifying it, multiple potential rows can be tested at the same time, speeding up an otherwise time-cumbersome process (at the tradeoff of a higher cost in memory usage). A top-down recursive helper method goes through the construction of all possible rows, spawning a new thread to test every row that gets formed. Once all rows have been scored, the main thread proceeds to pick the row that scored best. When there is a tie, a winner is selected randomly. As for how the scoring is done, it is more-or-less simply the summation of the individul improvements in coverage, location, and detection at the level of single (factor, value) pairs. Weight is given to each category such that solving detection issues is worth more than solving location issues, and solving location issues is worth more than solving coverage issues. The thinking is that in general, detection is harder to satisfy than location, and location is harder to satisfy than coverage. So, the heuristic should not select a row simply because it solves a lot of problems, if for example, those problems are mostly to do with coverage. Besides, in attempting to solve detection issues, many location/coverage issues are solved in the process anyway. Also note that because this heuristic calls the method that updates internal data structures - over and over (once per row) - its time behavior is dominated by that method, which is known to be one of the most computationally intensive parts of the program. So, similarly to that method, execution speed improves as problems are solved. This means that this heuristic can score faster the closer the array is to complete, providing one more reason why weight is assigned to each sub category of the scoring; by the time this heuristic is realistically ready to be called, most of the easieer problems to solve are probably already solved or close to being solved anyway. In short, while this method takes all types of properties into account, it is mainly intended to clean up the last missing ones near the end, which are likely to be primarily detection problems.
 
 ## Additional Links
 Colbourn and McClary, *[Locating and Detecting Arrays for Interaction Faults](https://drops.dagstuhl.de/opus/volltexte/2009/2240/pdf/09281.ColbournCharles.Paper.2240.pdf)*

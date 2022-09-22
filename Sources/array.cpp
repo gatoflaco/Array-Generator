@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 09/14/2022
+Last updated 09/21/2022
 
 |===========================================================================================================|
 |   This file contains the meat of the project's logic. The constructor for the Array class takes a pointer |
@@ -14,7 +14,7 @@ Last updated 09/14/2022
 | the goodness of the choice. This method should only be called for adding the first row of the Array.      |
 | All scoring and tracking of data structures, counts, etc. which influence decisions is self-contained;    |
 | the user of the Array object need not concern itself with these details.                                  |
-|===========================================================================================================|
+|=====================================KT======================================================================|
 */
 
 #include "array.h"
@@ -126,7 +126,7 @@ std::string T::to_string()
 */
 Array::Array()
 {
-    DEBUG_FLAG = false;
+    debug = d_off;
     total_problems = 0;
     coverage_problems = 0; location_problems = 0; detection_problems = 0;
     score = 0;
@@ -135,6 +135,8 @@ Array::Array()
     factors = nullptr;
     v = v_off; o = normal; p = all;
     is_covering = false; is_locating = false; is_detecting = false;
+    dont_cares = nullptr;
+    permutation = nullptr;
 }
 
 /* CONSTRUCTOR - initializes the object
@@ -149,7 +151,7 @@ Array::Array(Parser *in) : Array::Array()
     dont_cares = new prop_mode[num_factors]{none};
     permutation = new int[num_factors];
     for (uint64_t col = 0; col < num_factors; col++) permutation[col] = col;
-    v = in->v; o = in->o; p = in->p;
+    debug = in->debug; v = in->v; o = in->o; p = in->p;
     
     if (o != silent) printf("Building internal data structures....\n\n");
     try {
@@ -163,12 +165,12 @@ Array::Array(Parser *in) : Array::Array()
                 single_map.insert({factors[i]->singles[j]->to_string(), factors[i]->singles[j]});
             }
         }
-        if (v == v_on) print_singles(factors, num_factors);
+        if (debug == d_on) print_singles(factors, num_factors);
 
         // build all Interactions
         std::vector<Single*> temp_singles;
         build_t_way_interactions(0, t, &temp_singles);
-        if (v == v_on) print_interactions(interactions);
+        if (debug == d_on) print_interactions(interactions);
         total_problems += interactions.size();  // to account for all the coverage problems
         coverage_problems += interactions.size();
         score += total_problems;    // the array is considered completed when this reaches 0
@@ -177,7 +179,7 @@ Array::Array(Parser *in) : Array::Array()
         // build all Ts
         std::vector<Interaction*> temp_interactions;
         build_size_d_sets(0, d, &temp_interactions);
-        if (v == v_on) print_sets(sets);
+        if (debug == d_on) print_sets(sets);
         for (T *t_set : sets) {
             for (Single *s : t_set->singles) {
                 total_problems += sets.size();
@@ -218,8 +220,7 @@ Array::Array(Parser *in) : Array::Array()
 */
 Array::Array(uint64_t total_problems_o, uint64_t coverage_problems_o, uint64_t location_problems_o,
     uint64_t detection_problems_o, std::vector<int*> *rows_o, uint64_t num_tests_o, uint64_t num_factors_o,
-    Factor **factors_o, verb_mode v_o, out_mode o_o, prop_mode p_o, uint64_t d_o, uint64_t t_o,
-    uint64_t delta_o): Array::Array()
+    Factor **factors_o, prop_mode p_o, uint64_t d_o, uint64_t t_o, uint64_t delta_o): Array::Array()
 {
     total_problems = total_problems_o;
     coverage_problems = coverage_problems_o;
@@ -227,7 +228,7 @@ Array::Array(uint64_t total_problems_o, uint64_t coverage_problems_o, uint64_t l
     detection_problems = detection_problems_o;
     d = d_o; t = t_o; delta = delta_o;
     num_tests = num_tests_o; num_factors = num_factors_o;
-    v = v_o; o = o_o; p = p_o;
+    o = silent; p = p_o;
     factors = new Factor*[num_factors];
     for (uint64_t i = 0; i < num_factors; i++) {
         factors[i] = new Factor(i, factors_o[i]->level, new Single*[factors_o[i]->level]);
@@ -352,6 +353,42 @@ void Array::build_row_interactions(int *row, std::set<Interaction*> *row_interac
     }
 }
 
+/* UTILITY METHOD: print_stats - outputs current state of the Array to console
+ * - output details vary depending on what flags are set
+ * 
+ * parameters:
+ * - initial: whether this is the introductory 
+ * 
+ * returns:
+ * - void, but after the method finishes, the row_interactions set will hold all the interactions in the row
+*/
+void Array::print_stats(bool initial)
+{
+    if (o != silent) {
+        if (initial) {
+            if (o == normal) printf("There are %lu total problems to solve.\n", total_problems);
+            else printf("There are %lu total problems to solve, adding row #%lu.\n", score, num_tests+1);
+        } else {
+            if (o == normal) printf("Array score is currently %lu.\n", score);
+            else printf("Array score is currently %lu, adding row #%lu.\n", score, num_tests+1);
+        }
+    }
+    if (v == v_on) {
+        uint64_t c_score = coverage_problems, l_score = location_problems, d_score = detection_problems;
+        for (Single *s : singles) {
+            c_score += s->c_issues;
+            l_score += s->l_issues;
+            d_score += s->d_issues;
+        }
+        printf("\t- Current coverage score: %lu\n", c_score);
+        if (p != c_only) printf("\t- Current location score: %lu\n", l_score);
+        if (p == all) printf("\t- Current detection score: %lu\n", d_score);
+        if (!initial) printf("\t- The array is now at %.2f%% completion.\n",
+            static_cast<float>((total_problems - score))/total_problems*100);
+    }
+    if (o == normal) printf("Adding row #%lu.\n", num_tests+1);
+}
+
 /* SUB METHOD: add_row - adds a new row to the array using some predictive and scoring logic
  * - initializes a row with a greedy approach, then tweaks till good enough
  * 
@@ -386,12 +423,21 @@ void Array::add_row()
         }
         new_row[permutation[col]] = worst_single->value;
         
-        if (dont_cares[permutation[col]] == none && worst_single->c_issues == 0)
+        if (dont_cares[permutation[col]] == none && worst_single->c_issues == 0) {
             dont_cares[permutation[col]] = c_only;
-        if (p != c_only && dont_cares[permutation[col]] == c_only && worst_single->l_issues == 0)
+            if (debug == d_on) printf("==%d== All coverage issues associated with factor %d are solved!\n",
+                getpid(), permutation[col]);
+        }
+        if (p != c_only && dont_cares[permutation[col]] == c_only && worst_single->l_issues == 0) {
             dont_cares[permutation[col]] = c_and_l;
-        if (p == all && dont_cares[permutation[col]] == c_and_l && worst_single->d_issues == 0)
+            if (debug == d_on) printf("==%d== All location issues associated with factor %d are solved!\n",
+                getpid(), permutation[col]);
+        }
+        if (p == all && dont_cares[permutation[col]] == c_and_l && worst_single->d_issues == 0) {
             dont_cares[permutation[col]] = all;
+            if (debug == d_on) printf("==%d== All detection issues associated with factor %d are solved!\n",
+                getpid(), permutation[col]);
+        }
         
         if ((p == all && dont_cares[permutation[col]] == all) ||
             (p == c_and_l && dont_cares[permutation[col]] == c_and_l) ||
@@ -404,18 +450,6 @@ void Array::add_row()
     tweak_row(new_row, &row_interactions);  // next, go and score this decision, modifying values as needed
     row_interactions.clear(); build_row_interactions(new_row, &row_interactions, 0, t, ""); // rebuild
     update_array(new_row, &row_interactions);
-    if (DEBUG_FLAG && score == 1) { //TODO: delete this
-        printf("DEBUG: FAILED TO SOLVE THE PROBLEM...\n");
-        if (!is_covering) {
-            printf("\tCOVERAGE:\n");
-        }
-        if ((p == c_and_l || p == all) && !is_locating) {
-            printf("\tLOCATION:\n");
-        }
-        if (p == all && !is_detecting) {
-            printf("\tDETECTION:\n");
-        }
-    }
 }
 
 /* SUB METHOD: add_random_row - adds a randomly generated row to the array without scoring it
@@ -459,11 +493,10 @@ int *Array::get_random_row()
 void Array::update_array(int *row, std::set<Interaction*> *row_interactions, bool keep)
 {
     rows.push_back(row);
-    if (v == v_on && keep) {
-        printf(">Pushed row:\t");
-        for (uint64_t i = 0; i < num_factors; i++)
-            printf("%d\t", row[i]);
-        printf("\n");
+    if (o == normal && keep) {
+        printf("> Pushed row:\t");
+        for (uint64_t i = 0; i < num_factors; i++) printf("%d\t", row[i]);
+        printf("\n\n");
     }
     num_tests++;
 
@@ -597,7 +630,7 @@ Array *Array::clone()
 {
     // instantiate with private fields, copy public fields manually
     Array *clone = new Array(total_problems, coverage_problems, location_problems, detection_problems,
-        &rows, num_tests, num_factors, factors, v, o, p, d, t, delta);
+        &rows, num_tests, num_factors, factors, p, d, t, delta);
     clone->score = score;
     clone->is_covering = is_covering;
     clone->is_locating = is_locating;
