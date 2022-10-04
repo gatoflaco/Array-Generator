@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 09/21/2022
+Last updated 10/04/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods belonging to the Array class which are declared in array.h.  |
@@ -9,6 +9,82 @@ Last updated 09/21/2022
 */
 
 #include "array.h"
+
+/* SUB METHOD: add_row - adds a new row to the array using some predictive and scoring logic
+ * - initializes a row with a greedy approach, then tweaks till good enough
+ * 
+ * returns:
+ * - void, but after the method finishes, the array will have a new row appended to its end
+*/
+void Array::add_row()
+{
+    int *new_row = new int[num_factors]{0};
+    for (uint64_t size = num_factors; size > 0; size--) {
+        int rand_idx = rand() % static_cast<int>(size);
+        int temp = permutation[size - 1];
+        permutation[size - 1] = permutation[rand_idx];
+        permutation[rand_idx] = temp;
+    }   // at this point, permutation should be shuffled
+
+    // greedily select the values that appear to need the most attention
+    for (uint64_t col = 0; col < num_factors; col++) {
+        // check if column is don't care
+        if ((p == all && dont_cares[permutation[col]] == all) ||
+            (p == c_and_l && dont_cares[permutation[col]] == c_and_l) ||
+            (p == c_only && dont_cares[permutation[col]] == c_only)) {
+            new_row[permutation[col]] = static_cast<uint64_t>(rand()) % factors[permutation[col]]->level;
+            continue;
+        }
+
+        // assume 0 is the worst to start, then check if any others are worse
+        Single *worst_single = factors[permutation[col]]->singles[0];
+        int worst_score = static_cast<int64_t>(worst_single->c_issues) + worst_single->l_issues + 
+            3*static_cast<int64_t>(worst_single->d_issues);
+        for (uint64_t val = 1; val < factors[permutation[col]]->level; val++) {
+            Single *cur_single = factors[permutation[col]]->singles[val];
+            int cur_score = static_cast<int64_t>(cur_single->c_issues) + cur_single->l_issues +
+                3*static_cast<int64_t>(cur_single->d_issues);
+            if (cur_score > worst_score || (cur_score == worst_score && rand() % 2 == 0)) {
+                worst_single = cur_single;
+                worst_score = cur_score;
+            }
+        }
+        new_row[permutation[col]] = worst_single->value;
+    }   // entire row is now initialized based on the greedy approach
+    
+    std::set<Interaction*> row_interactions;
+    build_row_interactions(new_row, &row_interactions, 0, t, "");
+    tweak_row(new_row, &row_interactions);  // next, go and score this decision, modifying values as needed
+    row_interactions.clear(); build_row_interactions(new_row, &row_interactions, 0, t, ""); // rebuild
+    update_array(new_row, &row_interactions);
+}
+
+/* SUB METHOD: add_random_row - adds a randomly generated row to the array without scoring it
+ * - should only ever be called to initialize the first row of a brand new array from scratch
+ * 
+ * returns:
+ * - void, but after the method finishes, the array will have a new row appended to its end
+*/
+void Array::add_random_row()
+{
+    int *new_row = get_random_row();
+    std::set<Interaction*> row_interactions;
+    build_row_interactions(new_row, &row_interactions, 0, t, "");
+    update_array(new_row, &row_interactions);
+}
+
+/* HELPER METHOD: get_random_row - creates a randomly generated row without any logic to tweak it
+ * 
+ * returns:
+ * - a pointer to the first element in the array that represents the row
+*/
+int *Array::get_random_row()
+{
+    int *new_row = new int[num_factors];
+    for (uint64_t i = 0; i < num_factors; i++)
+        new_row[i] = static_cast<uint64_t>(rand()) % factors[i]->level;
+    return new_row;
+}
 
 /* SUB METHOD: tweak_row - chooses a heuristic to use for modifying a row based on current state of the Array
  * 

@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 07/22/2022
+Last updated 10/04/2022
 
 |===========================================================================================================|
 |   This header contains classes used for organizing data associated with the Array class. There should be  |
@@ -44,11 +44,14 @@ class Single
 class Factor
 {
     public:
-        uint64_t id;
-        uint64_t level;
-        Single **singles;
-        Factor();   // default constructor, don't use this
-        Factor(uint64_t i, uint64_t l, Single **ptr_array);
+        uint64_t c_issues;  // total coverage issues of all associated Singles
+        int64_t l_issues;   // total location issues of all associated Singles
+        uint64_t d_issues;  // total detection issues of all associated Singles
+        uint64_t id;        // column number
+        uint64_t level;     // number of values the column can take on
+        Single **singles;   // pointer to array of Single pointers
+        Factor();                                           // default constructor, don't use this
+        Factor(uint64_t i, uint64_t l, Single **ptr_array); // constructor that takes id, level, Single*
         ~Factor();
 };
 

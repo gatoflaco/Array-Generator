@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 09/20/2022
+Last updated 10/04/2022
 
 |===========================================================================================================|
 |   This header contains classes for managing the array in an automated fashion. The Interaction and T      |
@@ -196,13 +196,16 @@ class Array
         void build_row_interactions(int *row, std::set<Interaction*> *row_interactions,
             uint64_t start, uint64_t t_cur, std::string key);
 
-        int *get_random_row();  // gets a randomly generated row        
+        int *get_random_row();  // gets a randomly generated row
+        int *initialize_row();
         void tweak_row(int *row, std::set<Interaction*> *row_interactions); // improves a decision for a row
 
         // define more of these as needed; they are for deciding what needs changing
         void heuristic_c_only(int *row, std::set<Interaction*> *row_interactions);
         int heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions, int *problems);
         // TODO: make a somewhere-in-the-middle heuristic
+        void heuristic_l_only();
+
         void heuristic_all(int *row);
         void heuristic_all_helper(int *row, uint64_t cur_col, std::map<int*, int64_t> *scores);
         void heuristic_all_scorer(int *row, std::map<int*, int64_t> *scores);

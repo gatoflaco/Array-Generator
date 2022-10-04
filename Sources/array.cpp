@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 09/21/2022
+Last updated 10/04/2022
 
 |===========================================================================================================|
 |   This file contains the meat of the project's logic. The constructor for the Array class takes a pointer |
@@ -48,18 +48,7 @@ Interaction::Interaction()
 */
 Interaction::Interaction(std::vector<Single*> *temp) : Interaction::Interaction()
 {
-    // fencepost start: let the Interaction be the strength 1 interaction involving just the 0th Single in temp
-    singles.push_back(temp->at(0));
-    rows = temp->at(0)->rows;
-
-    // fencepost loop: for any t > 1, rows of the Interaction is the intersection of each Single's rows
-    for (uint64_t i = 1; i < temp->size(); i++) {
-      singles.push_back(temp->at(i));
-      std::set<int> temp_set;
-      std::set_intersection(rows.begin(), rows.end(),
-        temp->at(i)->rows.begin(), temp->at(i)->rows.end(), std::inserter(temp_set, temp_set.begin()));
-      rows = temp_set;
-    }
+    for (uint64_t i = 0; i < temp->size(); i++) singles.push_back(temp->at(i));
 }
 
 /* UTILITY METHOD: to_string - gets a string representation of the Interaction
@@ -88,18 +77,7 @@ T::T()
 */
 T::T(std::vector<Interaction*> *temp) : T::T()
 {
-    // fencepost start: let the Interaction be the strength 1 interaction involving just the 0th Single in s
-    interactions.push_back(temp->at(0));
-    rows = temp->at(0)->rows;
-
-    // fencepost loop: for any t > 1, rows of the Interaction is the intersection of each Single's rows
-    for (uint64_t i = 1; i < temp->size(); i++) {
-      interactions.push_back(temp->at(i));
-      std::set<int> temp_set;
-      std::set_union(rows.begin(), rows.end(),
-        temp->at(i)->rows.begin(), temp->at(i)->rows.end(), std::inserter(temp_set, temp_set.begin()));
-      rows = temp_set;
-    }
+    for (uint64_t i = 0; i < temp->size(); i++) interactions.push_back(temp->at(i));
 
     // next, give all involved Interactions a reference to this set and this set a reference to its Singles
     for (Interaction *interaction : *temp) {
@@ -182,8 +160,9 @@ Array::Array(Parser *in) : Array::Array()
         if (debug == d_on) print_sets(sets);
         for (T *t_set : sets) {
             for (Single *s : t_set->singles) {
-                total_problems += sets.size();
+                factors[s->factor]->l_issues += sets.size();
                 s->l_issues += sets.size();
+                total_problems += sets.size();
             }
         }
         total_problems += sets.size();  // to account for all the location problems
@@ -197,8 +176,9 @@ Array::Array(Parser *in) : Array::Array()
                 if (i->sets.find(t_set) == i->sets.end()) {
                     i->deltas.insert({t_set, 0});
                     for (Single *s: i->singles) {
-                        total_problems += delta;
+                        factors[s->factor]->d_issues += delta;
                         s->d_issues += delta;
+                        total_problems += delta;
                         score += delta;
                     }
                 }
@@ -276,6 +256,7 @@ void Array::build_t_way_interactions(uint64_t start, uint64_t t_cur, std::vector
         interactions.push_back(new_interaction);
         interaction_map.insert({new_interaction->to_string(), new_interaction});    // for later accessing
         for (Single *single : new_interaction->singles) {
+            factors[single->factor]->c_issues++;
             single->c_issues++;
             total_problems++;
             score++;
@@ -369,8 +350,8 @@ void Array::print_stats(bool initial)
             if (o == normal) printf("There are %lu total problems to solve.\n", total_problems);
             else printf("There are %lu total problems to solve, adding row #%lu.\n", score, num_tests+1);
         } else {
-            if (o == normal) printf("Array score is currently %lu.\n", score);
-            else printf("Array score is currently %lu, adding row #%lu.\n", score, num_tests+1);
+            if (o == normal) printf("\nArray score is currently %lu.\n", score);
+            else printf("\nArray score is currently %lu, adding row #%lu.\n", score, num_tests+1);
         }
     }
     if (v == v_on) {
@@ -387,96 +368,6 @@ void Array::print_stats(bool initial)
             static_cast<float>((total_problems - score))/total_problems*100);
     }
     if (o == normal) printf("Adding row #%lu.\n", num_tests+1);
-}
-
-/* SUB METHOD: add_row - adds a new row to the array using some predictive and scoring logic
- * - initializes a row with a greedy approach, then tweaks till good enough
- * 
- * returns:
- * - void, but after the method finishes, the array will have a new row appended to its end
-*/
-void Array::add_row()
-{
-    int *new_row = new int[num_factors]{0};
-    for (uint64_t size = num_factors; size > 0; size--) {
-        int rand_idx = rand() % static_cast<int>(size);
-        int temp = permutation[size - 1];
-        permutation[size - 1] = permutation[rand_idx];
-        permutation[rand_idx] = temp;
-    }   // at this point, permutation should be shuffled
-
-    // greedily select the values that appear to need the most attention
-    for (uint64_t col = 0; col < num_factors; col++) {
-
-        // assume 0 is the worst to start, then check if any others are worse
-        Single *worst_single = factors[permutation[col]]->singles[0];
-        int worst_score = static_cast<int64_t>(worst_single->c_issues) + worst_single->l_issues + 
-            3*static_cast<int64_t>(worst_single->d_issues);
-        for (uint64_t val = 1; val < factors[permutation[col]]->level; val++) {
-            Single *cur_single = factors[permutation[col]]->singles[val];
-            int cur_score = static_cast<int64_t>(cur_single->c_issues) + cur_single->l_issues +
-                3*static_cast<int64_t>(cur_single->d_issues);
-            if (cur_score > worst_score || (cur_score == worst_score && rand() % 2 == 0)) {
-                worst_single = cur_single;
-                worst_score = cur_score;
-            }
-        }
-        new_row[permutation[col]] = worst_single->value;
-        
-        if (dont_cares[permutation[col]] == none && worst_single->c_issues == 0) {
-            dont_cares[permutation[col]] = c_only;
-            if (debug == d_on) printf("==%d== All coverage issues associated with factor %d are solved!\n",
-                getpid(), permutation[col]);
-        }
-        if (p != c_only && dont_cares[permutation[col]] == c_only && worst_single->l_issues == 0) {
-            dont_cares[permutation[col]] = c_and_l;
-            if (debug == d_on) printf("==%d== All location issues associated with factor %d are solved!\n",
-                getpid(), permutation[col]);
-        }
-        if (p == all && dont_cares[permutation[col]] == c_and_l && worst_single->d_issues == 0) {
-            dont_cares[permutation[col]] = all;
-            if (debug == d_on) printf("==%d== All detection issues associated with factor %d are solved!\n",
-                getpid(), permutation[col]);
-        }
-        
-        if ((p == all && dont_cares[permutation[col]] == all) ||
-            (p == c_and_l && dont_cares[permutation[col]] == c_and_l) ||
-            (p == c_only && dont_cares[permutation[col]] == c_only))
-            new_row[permutation[col]] = static_cast<uint64_t>(rand()) % factors[permutation[col]]->level;
-    }   // entire row is now initialized based on the greedy approach
-    
-    std::set<Interaction*> row_interactions;
-    build_row_interactions(new_row, &row_interactions, 0, t, "");
-    tweak_row(new_row, &row_interactions);  // next, go and score this decision, modifying values as needed
-    row_interactions.clear(); build_row_interactions(new_row, &row_interactions, 0, t, ""); // rebuild
-    update_array(new_row, &row_interactions);
-}
-
-/* SUB METHOD: add_random_row - adds a randomly generated row to the array without scoring it
- * - should only ever be called to initialize the first row of a brand new array from scratch
- * 
- * returns:
- * - void, but after the method finishes, the array will have a new row appended to its end
-*/
-void Array::add_random_row()
-{
-    int *new_row = get_random_row();
-    std::set<Interaction*> row_interactions;
-    build_row_interactions(new_row, &row_interactions, 0, t, "");
-    update_array(new_row, &row_interactions);
-}
-
-/* HELPER METHOD: get_random_row - creates a randomly generated row without any logic to tweak it
- * 
- * returns:
- * - a pointer to the first element in the array that represents the row
-*/
-int *Array::get_random_row()
-{
-    int *new_row = new int[num_factors];
-    for (uint64_t i = 0; i < num_factors; i++)
-        new_row[i] = static_cast<uint64_t>(rand()) % factors[i]->level;
-    return new_row;
 }
 
 /* SUB METHOD: update_array - updates data structures to reflect changes caused by adding a new row
@@ -496,7 +387,7 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
     if (o == normal && keep) {
         printf("> Pushed row:\t");
         for (uint64_t i = 0; i < num_factors; i++) printf("%d\t", row[i]);
-        printf("\n\n");
+        printf("\n");
     }
     num_tests++;
 
@@ -516,6 +407,7 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
         if (!i->is_covered) {   // if true, this Interaction just became covered
             i->is_covered = true;
             for (Single *s: i->singles) {
+                factors[s->factor]->c_issues--;
                 s->c_issues--;
                 score--;
             }
@@ -533,6 +425,7 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
             for (T *t_set : other_sets) {   // for every T set in this row that this Interaction is not in,
                 if (i->deltas.at(t_set) <= static_cast<int64_t>(delta))
                     for (Single *s: i->singles) {
+                        factors[s->factor]->d_issues++;
                         s->d_issues++;  // to balance out a -- later
                         score++;
                     }
@@ -543,6 +436,7 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
                 if (kv.second < static_cast<int64_t>(delta)) i->is_detectable = false;    // separation still not high enough
                 if (kv.second <= static_cast<int64_t>(delta)) // detection issue heading towards solved for all Singles involved
                     for (Single *s: i->singles) {
+                        factors[s->factor]->d_issues--;
                         s->d_issues--;
                         score--;
                     }
@@ -560,6 +454,7 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
             if (t1->is_locatable) continue;
             if (t1->rows.size() == 1) {   // if true, this is the first time the set has been added, so
                 for (Single *s : t1->singles) {
+                    factors[s->factor]->l_issues -= sets.size();
                     s->l_issues -= sets.size();
                     score -= sets.size();
                 }
@@ -567,6 +462,7 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
                     if (t1 == t2 || t2->rows.size() > 1) continue;  // (skip when either of these is true)
                     t1->location_conflicts.insert(t2);  // can assume there is a location conflict
                     for (Single *s: t1->singles) {  // scores actually worsen here
+                        factors[s->factor]->l_issues++;
                         s->l_issues++;
                         score++;
                     }
@@ -581,6 +477,7 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
                         solved++;
                         if (t2->location_conflicts.erase(t1) == 1) {    // vice versa:
                             for (Single *s : t2->singles) { // conflicting T also had a location issue solved
+                                factors[s->factor]->l_issues--;
                                 s->l_issues--;
                                 score--;
                             }
@@ -599,6 +496,7 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
                         }
                     }
                 for (Single *s: t1->singles) {  // update scores
+                    factors[s->factor]->l_issues -= solved;
                     s->l_issues -= solved;
                     score -= solved;
                 }
@@ -623,6 +521,26 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
         for (T *t_set : row_sets) t_set->rows.erase(num_tests);
         num_tests--;
         rows.pop_back();
+        return;
+    }
+    
+    // update don't cares
+    for (uint64_t col = 0; col < num_factors; col++) {
+        if (dont_cares[col] == none && factors[col]->c_issues == 0) {
+            dont_cares[col] = c_only;
+            if (debug == d_on) printf("==%d== All coverage issues associated with factor %lu are solved!\n",
+                getpid(), col);
+        }
+        if (p != c_only && dont_cares[col] == c_only && factors[col]->l_issues == 0) {
+            dont_cares[col] = c_and_l;
+            if (debug == d_on) printf("==%d== All location issues associated with factor %lu are solved!\n",
+                getpid(), col);
+        }
+        if (p == all && dont_cares[col] == c_and_l && factors[col]->d_issues == 0) {
+            dont_cares[col] = all;
+            if (debug == d_on) printf("==%d== All detection issues associated with factor %lu are solved!\n",
+                getpid(), col);
+        }
     }
 }
 

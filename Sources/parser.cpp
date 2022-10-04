@@ -121,7 +121,7 @@ int Parser::process_input()
         if (!(iss >> num_cols)) throw 0;    // error when columns not given or not int
         if (num_cols < 1) throw 0;          // error when values define impossible array
     } catch (...) {
-        syntax_error(2, "C", cur_line);
+        syntax_error(1, "C", cur_line);
         in.close();
         return -1;
     }
@@ -136,7 +136,7 @@ int Parser::process_input()
             levels.push_back(level);
         }
     } catch (...) {
-        syntax_error(3, "L_1 L_2 ... L_C", cur_line);
+        syntax_error(2, "L_1 L_2 ... L_C", cur_line);
         in.close();
         return -1;
     }

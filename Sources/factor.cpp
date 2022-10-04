@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 07/25/2022
+Last updated 10/04/2022
 
 |===========================================================================================================|
 |   This file contains mostly just constructors and deconstructors for the Single and Factor classes. The   |
@@ -42,6 +42,7 @@ std::string Single::to_string()
 */
 Factor::Factor()
 {
+    c_issues = 0; l_issues = 0; d_issues = 0;   // to be incremented later
     id = 0;
     level = 0;
     singles = nullptr;
@@ -50,7 +51,7 @@ Factor::Factor()
 /* CONSTRUCTOR - initializes the object
  * - overloaded: this version can set its fields based on parameters
 */
-Factor::Factor(uint64_t i, uint64_t l, Single **ptr_array)
+Factor::Factor(uint64_t i, uint64_t l, Single **ptr_array) : Factor::Factor()
 {
     id = i;
     level = l;

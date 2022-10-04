@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 09/20/2022
+Last updated 10/04/2022
 
 |===========================================================================================================|
 |   This file contains the main() method which reflects the high level flow of the program. It starts by    |
@@ -107,11 +107,11 @@ int main(int argc, char *argv[])
 static int print_results(Parser *p, Array *array, bool success)
 {
     if (!success) {
-        printf("WARNING: It appears impossible to complete array with requested properties.\n");
+        printf("\nWARNING: It appears impossible to complete array with requested properties.\n");
         if (vm == v_off) printf("\tTry rerunning in verbose mode for details (by including -v flag).\n");
         printf("\nCancelling array generation....\n");
     }
-    else if (om != silent) printf("Completed array with %lu rows.\n\n", array->num_tests);
+    else if (om != silent) printf("\nCompleted array with %lu rows.\n\n", array->num_tests);
 
     if (p->out_filename.empty()) {
         if (!success) printf("The array up to this point was:\n");
