@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/04/2022
+Last updated 10/06/2022
 
 |===========================================================================================================|
 |   This header contains classes for managing the array in an automated fashion. The Interaction and T      |
@@ -110,9 +110,6 @@ class Array
         // tracks whether the array is (d, t, δ)-detecting
         bool is_detecting;
 
-        // field to track the current number of rows
-        uint64_t num_tests;
-
         // list of all individual Single (factor, value) pairs
         std::vector<Single*> singles;
 
@@ -133,7 +130,6 @@ class Array
 
         void print_stats(bool initial = false); // prints current stats such as score
         void add_row();             // adds a row to the array based on scoring
-        void add_random_row();      // adds a random row to the array
         std::string to_string();    // returns a string representing all rows
         Array();    // default constructor, don't use this
         Array(Parser *in);  // constructor with an initialized Parser object
@@ -158,6 +154,9 @@ class Array
         // list of the rows themselves, as a vector of int arrays
         std::vector<int*> rows;
 
+        // field to track the current number of rows
+        uint64_t num_tests;
+        
         // field to reference the upper bound on iterating through columns
         uint64_t num_factors;
 
@@ -182,6 +181,9 @@ class Array
         // this tracks what type of array is under construction; decides work to be done in several places
         prop_mode p;
 
+        // this keeps track of what heuristic the program is currently using
+        prop_mode heuristic_in_use;
+
         // this utility method is called in the constructor to fill out the vector of all interactions
         // almost certainly needs to be recursive in order to handle arbitrary values of t
         void build_t_way_interactions(uint64_t start, uint64_t t_cur, std::vector<Single*> *singles_so_far);
@@ -196,15 +198,19 @@ class Array
         void build_row_interactions(int *row, std::set<Interaction*> *row_interactions,
             uint64_t start, uint64_t t_cur, std::string key);
 
-        int *get_random_row();  // gets a randomly generated row
-        int *initialize_row();
-        void tweak_row(int *row, std::set<Interaction*> *row_interactions); // improves a decision for a row
+        int *initialize_row_R();    // returns a randomly generated row
+        int *initialize_row_S();    // returns a row initialized based on Singles with most issues
+        int *initialize_row_T();    // returns a row initialized based on T sets with most location conflicts
+        int *initialize_row_I();    // returns a row initialized based on Interactions with lowest separation
+        
+        void tweak_row(int *row);   // improves a decision for a row by calling one of the below heuristics
 
-        // define more of these as needed; they are for deciding what needs changing
-        void heuristic_c_only(int *row, std::set<Interaction*> *row_interactions);
+        void heuristic_c_only(int *row);
         int heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions, int *problems);
-        // TODO: make a somewhere-in-the-middle heuristic
-        void heuristic_l_only();
+        
+        void heuristic_l_only(int *row);
+
+        void heuristic_d_only(int *row);
 
         void heuristic_all(int *row);
         void heuristic_all_helper(int *row, uint64_t cur_col, std::map<int*, int64_t> *scores);
@@ -212,7 +218,10 @@ class Array
         std::mutex scores_mutex;    // needed by heuristic_all_scorer to update scores in threads safely
 
         // updates the internal data structures - counts, scores, rows, etc. - based on the row being added
-        void update_array(int *row, std::set<Interaction*> *row_interactions, bool keep = true);
+        void update_array(int *row, bool keep = true);
+        void update_scores(std::set<Interaction*> *row_interactions, std::set<T*> *row_sets);
+        void update_dont_cares();
+        void update_heuristic();
 
         Array *clone(); // for getting a copy of this, including deep copying of object references
 };

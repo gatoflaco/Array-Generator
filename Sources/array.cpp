@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/04/2022
+Last updated 10/06/2022
 
 |===========================================================================================================|
 |   This file contains the meat of the project's logic. The constructor for the Array class takes a pointer |
@@ -112,6 +112,7 @@ Array::Array()
     num_tests = 0; num_factors = 0;
     factors = nullptr;
     v = v_off; o = normal; p = all;
+    heuristic_in_use = none;
     is_covering = false; is_locating = false; is_detecting = false;
     dont_cares = nullptr;
     permutation = nullptr;
@@ -350,6 +351,10 @@ void Array::print_stats(bool initial)
             if (o == normal) printf("There are %lu total problems to solve.\n", total_problems);
             else printf("There are %lu total problems to solve, adding row #%lu.\n", score, num_tests+1);
         } else {
+            if (score == 0) {
+                printf("\nCompleted array with %lu rows.\n\n", num_tests);
+                return;
+            }
             if (o == normal) printf("\nArray score is currently %lu.\n", score);
             else printf("\nArray score is currently %lu, adding row #%lu.\n", score, num_tests+1);
         }
@@ -374,14 +379,13 @@ void Array::print_stats(bool initial)
  * 
  * parameters:
  * - row: integer array representing a row that should be added to the array
- * - row_interactions: set containing all Interactions present in the new row
  * - keep: boolean representing whether or not the changes are intended to be kept
  *  --> true by default; when false, score changes are kept but the row itself is not added
  * 
  * returns:
  * - void, but after the method finishes, the array will have a new row appended to its end
 */
-void Array::update_array(int *row, std::set<Interaction*> *row_interactions, bool keep)
+void Array::update_array(int *row, bool keep)
 {
     rows.push_back(row);
     if (o == normal && keep) {
@@ -391,8 +395,10 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
     }
     num_tests++;
 
+    std::set<Interaction*> row_interactions;    // all Interactions that occur in this row
+    build_row_interactions(row, &row_interactions, 0, t, "");
     std::set<T*> row_sets;  // all T sets that occur in this row
-    for (Interaction *i : *row_interactions) {
+    for (Interaction *i : row_interactions) {
         for (Single *s: i->singles) s->rows.insert(num_tests); // add the row to Singles in this Interaction
         i->rows.insert(num_tests); // add the row to this Interaction itself
         for (T *t_set : i->sets) {
@@ -401,6 +407,36 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
         }
     }
     
+    update_scores(&row_interactions, &row_sets);
+
+    // note: if keep == false, then caller must store previous score and coverage, location, and detection
+    // issue counts for array and individual Singles; after this method completes, caller should restore them
+    if (keep) { // if keep == true, update don't cares and heuristic that should be used based on changes
+        update_dont_cares();
+        update_heuristic();
+        return;
+    }
+    for (Interaction *i : row_interactions) {
+        for (Single *s: i->singles) s->rows.erase(num_tests);
+        i->rows.erase(num_tests);
+    }
+    for (T *t_set : row_sets) t_set->rows.erase(num_tests);
+    num_tests--;
+    rows.pop_back();
+}
+
+/* HELPER METHOD: update_scores - updates overall scores as well as for individual Singles, Interactions, Ts
+ * 
+ * parameters:
+ * - row_interactions: set containing all Interactions present in the new row
+ * - row_sets: set containing all T sets present in the new row
+ * 
+ * returns:
+ * - void, but after the method finishes, scores will be updated
+ *  --> additionally, all Singles, Interactions, and Ts will have their data structures updated accordingly
+*/
+void Array::update_scores(std::set<Interaction*> *row_interactions, std::set<T*> *row_sets)
+{
     // coverage and detection are associated with interactions
     for (Interaction *i : *row_interactions) {
         // coverage
@@ -420,7 +456,7 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
             if (i->is_detectable) continue; // can skip all this checking if already detectable
             i->is_detectable = true;    // about to set it back to false if anything is unsatisfied still
             // updating detection issues for this Interaction:
-            std::set<T*> other_sets = row_sets; // this will hold all row T sets this Interaction is NOT in
+            std::set<T*> other_sets = *row_sets;    // will hold all row T sets this Interaction is NOT in
             for (T *t_set : i->sets) other_sets.erase(t_set);
             for (T *t_set : other_sets) {   // for every T set in this row that this Interaction is not in,
                 if (i->deltas.at(t_set) <= static_cast<int64_t>(delta))
@@ -450,7 +486,7 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
 
     // location is associated with sets of interactions
     if (p != c_only && !is_locating) {  // the following is only done if we care about location
-        for (T *t1 : row_sets) {    // for every T set in this row,
+        for (T *t1 : *row_sets) {   // for every T set in this row,
             if (t1->is_locatable) continue;
             if (t1->rows.size() == 1) {   // if true, this is the first time the set has been added, so
                 for (Single *s : t1->singles) {
@@ -458,7 +494,7 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
                     s->l_issues -= sets.size();
                     score -= sets.size();
                 }
-                for (T *t2 : row_sets) {    // for every other T set in this row,
+                for (T *t2 : *row_sets) {   // for every other T set in this row,
                     if (t1 == t2 || t2->rows.size() > 1) continue;  // (skip when either of these is true)
                     t1->location_conflicts.insert(t2);  // can assume there is a location conflict
                     for (Single *s: t1->singles) {  // scores actually worsen here
@@ -472,7 +508,7 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
                 uint64_t solved = 0;
                 std::set<T*> others;
                 for (T *t2 : t1->location_conflicts)    // for every T set in the current T's conflicts,
-                    if (row_sets.find(t2) == row_sets.end()) {  // if the conflicting set is not in this row,
+                    if (row_sets->find(t2) == row_sets->end()) {    // if that set is not in this row,
                         temp.erase(t2); // it is no longer an issue for the current T
                         solved++;
                         if (t2->location_conflicts.erase(t1) == 1) {    // vice versa:
@@ -510,21 +546,16 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
             }
         }
     }
+}
 
-    // note: if keep == false, then caller must store previous score and coverage, location, and detection
-    // issue counts for array and individual Singles; after this method completes, caller should restore them
-    if (!keep) {
-        for (Interaction *i : *row_interactions) {
-            for (Single *s: i->singles) s->rows.erase(num_tests);
-            i->rows.erase(num_tests);
-        }
-        for (T *t_set : row_sets) t_set->rows.erase(num_tests);
-        num_tests--;
-        rows.pop_back();
-        return;
-    }
-    
-    // update don't cares
+/* HELPER METHOD: update_dont_cares - updates column-total information to track don't care states
+ *  --> should only call when adding (and keeping) a row, after update_scores() is called
+ * 
+ * returns:
+ * - void, but after the method finishes, don't cares will be updated
+*/
+void Array::update_dont_cares()
+{
     for (uint64_t col = 0; col < num_factors; col++) {
         if (dont_cares[col] == none && factors[col]->c_issues == 0) {
             dont_cares[col] = c_only;
@@ -542,6 +573,41 @@ void Array::update_array(int *row, std::set<Interaction*> *row_interactions, boo
                 getpid(), col);
         }
     }
+}
+
+/* HELPER METHOD: update_heuristic - looks at overall states and decides whether to switch heuristics
+ *  --> should only call when adding (and keeping) a row, after update_scores() is called
+ * 
+ * returns:
+ * - void, but after the method finishes, heuristic_in_use may have changed
+*/
+void Array::update_heuristic()
+{
+    // TODO: work on making this as more heuristics are created and tested
+    float ratio = static_cast<float>(score)/total_problems;
+    bool satisfied = false; // used repeatedly to decide whether it is time to switch heuristics
+
+    // first up, should we use the most in-depth scoring function:
+    if (p == c_only) {
+        if (total_problems < 500) satisfied = true; // arbitrary choice
+        else if (ratio < 0.90) satisfied = true;    // arbitrary choice
+    } else if (p == c_and_l) {
+        if (total_problems < 450) satisfied = true; // arbitrary choice
+        else if (ratio < 0.85) satisfied = true;    // arbitrary choice
+    } else {    // p == all
+        if (total_problems < 400) satisfied = true; // arbitrary choice
+        else if (ratio < 0.80) satisfied = true;    // arbitrary choice
+    }
+    if (satisfied) {
+        heuristic_in_use = all;
+        return;
+    }
+
+    // TODO: come up with more heuristics
+    
+    // if not far enough yet, go with the simplistic coverage-only heuristic
+    heuristic_in_use = c_only;
+    //*/
 }
 
 Array *Array::clone()

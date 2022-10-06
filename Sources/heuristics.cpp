@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/04/2022
+Last updated 10/06/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods belonging to the Array class which are declared in array.h.  |
@@ -11,20 +11,68 @@ Last updated 10/04/2022
 #include "array.h"
 
 /* SUB METHOD: add_row - adds a new row to the array using some predictive and scoring logic
- * - initializes a row with a greedy approach, then tweaks till good enough
+ * - simply an interface for adding a row; method itself simply decides which heuristic to use
  * 
  * returns:
  * - void, but after the method finishes, the array will have a new row appended to its end
 */
 void Array::add_row()
 {
-    int *new_row = new int[num_factors]{0};
+    // choose a new random order for the column iterations this round
     for (uint64_t size = num_factors; size > 0; size--) {
         int rand_idx = rand() % static_cast<int>(size);
         int temp = permutation[size - 1];
         permutation[size - 1] = permutation[rand_idx];
         permutation[rand_idx] = temp;
     }   // at this point, permutation should be shuffled
+
+    // choose how to initialize the new row based on current heuristic to be used
+    int *new_row;
+    switch (heuristic_in_use) {
+        case c_only:
+        case c_and_l:
+        case c_and_d:
+            new_row = initialize_row_S();
+            break;
+        case l_only:
+        case l_and_d:
+            new_row = initialize_row_T();
+            break;
+        case d_only:
+            // TODO: implement initialize_row_I() and call that here, then break
+        case all:
+        case none:
+        default:
+            new_row = initialize_row_R();
+            break;
+    }   // at this point, new row should be initialized with values
+    
+    // tweak the row based on the current heuristic and then add to the array
+    tweak_row(new_row);
+    update_array(new_row);
+}
+
+/* SUB METHOD: initialize_row_R - creates a randomly generated row
+ * 
+ * returns:
+ * - a pointer to the first element in the array that represents the row
+*/
+int *Array::initialize_row_R()
+{
+    int *new_row = new int[num_factors];
+    for (uint64_t i = 0; i < num_factors; i++)
+        new_row[i] = static_cast<uint64_t>(rand()) % factors[i]->level;
+    return new_row;
+}
+
+/* SUB METHOD: initialize_row_S - creates a row by considering which Singles have the most issues
+ * 
+ * returns:
+ * - a pointer to the first element in the array that represents the row
+*/
+int* Array::initialize_row_S()
+{
+    int *new_row = new int[num_factors]{0};
 
     // greedily select the values that appear to need the most attention
     for (uint64_t col = 0; col < num_factors; col++) {
@@ -51,38 +99,30 @@ void Array::add_row()
         }
         new_row[permutation[col]] = worst_single->value;
     }   // entire row is now initialized based on the greedy approach
-    
-    std::set<Interaction*> row_interactions;
-    build_row_interactions(new_row, &row_interactions, 0, t, "");
-    tweak_row(new_row, &row_interactions);  // next, go and score this decision, modifying values as needed
-    row_interactions.clear(); build_row_interactions(new_row, &row_interactions, 0, t, ""); // rebuild
-    update_array(new_row, &row_interactions);
+    return new_row;
 }
 
-/* SUB METHOD: add_random_row - adds a randomly generated row to the array without scoring it
- * - should only ever be called to initialize the first row of a brand new array from scratch
- * 
- * returns:
- * - void, but after the method finishes, the array will have a new row appended to its end
-*/
-void Array::add_random_row()
-{
-    int *new_row = get_random_row();
-    std::set<Interaction*> row_interactions;
-    build_row_interactions(new_row, &row_interactions, 0, t, "");
-    update_array(new_row, &row_interactions);
-}
-
-/* HELPER METHOD: get_random_row - creates a randomly generated row without any logic to tweak it
+/* SUB METHOD: initialize_row_T - creates a row by considering which T sets have the most location conflicts
  * 
  * returns:
  * - a pointer to the first element in the array that represents the row
 */
-int *Array::get_random_row()
+int *Array::initialize_row_T()
 {
     int *new_row = new int[num_factors];
-    for (uint64_t i = 0; i < num_factors; i++)
-        new_row[i] = static_cast<uint64_t>(rand()) % factors[i]->level;
+    // TODO: logic
+    return new_row;
+}
+
+/* SUB METHOD: initialize_row_I - creates a row by considering which Interactions have the lowest separation
+ * 
+ * returns:
+ * - a pointer to the first element in the array that represents the row
+*/
+int *Array::initialize_row_I()
+{
+    int *new_row = new int[num_factors];
+    // TODO: logic
     return new_row;
 }
 
@@ -90,51 +130,46 @@ int *Array::get_random_row()
  * 
  * parameters:
  * - row: integer array representing a row being considered for adding to the array
- * - row_interactions: set containing all Interactions present in the row
  * 
  * returns:
  * - void, but after the method finishes, the row may be modified in an attempt to satisfy more issues
 */
-void Array::tweak_row(int *row, std::set<Interaction*> *row_interactions)
+void Array::tweak_row(int *row)
 {
-    float ratio = static_cast<float>(score)/total_problems;
-    bool satisfied = false; // used repeatedly to decide whether it is time to switch heuristics
-
-    // first up, should we use the most in-depth scoring function:
-    if (p == c_only) {
-        if (total_problems < 500) satisfied = true; // arbitrary choice
-        else if (ratio < 0.90) satisfied = true;    // arbitrary choice
-    } else if (p == c_and_l) {
-        if (total_problems < 450) satisfied = true; // arbitrary choice
-        else if (ratio < 0.85) satisfied = true;    // arbitrary choice
-    } else {    // p == all
-        if (total_problems < 400) satisfied = true; // arbitrary choice
-        else if (ratio < 0.80) satisfied = true;    // arbitrary choice
+    switch (heuristic_in_use) {
+        case c_only:
+        case c_and_l:
+        case c_and_d:
+            heuristic_c_only(row);
+            break;
+        case l_only:
+        case l_and_d:
+            heuristic_l_only(row);
+            break;
+        case d_only:
+            heuristic_d_only(row);
+            break;
+        case all:
+            heuristic_all(row);
+            break;
+        case none:
+        default:
+            break;
     }
-    if (satisfied) {
-        heuristic_all(row);
-        return;
-    }
-
-    // TODO: come up with more heuristics
-    
-    // if not far enough yet, go with the simplistic coverage-only heuristic
-    heuristic_c_only(row, row_interactions);
 }
 
 /* SUB METHOD: heuristic_c_only - lightweight heuristic that only concerns itself with coverage
- * - in the tradeoff between speed and optimal row choice, this heuristic is towards the speed extreme
+ * - in the tradeoff between speed and better row choice, this heuristic is towards the speed extreme
  * - should only be used very early on in array construction
  * --> can do well for longer when the desired array is simpler (i.e., covering as opposed to detecting)
  * 
  * parameters:
  * - row: integer array representing a row being considered for adding to the array
- * - row_interactions: set containing all Interactions present in the row
  * 
  * returns:
  * - void, but after the method finishes, the row may be modified in an attempt to satisfy more issues
 */
-void Array::heuristic_c_only(int *row, std::set<Interaction*> *row_interactions)
+void Array::heuristic_c_only(int *row)
 {
     if (v == v_on) printf("\t- Using heuristic_c_only.\n");
     int *problems = new int[num_factors]{0};    // for counting how many "problems" each factor has
@@ -143,7 +178,9 @@ void Array::heuristic_c_only(int *row, std::set<Interaction*> *row_interactions)
     prop_mode *dont_cares_c = new prop_mode[num_factors];   // local copy of the don't cares
     for (uint64_t col = 0; col < num_factors; col++) dont_cares_c[col] = dont_cares[col];
 
-    for (Interaction *i : *row_interactions) {
+    std::set<Interaction*> row_interactions;
+    build_row_interactions(row, &row_interactions, 0, t, "");
+    for (Interaction *i : row_interactions) {
         if (i->rows.size() != 0) {  // Interaction is already covered
             bool can_skip = false;  // don't account for Interactions involving already-completed factors
             for (Single *s : i->singles)
@@ -258,7 +295,38 @@ int Array::heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions
     return max_problems;
 }
 
-/* SUB METHOD: heuristic_all - tweaks a row so that it solves the most problems possible
+/* SUB METHOD: heuristic_l_only - middleweight heuristic that only concerns itself with location
+ * - in the tradeoff between speed and better row choice, this heuristic is somewhere in the middle
+ * - should be used when most, if not all, coverage problems have been solved
+ * 
+ * parameters:
+ * - row: integer array representing a row being considered for adding to the array
+ * 
+ * returns:
+ * - void, but after the method finishes, the row may be modified in an attempt to satisfy more issues
+*/
+void Array::heuristic_l_only(int *row)
+{
+
+}
+
+/* SUB METHOD: heuristic_d_only - middleweight heuristic that only concerns itself with detection
+ * - in the tradeoff between speed and better row choice, this heuristic is somewhere in the middle
+ * - should be used when detection problems are all that remain
+ * 
+ * parameters:
+ * - row: integer array representing a row being considered for adding to the array
+ * 
+ * returns:
+ * - void, but after the method finishes, the row may be modified in an attempt to satisfy more issues
+*/
+void Array::heuristic_d_only(int *row)
+{
+
+}
+
+/* SUB METHOD: heuristic_all - heavyweight heuristic that tries to solve the most problems possible
+ * - in the tradeoff between speed and better row choice, this heuristic is towards the row choice extreme
  * - does the deepest inspection of all the heuristics; therefore, should not be used till close to complete
  * 
  * parameters:
@@ -362,10 +430,7 @@ void Array::heuristic_all_scorer(int *row, std::map<int*, int64_t> *scores)
 {
     // current thread will work with unique copies of the data structures being modified
     Array *copy = clone();
-    std::set<Interaction*> row_interactions;
-    copy->build_row_interactions(row, &row_interactions, 0, copy->t, "");
-
-    copy->update_array(row, &row_interactions, false);  // see how all scores, etc., would change
+    copy->update_array(row, false); // see how all scores, etc., would change
 
     // define the row score to be the combination of net changes below, weighted by importance
     int64_t row_score = 0; //= prev_score - static_cast<int64_t>(score);
@@ -377,6 +442,7 @@ void Array::heuristic_all_scorer(int *row, std::map<int*, int64_t> *scores)
         row_score += static_cast<int64_t>(3*weight*(this_s->d_issues - copy_s->d_issues));
     }
 
+    // need to add result to data structure containing all thread's results; use mutex for thread safety
     scores_mutex.lock();
     scores->insert({row, row_score});
     scores_mutex.unlock();

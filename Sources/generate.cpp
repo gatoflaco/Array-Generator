@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/04/2022
+Last updated 10/06/2022
 
 |===========================================================================================================|
 |   This file contains the main() method which reflects the high level flow of the program. It starts by    |
@@ -79,16 +79,15 @@ int main(int argc, char *argv[])
     }
 
     array.print_stats(true);        // report initial state of array
-    array.add_random_row();         // add a completely random row to start
     uint64_t prev_score;            // for comparing to current score to see if nothing is changing
     uint8_t no_change_counter = 0;  // need this to stop an infinite loop if the array cannot be completed
     while (array.score > 0) {       // add rows until the array is complete
         prev_score = array.score;   // needed for catching impossible scenarios
-        array.print_stats();        // report current state of array
         array.add_row();            // add another row
         if (array.score == prev_score) no_change_counter++;
         else no_change_counter = 0;
         if (no_change_counter > 10) break;
+        array.print_stats();        // report current state of array
     }
     return print_results(&p, &array, (no_change_counter == 0));
 }
@@ -111,7 +110,6 @@ static int print_results(Parser *p, Array *array, bool success)
         if (vm == v_off) printf("\tTry rerunning in verbose mode for details (by including -v flag).\n");
         printf("\nCancelling array generation....\n");
     }
-    else if (om != silent) printf("\nCompleted array with %lu rows.\n\n", array->num_tests);
 
     if (p->out_filename.empty()) {
         if (!success) printf("The array up to this point was:\n");
