@@ -10,6 +10,10 @@
 - Advisor to the author of this project
 - Credited for [proposing locating and detecting arrays](#additional-links)
 
+[Kevin John](https://github.com/kevin-cgc)
+- classmate
+- contributor and tester
+
 ## Overview
 The purpose of this program is to generate test suites of enumerated 2-dimensional arrays with the covering, locating, and detecting properties. This readme assumes that users already have a general understanding of what these properties are. If you do not, try checking out the [links at the bottom of this page](#additional-links).
 
