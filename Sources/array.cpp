@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/06/2022
+Last updated 10/12/2022
 
 |===========================================================================================================|
 |   This file contains the meat of the project's logic. The constructor for the Array class takes a pointer |
@@ -373,6 +373,11 @@ void Array::print_stats(bool initial)
             static_cast<float>((total_problems - score))/total_problems*100);
     }
     if (o == normal) printf("Adding row #%lu.\n", num_tests+1);
+    if (v == v_on) {
+        if (heuristic_in_use == c_only) printf("\t- Using heuristic_c_only.\n");
+        else if (heuristic_in_use == l_only) printf("\t- Using heuristic_l_only.\n");
+        else if (heuristic_in_use == all) printf("\t- Using heuristic_all.\n");
+    }
 }
 
 /* SUB METHOD: update_array - updates data structures to reflect changes caused by adding a new row

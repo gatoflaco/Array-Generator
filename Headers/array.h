@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/06/2022
+Last updated 10/12/2022
 
 |===========================================================================================================|
 |   This header contains classes for managing the array in an automated fashion. The Interaction and T      |
@@ -156,7 +156,7 @@ class Array
 
         // field to track the current number of rows
         uint64_t num_tests;
-        
+
         // field to reference the upper bound on iterating through columns
         uint64_t num_factors;
 
@@ -184,6 +184,9 @@ class Array
         // this keeps track of what heuristic the program is currently using
         prop_mode heuristic_in_use;
 
+        // needed by heuristic_all_scorer to update scores in threads safely
+        std::mutex scores_mutex;
+
         // this utility method is called in the constructor to fill out the vector of all interactions
         // almost certainly needs to be recursive in order to handle arbitrary values of t
         void build_t_way_interactions(uint64_t start, uint64_t t_cur, std::vector<Single*> *singles_so_far);
@@ -198,26 +201,24 @@ class Array
         void build_row_interactions(int *row, std::set<Interaction*> *row_interactions,
             uint64_t start, uint64_t t_cur, std::string key);
 
-        int *initialize_row_R();    // returns a randomly generated row
-        int *initialize_row_S();    // returns a row initialized based on Singles with most issues
-        int *initialize_row_T();    // returns a row initialized based on T sets with most location conflicts
-        int *initialize_row_I();    // returns a row initialized based on Interactions with lowest separation
+        int *initialize_row_R();            // returns a randomly generated row
+        int *initialize_row_S();            // returns a row initialized based on Singles
+        int *initialize_row_T(T **locked);  // returns a row initialized based on T sets
+        int *initialize_row_I();            // returns a row initialized based on Interactions
         
-        void tweak_row(int *row);   // improves a decision for a row by calling one of the below heuristics
+        void tweak_row(int *row, T *locked = nullptr);   // improves a decision for a row
 
         void heuristic_c_only(int *row);
         int heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions, int *problems);
         
-        void heuristic_l_only(int *row);
+        void heuristic_l_only(int *row, T *locked);
 
         void heuristic_d_only(int *row);
 
         void heuristic_all(int *row);
         void heuristic_all_helper(int *row, uint64_t cur_col, std::map<int*, int64_t> *scores);
         void heuristic_all_scorer(int *row, std::map<int*, int64_t> *scores);
-        std::mutex scores_mutex;    // needed by heuristic_all_scorer to update scores in threads safely
-
-        // updates the internal data structures - counts, scores, rows, etc. - based on the row being added
+        
         void update_array(int *row, bool keep = true);
         void update_scores(std::set<Interaction*> *row_interactions, std::set<T*> *row_sets);
         void update_dont_cares();

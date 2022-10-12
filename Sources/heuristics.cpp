@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/06/2022
+Last updated 10/12/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods belonging to the Array class which are declared in array.h.  |
@@ -28,6 +28,7 @@ void Array::add_row()
 
     // choose how to initialize the new row based on current heuristic to be used
     int *new_row;
+    T *locked = nullptr;
     switch (heuristic_in_use) {
         case c_only:
         case c_and_l:
@@ -36,7 +37,7 @@ void Array::add_row()
             break;
         case l_only:
         case l_and_d:
-            new_row = initialize_row_T();
+            new_row = initialize_row_T(&locked);
             break;
         case d_only:
             // TODO: implement initialize_row_I() and call that here, then break
@@ -48,7 +49,7 @@ void Array::add_row()
     }   // at this point, new row should be initialized with values
     
     // tweak the row based on the current heuristic and then add to the array
-    tweak_row(new_row);
+    tweak_row(new_row, locked);
     update_array(new_row);
 }
 
@@ -83,7 +84,6 @@ int* Array::initialize_row_S()
             new_row[permutation[col]] = static_cast<uint64_t>(rand()) % factors[permutation[col]]->level;
             continue;
         }
-
         // assume 0 is the worst to start, then check if any others are worse
         Single *worst_single = factors[permutation[col]]->singles[0];
         int worst_score = static_cast<int64_t>(worst_single->c_issues) + worst_single->l_issues + 
@@ -107,10 +107,26 @@ int* Array::initialize_row_S()
  * returns:
  * - a pointer to the first element in the array that represents the row
 */
-int *Array::initialize_row_T()
+int *Array::initialize_row_T(T **locked)
 {
-    int *new_row = new int[num_factors];
-    // TODO: logic
+    int *new_row = initialize_row_R();
+    
+    int64_t worst_count = INT64_MIN;
+    std::vector<T*> worst_sets; // there could be ties for the worst
+    for (T *t_set : sets) {
+        //t_set->rows.size()==0
+        if (static_cast<int64_t>(t_set->location_conflicts.size()) >= worst_count) {    // worse or tied
+            if (static_cast<int64_t>(t_set->location_conflicts.size()) > worst_count) { // strictly worse
+                worst_count = t_set->location_conflicts.size();
+                worst_sets.clear();
+            }
+            worst_sets.push_back(t_set);
+        }
+    }
+
+    // choose the set with most conflicts (for ties, choose randomly from among those tied for the worst)
+    *locked = worst_sets.at(static_cast<uint64_t>(rand()) % worst_sets.size());
+    for (Single *s : (*locked)->singles) new_row[s->factor] = s->value;
     return new_row;
 }
 
@@ -134,7 +150,7 @@ int *Array::initialize_row_I()
  * returns:
  * - void, but after the method finishes, the row may be modified in an attempt to satisfy more issues
 */
-void Array::tweak_row(int *row)
+void Array::tweak_row(int *row, T *locked)
 {
     switch (heuristic_in_use) {
         case c_only:
@@ -144,7 +160,7 @@ void Array::tweak_row(int *row)
             break;
         case l_only:
         case l_and_d:
-            heuristic_l_only(row);
+            heuristic_l_only(row, locked);
             break;
         case d_only:
             heuristic_d_only(row);
@@ -171,7 +187,6 @@ void Array::tweak_row(int *row)
 */
 void Array::heuristic_c_only(int *row)
 {
-    if (v == v_on) printf("\t- Using heuristic_c_only.\n");
     int *problems = new int[num_factors]{0};    // for counting how many "problems" each factor has
     int max_problems;   // largest value among all in the problems[] array created above
     int cur_max;    // for comparing to max_problems to see if there is an improvement
@@ -305,9 +320,36 @@ int Array::heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions
  * returns:
  * - void, but after the method finishes, the row may be modified in an attempt to satisfy more issues
 */
-void Array::heuristic_l_only(int *row)
+void Array::heuristic_l_only(int *row, T *locked)
 {
+    // keep track of which columns should not be modified
+    bool *locked_factors = new bool[num_factors]{false};
+    for (Single *s : locked->singles) locked_factors[s->factor] = true;
 
+    std::map<std::string, uint64_t> scores; // create and initialize a map of every Single to a scoring
+    for (uint64_t col = 0; col < num_factors; col++)
+        for (uint64_t val = 0; val < factors[col]->level; val++)
+            scores.insert({"f" + std::to_string(col) + "," + std::to_string(val), 0});
+    
+    for (T *conflict : locked->location_conflicts)  // for every conflicting T set,
+        for (Single *s : conflict->singles) // for every Single in that conflicting set,
+            scores.at(s->to_string())++;    // increase the score of that Single
+
+    // a larger value in the scores map means the Single is involved in more location conflicts
+    for (uint64_t col = 0; col < num_factors; col++) {
+        if (locked_factors[col]) continue;
+        uint64_t best_val;
+        uint64_t best_val_score = 0;
+        for (uint64_t val = 0; val < factors[col]->level; val++) {
+            uint64_t val_score = scores.at("f" + std::to_string(col) + "," + std::to_string(val));
+            if (val_score > best_val_score) {
+                best_val = val;
+                best_val_score = val_score;
+            }
+        }
+        if (best_val_score != 0) row[col] = best_val;   // else allow it to remain random
+    }
+    delete[] locked_factors;
 }
 
 /* SUB METHOD: heuristic_d_only - middleweight heuristic that only concerns itself with detection
@@ -339,7 +381,6 @@ void Array::heuristic_d_only(int *row)
 */
 void Array::heuristic_all(int *row)
 {
-    if (v == v_on) printf("\t- Using heuristic_all.\n");
     // get scores for all relevant possible rows
     std::map<int*, int64_t> scores;
     heuristic_all_helper(row, 0, &scores);
