@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/12/2022
+Last updated 10/13/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods belonging to the Array class which are declared in array.h.  |
@@ -338,11 +338,11 @@ void Array::heuristic_l_only(int *row, T *locked)
     // a larger value in the scores map means the Single is involved in more location conflicts
     for (uint64_t col = 0; col < num_factors; col++) {
         if (locked_factors[col]) continue;
-        uint64_t best_val;
-        uint64_t best_val_score = 0;
+        uint64_t best_val = static_cast<uint64_t>(rand()) % factors[col]->level;
+        uint64_t best_val_score = UINT64_MAX;
         for (uint64_t val = 0; val < factors[col]->level; val++) {
             uint64_t val_score = scores.at("f" + std::to_string(col) + "," + std::to_string(val));
-            if (val_score > best_val_score) {
+            if (val_score < best_val_score) {
                 best_val = val;
                 best_val_score = val_score;
             }
@@ -389,7 +389,7 @@ void Array::heuristic_all(int *row)
     // inspect the scores for the best one(s)
     int64_t best_score = INT64_MIN;
     std::vector<int*> best_rows;    // there could be ties for the best
-    for (auto& kv : scores) {
+    for (auto &kv : scores) {
         if (kv.second >= best_score) {  // it was better or it tied
             if (kv.second > best_score) {   // for an even better choice, can stop tracking the previous best
                 for (int *r : best_rows) delete[] r;
@@ -430,7 +430,6 @@ void Array::heuristic_all_helper(int *row, uint64_t cur_col, std::map<int*, int6
 {
     // base case: row represents a unique combination and is ready for scoring
     if (cur_col == num_factors) {
-
         int *row_copy = new int[num_factors];   // must be deleted by heuristic_all() later
         for (uint64_t col = 0; col < num_factors; col++) row_copy[col] = row[col];
         heuristic_all_scorer(row_copy, scores);

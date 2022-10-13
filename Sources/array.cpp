@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/12/2022
+Last updated 10/13/2022
 
 |===========================================================================================================|
 |   This file contains the meat of the project's logic. The constructor for the Array class takes a pointer |
@@ -152,7 +152,7 @@ Array::Array(Parser *in) : Array::Array()
         if (debug == d_on) print_interactions(interactions);
         total_problems += interactions.size();  // to account for all the coverage problems
         coverage_problems += interactions.size();
-        score += total_problems;    // the array is considered completed when this reaches 0
+        score += interactions.size();   // the array is considered completed when this reaches 0
         if (p == c_only) return;    // no need to spend effort building Ts if they won't be used
 
         // build all Ts
@@ -164,6 +164,10 @@ Array::Array(Parser *in) : Array::Array()
                 factors[s->factor]->l_issues += sets.size();
                 s->l_issues += sets.size();
                 total_problems += sets.size();
+            }
+            for (T *other_set : sets) {
+                if (t_set == other_set) continue;
+                t_set->location_conflicts.insert(other_set);
             }
         }
         total_problems += sets.size();  // to account for all the location problems
@@ -189,7 +193,7 @@ Array::Array(Parser *in) : Array::Array()
         detection_problems += interactions.size();
         score += interactions.size();   // need to update this one last time
 
-    } catch (const std::bad_alloc& e) {
+    } catch (const std::bad_alloc &e) {
         printf("ERROR: not enough memory to work with given array for given arguments\n");
         exit(1);
     }
@@ -210,6 +214,11 @@ Array::Array(uint64_t total_problems_o, uint64_t coverage_problems_o, uint64_t l
     d = d_o; t = t_o; delta = delta_o;
     num_tests = num_tests_o; num_factors = num_factors_o;
     o = silent; p = p_o;
+    for (int *row_o : *rows_o) {
+        int *row = new int[num_factors];
+        for (uint64_t col = 0; col < num_factors; col++) row[col] = row_o[col];
+        rows.push_back(row);
+    }
     factors = new Factor*[num_factors];
     for (uint64_t i = 0; i < num_factors; i++) {
         factors[i] = new Factor(i, factors_o[i]->level, new Single*[factors_o[i]->level]);
@@ -224,15 +233,6 @@ Array::Array(uint64_t total_problems_o, uint64_t coverage_problems_o, uint64_t l
     if (p == c_only) return;
     std::vector<Interaction*> temp_interactions;
     build_size_d_sets(0, d, &temp_interactions);
-    //for (Interaction *i : interactions)
-    //    for (T *t_set : sets)
-    //        if (i->sets.find(t_set) == i->sets.end())
-    //            i->deltas.insert({t_set, 0});
-    for (int* row_o : *rows_o) {
-        int* row = new int[num_factors];
-        for (uint64_t col = 0; col < num_factors; col++) row[col] = row_o[col];
-        rows.push_back(row);
-    }
 }
 
 /* HELPER METHOD: build_t_way_interactions - initializes the interactions vector recursively
@@ -413,21 +413,13 @@ void Array::update_array(int *row, bool keep)
     }
     
     update_scores(&row_interactions, &row_sets);
-
-    // note: if keep == false, then caller must store previous score and coverage, location, and detection
-    // issue counts for array and individual Singles; after this method completes, caller should restore them
-    if (keep) { // if keep == true, update don't cares and heuristic that should be used based on changes
-        update_dont_cares();
-        update_heuristic();
+    if (!keep) {
+        num_tests--;
+        rows.pop_back();
         return;
     }
-    for (Interaction *i : row_interactions) {
-        for (Single *s: i->singles) s->rows.erase(num_tests);
-        i->rows.erase(num_tests);
-    }
-    for (T *t_set : row_sets) t_set->rows.erase(num_tests);
-    num_tests--;
-    rows.pop_back();
+    update_dont_cares();
+    update_heuristic();
 }
 
 /* HELPER METHOD: update_scores - updates overall scores as well as for individual Singles, Interactions, Ts
@@ -472,7 +464,7 @@ void Array::update_scores(std::set<Interaction*> *row_interactions, std::set<T*>
                     }
                 i->deltas.at(t_set)--;  // to balance out all deltas getting ++ after this
             }
-            for (auto& kv : i->deltas) {    // for all T sets,
+            for (auto &kv : i->deltas) {    // for all T sets,
                 kv.second++;    // increase their separation; offset by the -- earlier for T sets in this row
                 if (kv.second < static_cast<int64_t>(delta)) i->is_detectable = false;    // separation still not high enough
                 if (kv.second <= static_cast<int64_t>(delta)) // detection issue heading towards solved for all Singles involved
@@ -499,6 +491,7 @@ void Array::update_scores(std::set<Interaction*> *row_interactions, std::set<T*>
                     s->l_issues -= sets.size();
                     score -= sets.size();
                 }
+                t1->location_conflicts.clear();
                 for (T *t2 : *row_sets) {   // for every other T set in this row,
                     if (t1 == t2 || t2->rows.size() > 1) continue;  // (skip when either of these is true)
                     t1->location_conflicts.insert(t2);  // can assume there is a location conflict
@@ -594,25 +587,44 @@ void Array::update_heuristic()
 
     // first up, should we use the most in-depth scoring function:
     if (p == c_only) {
-        if (total_problems < 500) satisfied = true; // arbitrary choice
-        else if (ratio < 0.90) satisfied = true;    // arbitrary choice
-    } else if (p == c_and_l) {
-        if (total_problems < 450) satisfied = true; // arbitrary choice
-        else if (ratio < 0.85) satisfied = true;    // arbitrary choice
-    } else {    // p == all
-        if (total_problems < 400) satisfied = true; // arbitrary choice
-        else if (ratio < 0.80) satisfied = true;    // arbitrary choice
+        if (total_problems < 10000) {   // arbitrary choice
+            heuristic_in_use = all;
+        } else if (ratio < 0.40) {      // arbitrary choice
+            heuristic_in_use = all;
+        } else {
+            heuristic_in_use = c_only;
+        }
+        return;
     }
-    if (satisfied) {
-        heuristic_in_use = all;
+    
+    if (p == c_and_l) {
+        if (total_problems < 9000) {    // arbitrary choice
+            heuristic_in_use = all;
+        } else if (ratio < 0.30) {      // arbitrary choice
+            heuristic_in_use = all;
+        } else if (ratio < 0.80) {      // arbitrary choice
+            heuristic_in_use = l_only;
+        } else {
+            heuristic_in_use = c_only;
+        }
         return;
     }
 
-    // TODO: come up with more heuristics
-    
-    // if not far enough yet, go with the simplistic coverage-only heuristic
-    heuristic_in_use = c_only;
-    //*/
+    if (p == all) {
+        if (total_problems < 8000) {    // arbitrary choice
+            heuristic_in_use = all;
+        } else if (ratio < 0.20) {      // arbitrary choice
+            heuristic_in_use = all;
+        } else if (ratio < 0.60) {      // arbitrary choice
+            // TODO: change to detection heuristic
+            heuristic_in_use = all; // TODO: delete this
+        } else if (ratio < 0.95) {      // arbitrary choice
+            heuristic_in_use = l_only;
+        } else {
+            heuristic_in_use = c_only;
+        }
+        return;
+    }
 }
 
 Array *Array::clone()
@@ -639,7 +651,7 @@ Array *Array::clone()
         clone_i->rows = this_i->rows;
         clone_i->is_covered = this_i->is_covered;
         clone_i->is_detectable = this_i->is_detectable;
-        for (auto& kv : this_i->deltas) {
+        for (auto &kv : this_i->deltas) {
             T *clone_t = clone->t_set_map.at(kv.first->to_string());
             //clone_i->deltas.at(clone_t) = kv.second;
             clone_i->deltas.insert({clone_t, kv.second});
