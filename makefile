@@ -13,7 +13,7 @@ CXXFLAGS += -pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy
 
 build: generate
 build-debug: CXXFLAGS += -g -g3
-build-debug: CXXFLAGS:=$(filter-out -O3, $(C++FLAGS))
+build-debug: CXXFLAGS:=$(filter-out -O3, $(CXXFLAGS))
 build-debug: build
 
 generate: $(HDR)/* $(SRC)/*

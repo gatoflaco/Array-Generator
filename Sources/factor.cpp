@@ -13,48 +13,28 @@ Last updated 10/04/2022
 #include <algorithm>
 
 /* CONSTRUCTOR - initializes the object
- * - overloaded: this is the default with no parameters, and should not be used
-*/
-Single::Single()
-{
-    c_issues = 0; l_issues = 0; d_issues = 0;   // to be incremented later
-    factor = 0;
-    value = 0;
-}
-
-/* CONSTRUCTOR - initializes the object
  * - overloaded: this version can set its fields based on parameters
 */
-Single::Single(uint64_t f, uint64_t v) : Single::Single()
+Single::Single(uint64_t f, uint64_t v) : factor(f), value(v), str_rep(this->to_string_internal())
 {
-    factor = f;
-    value = v;
     // rows will be built later
 }
 
-std::string Single::to_string()
+std::string Single::to_string() const
+{
+    return str_rep;
+}
+
+std::string Single::to_string_internal() const
 {
     return "f" + std::to_string(factor) + "," + std::to_string(value);
 }
 
 /* CONSTRUCTOR - initializes the object
- * - overloaded: this is the default with no parameters, and should not be used
-*/
-Factor::Factor()
-{
-    c_issues = 0; l_issues = 0; d_issues = 0;   // to be incremented later
-    id = 0;
-    level = 0;
-    singles = nullptr;
-}
-
-/* CONSTRUCTOR - initializes the object
  * - overloaded: this version can set its fields based on parameters
 */
-Factor::Factor(uint64_t i, uint64_t l, Single **ptr_array) : Factor::Factor()
+Factor::Factor(uint64_t i, uint64_t l, Single **ptr_array) : id(i), level(l)
 {
-    id = i;
-    level = l;
     singles = ptr_array;
 }
 
