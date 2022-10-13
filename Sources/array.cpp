@@ -34,19 +34,9 @@ static void print_sets(std::vector<T*> sets);
 static void print_debug(Factor **factors, uint64_t num_factors);
 
 /* CONSTRUCTOR - initializes the object
- * - overloaded: this is the default with no parameters, and should not be used
-*/
-Interaction::Interaction()
-{
-    id = -1;
-    is_covered = false;
-    is_detectable = false;
-}
-
-/* CONSTRUCTOR - initializes the object
  * - overloaded: this version can set its fields based on a premade vector of Single pointers
 */
-Interaction::Interaction(std::vector<Single*> *temp) : Interaction::Interaction()
+Interaction::Interaction(std::vector<Single*> *temp)
 {
     for (uint64_t i = 0; i < temp->size(); i++) singles.push_back(temp->at(i));
 }
@@ -65,17 +55,9 @@ std::string Interaction::to_string()
 }
 
 /* CONSTRUCTOR - initializes the object
- * - overloaded: this is the default with no parameters, and should not be used
-*/
-T::T()
-{
-    is_locatable = false;
-}
-
-/* CONSTRUCTOR - initializes the object
  * - overloaded: this version can set its fields based on a premade vector of Interaction pointers
 */
-T::T(std::vector<Interaction*> *temp) : T::T()
+T::T(std::vector<Interaction*> *temp)
 {
     for (uint64_t i = 0; i < temp->size(); i++) interactions.push_back(temp->at(i));
 

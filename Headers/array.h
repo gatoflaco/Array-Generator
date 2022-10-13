@@ -23,7 +23,7 @@ class Interaction
 {
     public:
         // used only in verbose mode, to have some id associated with the interaction
-        int id;
+        int id = -1;
 
         // the actual list of (factor, value) tuples
         std::vector<Single*> singles;
@@ -33,7 +33,7 @@ class Interaction
         std::set<int> rows;
 
         // easy lookup bool to cut down on redundant checks
-        bool is_covered;
+        bool is_covered = false;
 
         // this tracks all the T sets in which this interaction occurs; using this, one can obtain all the
         // relevant sets when a new row with this interaction is added
@@ -45,10 +45,9 @@ class Interaction
         std::map<T*, int64_t> deltas;
 
         // easy lookup bool to cut down on redundant checks
-        bool is_detectable;
+        bool is_detectable = false;
 
         std::string to_string();    // returns a string representing all Singles in the interaction
-        Interaction();  // default constructor, don't use this
         Interaction(std::vector<Single*> *temp);    // constructor with a premade vector of Single pointers
 };
 
@@ -79,10 +78,9 @@ class T
         std::set<T*> location_conflicts;
 
         // easy lookup bool to cut down on redundant checks
-        bool is_locatable;
+        bool is_locatable = false;
 
         std::string to_string();    // returns a string representing all Interactions in the set
-        T();    // default constructor, don't use this      
         T(std::vector<Interaction*> *temp); // constructor with a premade vector of Interaction pointers
 };
 

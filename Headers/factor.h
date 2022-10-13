@@ -29,28 +29,29 @@ Last updated 10/04/2022
 class Single
 {
     public:
-        uint64_t c_issues;  // in how many coverage issues does this Single appear
-        int64_t l_issues;   // in how many location issues does this Single appear
-        uint64_t d_issues;  // in how many detection issues does this Single appear
-        uint64_t factor;    // represents the factor, or column of the array
-        uint64_t value;     // represents the actual value of the factor
+        uint64_t c_issues = 0;  // in how many coverage issues does this Single appear
+        int64_t l_issues = 0;   // in how many location issues does this Single appear
+        uint64_t d_issues = 0;  // in how many detection issues does this Single appear
+        const uint64_t factor;    // represents the factor, or column of the array
+        const uint64_t value;     // represents the actual value of the factor
         std::set<int> rows;         // tracks the set of rows in which this (factor, value) occurs
-        std::string to_string();    // returns a string representing the (factor, value)
-        Single();                       // default constructor, don't use this
+        std::string to_string() const;    // returns a string representing the (factor, value)
+        const std::string str_rep;            // memoized to_string_internal
         Single(uint64_t f, uint64_t v); // constructor that takes the (factor, value)
+    private:
+        std::string to_string_internal() const;    // returns a string representing the (factor, value)
 };
 
 // think of this class as containing the information associated with a single column in the array
 class Factor
 {
     public:
-        uint64_t c_issues;  // total coverage issues of all associated Singles
-        int64_t l_issues;   // total location issues of all associated Singles
-        uint64_t d_issues;  // total detection issues of all associated Singles
-        uint64_t id;        // column number
-        uint64_t level;     // number of values the column can take on
-        Single **singles;   // pointer to array of Single pointers
-        Factor();                                           // default constructor, don't use this
+        uint64_t c_issues = 0;  // total coverage issues of all associated Singles
+        int64_t l_issues = 0;   // total location issues of all associated Singles
+        uint64_t d_issues = 0;  // total detection issues of all associated Singles
+        const uint64_t id = 0;        // column number
+        const uint64_t level = 0;     // number of values the column can take on
+        Single **singles = nullptr;   // pointer to array of Single pointers
         Factor(uint64_t i, uint64_t l, Single **ptr_array); // constructor that takes id, level, Single*
         ~Factor();
 };
