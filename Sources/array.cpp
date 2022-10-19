@@ -598,8 +598,7 @@ void Array::update_heuristic()
         } else if (ratio < 0.20) {      // arbitrary choice
             heuristic_in_use = all;
         } else if (ratio < 0.60) {      // arbitrary choice
-            // TODO: change to detection heuristic
-            heuristic_in_use = all; // TODO: delete this
+            heuristic_in_use = d_only;
         } else if (ratio < 0.95) {      // arbitrary choice
             heuristic_in_use = l_only;
         } else {

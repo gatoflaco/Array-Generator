@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/13/2022
+Last updated 10/19/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods belonging to the Array class which are declared in array.h.  |
@@ -28,20 +28,28 @@ void Array::add_row()
 
     // choose how to initialize the new row based on current heuristic to be used
     int *new_row;
-    T *locked = nullptr;
     switch (heuristic_in_use) {
         case c_only:
         case c_and_l:
         case c_and_d:
             new_row = initialize_row_S();
+            heuristic_c_only(new_row);
             break;
         case l_only:
         case l_and_d:
-            new_row = initialize_row_T(&locked);
+            T *locked_t_set = nullptr;
+            new_row = initialize_row_T(&locked_t_set);
+            heuristic_l_only(new_row, locked_t_set);
             break;
         case d_only:
-            // TODO: implement initialize_row_I() and call that here, then break
+            Interaction *locked_interaction = nullptr;
+            new_row = initialize_row_I(&locked_interaction);
+            heuristic_d_only(new_row, locked_interaction);
+            break;
         case all:
+            new_row = initialize_row_R();
+            heuristic_all(new_row);
+            break;
         case none:
         default:
             new_row = initialize_row_R();
@@ -49,7 +57,6 @@ void Array::add_row()
     }   // at this point, new row should be initialized with values
     
     // tweak the row based on the current heuristic and then add to the array
-    tweak_row(new_row, locked);
     update_array(new_row);
 }
 
@@ -104,6 +111,10 @@ int* Array::initialize_row_S()
 
 /* SUB METHOD: initialize_row_T - creates a row by considering which T sets have the most location conflicts
  * 
+ * parameters:
+ * - locked: pointer to T* that will drive a scoring heuristic later
+ *  --> should be nullptr when passed in as a parameter; this method will assign the value
+ *
  * returns:
  * - a pointer to the first element in the array that represents the row
 */
@@ -114,7 +125,6 @@ int *Array::initialize_row_T(T **locked)
     int64_t worst_count = INT64_MIN;
     std::vector<T*> worst_sets; // there could be ties for the worst
     for (T *t_set : sets) {
-        //t_set->rows.size()==0
         if (static_cast<int64_t>(t_set->location_conflicts.size()) >= worst_count) {    // worse or tied
             if (static_cast<int64_t>(t_set->location_conflicts.size()) > worst_count) { // strictly worse
                 worst_count = t_set->location_conflicts.size();
@@ -124,7 +134,7 @@ int *Array::initialize_row_T(T **locked)
         }
     }
 
-    // choose the set with most conflicts (for ties, choose randomly from among those tied for the worst)
+    // choose the set with most conflicts (for ties, choose randomly from among those tied)
     *locked = worst_sets.at(static_cast<uint64_t>(rand()) % worst_sets.size());
     for (Single *s : (*locked)->singles) new_row[s->factor] = s->value;
     return new_row;
@@ -132,46 +142,36 @@ int *Array::initialize_row_T(T **locked)
 
 /* SUB METHOD: initialize_row_I - creates a row by considering which Interactions have the lowest separation
  * 
+ * parameters:
+ * - locked: pointer to Interaction* that will drive a scoring heuristic later
+ *  --> should be nullptr when passed in as a parameter; this method will assign the value
+
  * returns:
  * - a pointer to the first element in the array that represents the row
 */
-int *Array::initialize_row_I()
+int *Array::initialize_row_I(Interaction **locked)
 {
-    int *new_row = new int[num_factors];
-    // TODO: logic
-    return new_row;
-}
-
-/* SUB METHOD: tweak_row - chooses a heuristic to use for modifying a row based on current state of the Array
- * 
- * parameters:
- * - row: integer array representing a row being considered for adding to the array
- * 
- * returns:
- * - void, but after the method finishes, the row may be modified in an attempt to satisfy more issues
-*/
-void Array::tweak_row(int *row, T *locked)
-{
-    switch (heuristic_in_use) {
-        case c_only:
-        case c_and_l:
-        case c_and_d:
-            heuristic_c_only(row);
-            break;
-        case l_only:
-        case l_and_d:
-            heuristic_l_only(row, locked);
-            break;
-        case d_only:
-            heuristic_d_only(row);
-            break;
-        case all:
-            heuristic_all(row);
-            break;
-        case none:
-        default:
-            break;
+    int *new_row = initialize_row_R();
+    
+    int64_t worst_count = INT64_MIN;
+    std::vector<Interaction*> worst_interactions;   // there could be ties for the worst
+    for (Interaction *interaction : interactions) {
+        int64_t cur_count = 0;
+        for (auto &kv : interaction->deltas)
+            if (kv.second < delta) cur_count += delta - kv.second;
+        if (cur_count >= worst_count) { // worse or tied
+            if (cur_count > worst_count) {
+                worst_count = cur_count;
+                worst_interactions.clear();
+            }
+            worst_interactions.push_back(interaction);
+        }
     }
+
+    // choose the interaction with lowest separation (for ties, choose randomly from among those tied)
+    *locked = worst_interactions.at(static_cast<uint64_t>(rand()) % worst_interactions.size());
+    for (Single *s : (*locked)->singles) new_row[s->factor] = s->value;
+    return new_row;
 }
 
 /* SUB METHOD: heuristic_c_only - lightweight heuristic that only concerns itself with coverage
@@ -316,6 +316,7 @@ int Array::heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions
  * 
  * parameters:
  * - row: integer array representing a row being considered for adding to the array
+ * - locked: pointer to T whose Singles' columns should not be altered
  * 
  * returns:
  * - void, but after the method finishes, the row may be modified in an attempt to satisfy more issues
@@ -354,17 +355,46 @@ void Array::heuristic_l_only(int *row, T *locked)
 
 /* SUB METHOD: heuristic_d_only - middleweight heuristic that only concerns itself with detection
  * - in the tradeoff between speed and better row choice, this heuristic is somewhere in the middle
- * - should be used when detection problems are all that remain
+ * - should be used when detection problems are mostly all that remain to be solved
  * 
  * parameters:
  * - row: integer array representing a row being considered for adding to the array
+ * - locked: pointer to Interaction whose Singles' columns should not be altered
  * 
  * returns:
  * - void, but after the method finishes, the row may be modified in an attempt to satisfy more issues
 */
-void Array::heuristic_d_only(int *row)
+void Array::heuristic_d_only(int *row, Interaction *locked)
 {
+    // keep track of which columns should not be modified
+    bool *locked_factors = new bool[num_factors]{false};
+    for (Single *s : locked->singles) locked_factors[s->factor] = true;
 
+    std::map<std::string, uint64_t> scores; // create and initialize a map of every Single to a scoring
+    for (uint64_t col = 0; col < num_factors; col++)
+        for (uint64_t val = 0; val < factors[col]->level; val++)
+            scores.insert({"f" + std::to_string(col) + "," + std::to_string(val), 0});
+    
+    for (auto &kv : locked->deltas) // for every t set from which the locked interaction needs separation,
+        if (kv.second >= delta) continue;                   // (skip if separation is already sufficient)
+        for (Single *s : kv.first->singles)                 // for every Single in that set,
+            scores.at(s->to_string()) += delta - kv.second; // increase the score of that Single
+
+    // a larger value in the scores map means the Single is involved in more sets that need separation
+    for (uint64_t col = 0; col < num_factors; col++) {
+        if (locked_factors[col]) continue;
+        uint64_t best_val = static_cast<uint64_t>(rand()) % factors[col]->level;
+        uint64_t best_val_score = UINT64_MAX;
+        for (uint64_t val = 0; val < factors[col]->level; val++) {
+            uint64_t val_score = scores.at("f" + std::to_string(col) + "," + std::to_string(val));
+            if (val_score < best_val_score) {
+                best_val = val;
+                best_val_score = val_score;
+            }
+        }
+        if (best_val_score != 0) row[col] = best_val;   // else allow it to remain random
+    }
+    delete[] locked_factors;
 }
 
 /* SUB METHOD: heuristic_all - heavyweight heuristic that tries to solve the most problems possible
