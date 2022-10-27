@@ -599,7 +599,7 @@ void Array::update_heuristic()
             heuristic_in_use = all;
         } else if (ratio < 0.60) {      // arbitrary choice
             heuristic_in_use = d_only;
-        } else if (ratio < 0.95) {      // arbitrary choice
+        } else if (ratio < 0.85) {      // arbitrary choice
             heuristic_in_use = l_only;
         } else {
             heuristic_in_use = c_only;

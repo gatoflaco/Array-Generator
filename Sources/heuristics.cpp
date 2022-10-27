@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/19/2022
+Last updated 10/27/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods belonging to the Array class which are declared in array.h.  |
@@ -9,6 +9,7 @@ Last updated 10/19/2022
 */
 
 #include "array.h"
+#include <sstream>
 
 /* SUB METHOD: add_row - adds a new row to the array using some predictive and scoring logic
  * - simply an interface for adding a row; method itself simply decides which heuristic to use
@@ -28,6 +29,8 @@ void Array::add_row()
 
     // choose how to initialize the new row based on current heuristic to be used
     int *new_row;
+    Interaction *locked_interaction = nullptr;
+    T *locked_set = nullptr;
     switch (heuristic_in_use) {
         case c_only:
         case c_and_l:
@@ -37,12 +40,10 @@ void Array::add_row()
             break;
         case l_only:
         case l_and_d:
-            T *locked_t_set = nullptr;
-            new_row = initialize_row_T(&locked_t_set);
-            heuristic_l_only(new_row, locked_t_set);
+            new_row = initialize_row_T(&locked_set, &locked_interaction);
+            heuristic_l_only(new_row, locked_set, locked_interaction);
             break;
         case d_only:
-            Interaction *locked_interaction = nullptr;
             new_row = initialize_row_I(&locked_interaction);
             heuristic_d_only(new_row, locked_interaction);
             break;
@@ -112,13 +113,15 @@ int* Array::initialize_row_S()
 /* SUB METHOD: initialize_row_T - creates a row by considering which T sets have the most location conflicts
  * 
  * parameters:
- * - locked: pointer to T* that will drive a scoring heuristic later
- *  --> should be nullptr when passed in as a parameter; this method will assign the value
+ * - l_set: pointer to T* that will drive a scoring heuristic later
+ *  --> *l_set should be nullptr when passed in as a parameter; this method will assign the value
+ * - l_interaction: pointer to Interaction* that will drive a scoring heuristic later
+ *  --> *l_interaction should be nullptr when passed in as a parameter; this method will assign the value
  *
  * returns:
  * - a pointer to the first element in the array that represents the row
 */
-int *Array::initialize_row_T(T **locked)
+int *Array::initialize_row_T(T **l_set, Interaction **l_interaction)
 {
     int *new_row = initialize_row_R();
     
@@ -135,8 +138,9 @@ int *Array::initialize_row_T(T **locked)
     }
 
     // choose the set with most conflicts (for ties, choose randomly from among those tied)
-    *locked = worst_sets.at(static_cast<uint64_t>(rand()) % worst_sets.size());
-    for (Single *s : (*locked)->singles) new_row[s->factor] = s->value;
+    *l_set = worst_sets.at(static_cast<uint64_t>(rand()) % worst_sets.size());
+    *l_interaction = (*l_set)->interactions.at(static_cast<uint64_t>(rand()) % (*l_set)->interactions.size());
+    for (Single *s : (*l_interaction)->singles) new_row[s->factor] = s->value;
     return new_row;
 }
 
@@ -158,7 +162,7 @@ int *Array::initialize_row_I(Interaction **locked)
     for (Interaction *interaction : interactions) {
         int64_t cur_count = 0;
         for (auto &kv : interaction->deltas)
-            if (kv.second < delta) cur_count += delta - kv.second;
+            if (kv.second < static_cast<int64_t>(delta)) cur_count += delta - kv.second;
         if (cur_count >= worst_count) { // worse or tied
             if (cur_count > worst_count) {
                 worst_count = cur_count;
@@ -177,7 +181,7 @@ int *Array::initialize_row_I(Interaction **locked)
 /* SUB METHOD: heuristic_c_only - lightweight heuristic that only concerns itself with coverage
  * - in the tradeoff between speed and better row choice, this heuristic is towards the speed extreme
  * - should only be used very early on in array construction
- * --> can do well for longer when the desired array is simpler (i.e., covering as opposed to detecting)
+ *  --> can do well for longer when the desired array is simpler (i.e., covering as opposed to detecting)
  * 
  * parameters:
  * - row: integer array representing a row being considered for adding to the array
@@ -316,23 +320,24 @@ int Array::heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions
  * 
  * parameters:
  * - row: integer array representing a row being considered for adding to the array
- * - locked: pointer to T whose Singles' columns should not be altered
+ * - l_set: pointer to T set whose location conflicts will be used to pick column values
+ * - l_interaction: pointer to Interaction whose Singles' columns should not be altered
  * 
  * returns:
  * - void, but after the method finishes, the row may be modified in an attempt to satisfy more issues
 */
-void Array::heuristic_l_only(int *row, T *locked)
+void Array::heuristic_l_only(int *row, T* l_set, Interaction *l_interaction)
 {
     // keep track of which columns should not be modified
     bool *locked_factors = new bool[num_factors]{false};
-    for (Single *s : locked->singles) locked_factors[s->factor] = true;
+    for (Single *s : l_interaction->singles) locked_factors[s->factor] = true;
 
     std::map<std::string, uint64_t> scores; // create and initialize a map of every Single to a scoring
     for (uint64_t col = 0; col < num_factors; col++)
         for (uint64_t val = 0; val < factors[col]->level; val++)
             scores.insert({"f" + std::to_string(col) + "," + std::to_string(val), 0});
     
-    for (T *conflict : locked->location_conflicts)  // for every conflicting T set,
+    for (T *conflict : l_set->location_conflicts)   // for every conflicting T set,
         for (Single *s : conflict->singles) // for every Single in that conflicting set,
             scores.at(s->to_string())++;    // increase the score of that Single
 
@@ -375,10 +380,11 @@ void Array::heuristic_d_only(int *row, Interaction *locked)
         for (uint64_t val = 0; val < factors[col]->level; val++)
             scores.insert({"f" + std::to_string(col) + "," + std::to_string(val), 0});
     
-    for (auto &kv : locked->deltas) // for every t set from which the locked interaction needs separation,
-        if (kv.second >= delta) continue;                   // (skip if separation is already sufficient)
+    for (auto &kv : locked->deltas) {   // for every t set from which the locked interaction needs separation,
+        if (kv.second >= static_cast<int64_t>(delta)) continue; // (skip if separation is already sufficient)
         for (Single *s : kv.first->singles)                 // for every Single in that set,
             scores.at(s->to_string()) += delta - kv.second; // increase the score of that Single
+    }
 
     // a larger value in the scores map means the Single is involved in more sets that need separation
     for (uint64_t col = 0; col < num_factors; col++) {
@@ -413,8 +419,12 @@ void Array::heuristic_all(int *row)
 {
     // get scores for all relevant possible rows
     std::map<int*, int64_t> scores;
-    heuristic_all_helper(row, 0, &scores);
-    //TODO: wait for all child processes to terminate (once threading has been implemented)
+    std::vector<std::thread*> threads;
+    heuristic_all_helper(row, 0, &scores, &threads);
+    for (std::thread *cur_thread : threads) {
+        cur_thread->join();
+        delete cur_thread;
+    }
 
     // inspect the scores for the best one(s)
     int64_t best_score = INT64_MIN;
@@ -446,23 +456,29 @@ void Array::heuristic_all(int *row)
  * parameters:
  * - row: integer array representing a row being considered for adding to the array
  * - cur_col: which column should have its levels looped over in the recursive case
- * --> overhead caller should pass 0 to this method initially
- * --> value should increment by 1 with each recursive call
- * --> triggers the base case when value is equal to the total number of columns
+ *  --> overhead caller should pass 0 to this method initially
+ *  --> value should increment by 1 with each recursive call
+ *  --> triggers the base case when value is equal to the total number of columns
  * - scores: pointer to a map whose keys are pointers to rows and whose values are the scores of those rows
- * --> overhead caller should pass the address of an empty map to this method initially
- * --> for each row inspected by the base case, a separate thread should handle the scoring and map updating
+ *  --> overhead caller should pass the address of an empty map to this method initially
+ *  --> for each row inspected by the base case, a separate thread should handle the scoring and map updating
+ * - threads: pointer to vector of pointers to threads, needed so caller can join threads later
+ *  --> overhead caller should pass the address of an empty vector to this method initially
+ *  --> a separate thread should be started for each row inspected by the base case
  * 
  * returns:
  * - none, but scores will be modified to contain all the rows inspected and their scores
 */
-void Array::heuristic_all_helper(int *row, uint64_t cur_col, std::map<int*, int64_t> *scores)
+void Array::heuristic_all_helper(int *row, uint64_t cur_col, std::map<int*, int64_t> *scores,
+    std::vector<std::thread*> *threads)
 {
     // base case: row represents a unique combination and is ready for scoring
     if (cur_col == num_factors) {
         int *row_copy = new int[num_factors];   // must be deleted by heuristic_all() later
         for (uint64_t col = 0; col < num_factors; col++) row_copy[col] = row[col];
-        heuristic_all_scorer(row_copy, scores);
+        std::thread *new_thread = new std::thread(&Array::heuristic_all_scorer, this, row_copy, scores);
+        threads->push_back(new_thread);
+        //heuristic_all_scorer(row_copy, scores);
         return;
     }
 
@@ -478,7 +494,7 @@ void Array::heuristic_all_helper(int *row, uint64_t cur_col, std::map<int*, int6
         int temp = row[permutation[cur_col]];
         row[permutation[cur_col]] = (row[permutation[cur_col]] + static_cast<int>(offset)) %
             static_cast<int>(factors[permutation[cur_col]]->level); // try every value for this factor
-        heuristic_all_helper(row, cur_col+1, scores);
+        heuristic_all_helper(row, cur_col+1, scores, threads);
         row[permutation[cur_col]] = temp;
     }
 }
@@ -494,7 +510,7 @@ void Array::heuristic_all_helper(int *row, uint64_t cur_col, std::map<int*, int6
  * 
  * returns:
  * - none, but best_rows will be modified to contain whichever row(s) scored best
- * --> also, best_score will be modified, but this value will likely not be needed by the caller
+ *  --> also, best_score will be modified, but this value will likely not be needed by the caller
 */
 void Array::heuristic_all_scorer(int *row, std::map<int*, int64_t> *scores)
 {
@@ -519,4 +535,14 @@ void Array::heuristic_all_scorer(int *row, std::map<int*, int64_t> *scores)
 
     delete copy;
     // note: do not delete row here, as heuristic_all() will need to reference it
+
+    if (debug == d_on) {
+        std::stringstream thread_output;
+        thread_output << "==" << std::this_thread::get_id() << "== For row [" << row[0];
+        for (uint64_t col = 1; col < num_factors; col++) thread_output << " " << row[col];
+        thread_output << "], score is " << row_score << std::endl;
+        scores_mutex.lock();
+        printf("%s", thread_output.str().c_str());
+        scores_mutex.unlock();
+    }
 }

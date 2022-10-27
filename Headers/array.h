@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/18/2022
+Last updated 10/27/2022
 
 |===========================================================================================================|
 |   This header contains classes for managing the array in an automated fashion. The Interaction and T      |
@@ -16,6 +16,7 @@ Last updated 10/18/2022
 #include "factor.h"
 #include <map>
 #include <mutex>
+#include <thread>
 
 class T;    // forward declaration because Interaction and T have circular references
 
@@ -199,20 +200,21 @@ class Array
         void build_row_interactions(int *row, std::set<Interaction*> *row_interactions,
             uint64_t start, uint64_t t_cur, std::string key);
 
-        int *initialize_row_R();                        // returns a randomly generated row
-        int *initialize_row_S();                        // returns a row initialized based on Singles
-        int *initialize_row_T(T **locked);              // returns a row initialized based on T sets
-        int *initialize_row_I(Interaction **locked);    // returns a row initialized based on Interactions
+        int *initialize_row_R();                                        // returns a randomly generated row
+        int *initialize_row_S();                                        // based on Singles
+        int *initialize_row_T(T **l_set, Interaction **l_interaction);  // based on T sets
+        int *initialize_row_I(Interaction **locked);                    // based on Interactions
 
         void heuristic_c_only(int *row);
         int heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions, int *problems);
         
-        void heuristic_l_only(int *row, T *locked);
+        void heuristic_l_only(int *row, T *l_set, Interaction *l_interaction);
 
         void heuristic_d_only(int *row, Interaction *locked);
 
         void heuristic_all(int *row);
-        void heuristic_all_helper(int *row, uint64_t cur_col, std::map<int*, int64_t> *scores);
+        void heuristic_all_helper(int *row, uint64_t cur_col, std::map<int*, int64_t> *scores, 
+            std::vector<std::thread*> *threads);
         void heuristic_all_scorer(int *row, std::map<int*, int64_t> *scores);
         
         void update_array(int *row, bool keep = true);
