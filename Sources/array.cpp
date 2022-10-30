@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/13/2022
+Last updated 10/29/2022
 
 |===========================================================================================================|
 |   This file contains the meat of the project's logic. The constructor for the Array class takes a pointer |
@@ -563,47 +563,34 @@ void Array::update_dont_cares()
 */
 void Array::update_heuristic()
 {
-    // TODO: work on making this as more heuristics are created and tested
+    just_switched_heuristics = true;    // assume true until determined to be false
     float ratio = static_cast<float>(score)/total_problems;
-    bool satisfied = false; // used repeatedly to decide whether it is time to switch heuristics
 
     // first up, should we use the most in-depth scoring function:
     if (p == c_only) {
-        if (total_problems < 10000) {   // arbitrary choice
-            heuristic_in_use = all;
-        } else if (ratio < 0.40) {      // arbitrary choice
-            heuristic_in_use = all;
-        } else {
-            heuristic_in_use = c_only;
-        }
+        if (heuristic_in_use != all && total_problems < 10000) heuristic_in_use = all;
+        else if (heuristic_in_use == c_only && ratio < 0.40) heuristic_in_use = all;
+        else if (heuristic_in_use == none) heuristic_in_use = c_only;
+        else just_switched_heuristics = false;
         return;
     }
     
     if (p == c_and_l) {
-        if (total_problems < 9000) {    // arbitrary choice
-            heuristic_in_use = all;
-        } else if (ratio < 0.30) {      // arbitrary choice
-            heuristic_in_use = all;
-        } else if (ratio < 0.80) {      // arbitrary choice
-            heuristic_in_use = l_only;
-        } else {
-            heuristic_in_use = c_only;
-        }
+        if (heuristic_in_use != all && total_problems < 9000) heuristic_in_use = all;
+        else if (heuristic_in_use == l_only && ratio < 0.30) heuristic_in_use = all;
+        else if (heuristic_in_use == c_only && ratio < 0.80) heuristic_in_use = l_only;
+        else if (heuristic_in_use == none) heuristic_in_use = c_only;
+        else just_switched_heuristics = false;
         return;
     }
 
     if (p == all) {
-        if (total_problems < 8000) {    // arbitrary choice
-            heuristic_in_use = all;
-        } else if (ratio < 0.20) {      // arbitrary choice
-            heuristic_in_use = all;
-        } else if (ratio < 0.60) {      // arbitrary choice
-            heuristic_in_use = d_only;
-        } else if (ratio < 0.85) {      // arbitrary choice
-            heuristic_in_use = l_only;
-        } else {
-            heuristic_in_use = c_only;
-        }
+        if (heuristic_in_use != all && total_problems < 8000) heuristic_in_use = all;
+        else if (heuristic_in_use == d_only && ratio < 0.20) heuristic_in_use = all;
+        else if (heuristic_in_use == l_only && ratio < 0.60) heuristic_in_use = d_only;
+        else if (heuristic_in_use == c_only && ratio < 0.85) heuristic_in_use = l_only;
+        else if (heuristic_in_use == none) heuristic_in_use = c_only;
+        else just_switched_heuristics = false;
         return;
     }
 }

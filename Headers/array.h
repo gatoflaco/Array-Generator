@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/27/2022
+Last updated 10/29/2022
 
 |===========================================================================================================|
 |   This header contains classes for managing the array in an automated fashion. The Interaction and T      |
@@ -165,6 +165,12 @@ class Array
         // for tracking which factors have solved all issues of which categories
         prop_mode *dont_cares;
 
+        // memoized heuristic_all scores
+        std::map<std::string, uint64_t> row_scores;
+
+        // used to help avoid redudant checks for heuristics that do something only on the first call
+        bool just_switched_heuristics = false;
+
         // for dictating order of iteration; should be regularly shuffled
         int *permutation;
 
@@ -213,9 +219,8 @@ class Array
         void heuristic_d_only(int *row, Interaction *locked);
 
         void heuristic_all(int *row);
-        void heuristic_all_helper(int *row, uint64_t cur_col, std::map<int*, int64_t> *scores, 
-            std::vector<std::thread*> *threads);
-        void heuristic_all_scorer(int *row, std::map<int*, int64_t> *scores);
+        void heuristic_all_helper(int *row, uint64_t cur_col, std::vector<std::thread*> *threads);
+        void heuristic_all_scorer(int *row, std::string row_str);
         
         void update_array(int *row, bool keep = true);
         void update_scores(std::set<Interaction*> *row_interactions, std::set<T*> *row_sets);

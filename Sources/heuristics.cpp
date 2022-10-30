@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/27/2022
+Last updated 10/29/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods belonging to the Array class which are declared in array.h.  |
@@ -418,35 +418,36 @@ void Array::heuristic_d_only(int *row, Interaction *locked)
 void Array::heuristic_all(int *row)
 {
     // get scores for all relevant possible rows
-    std::map<int*, int64_t> scores;
     std::vector<std::thread*> threads;
-    heuristic_all_helper(row, 0, &scores, &threads);
+    heuristic_all_helper(row, 0, &threads);
     for (std::thread *cur_thread : threads) {
         cur_thread->join();
         delete cur_thread;
     }
 
     // inspect the scores for the best one(s)
-    int64_t best_score = INT64_MIN;
-    std::vector<int*> best_rows;    // there could be ties for the best
-    for (auto &kv : scores) {
+    uint64_t best_score = 0;
+    std::vector<std::string> best_rows; // there could be ties for the best
+    for (auto &kv : row_scores) {
         if (kv.second >= best_score) {  // it was better or it tied
             if (kv.second > best_score) {   // for an even better choice, can stop tracking the previous best
-                for (int *r : best_rows) delete[] r;
+                //for (int *r : best_rows) delete[] r;
                 best_score = kv.second;
                 best_rows.clear();
             }
             best_rows.push_back(kv.first);  // whether it was better or only a tie, keep track of this row
-        } else delete[] kv.first;
+        } //else delete[] kv.first;
     }
 
     // choose the row that scored the best (for ties, choose randomly from among those tied for the best)
-    int choice = static_cast<uint64_t>(rand()) % best_rows.size(); // for breaking ties randomly
+    uint64_t choice = static_cast<uint64_t>(rand()) % best_rows.size();  // for breaking ties randomly
+    std::stringstream choice_ss = std::stringstream(best_rows.at(choice));
     for (uint64_t col = 0; col < num_factors; col++)
-        row[col] = best_rows.at(choice)[col];
+        choice_ss >> row[col];
+        //row[col] = best_rows.at(choice)[col];
     
     // free memory
-    for (int *r : best_rows) delete[] r;
+    //for (int *r : best_rows) delete[] r;
 }
 
 /* HELPER METHOD: heuristic_all_helper - performs top-down recursive logic for heuristic_all()
@@ -459,9 +460,6 @@ void Array::heuristic_all(int *row)
  *  --> overhead caller should pass 0 to this method initially
  *  --> value should increment by 1 with each recursive call
  *  --> triggers the base case when value is equal to the total number of columns
- * - scores: pointer to a map whose keys are pointers to rows and whose values are the scores of those rows
- *  --> overhead caller should pass the address of an empty map to this method initially
- *  --> for each row inspected by the base case, a separate thread should handle the scoring and map updating
  * - threads: pointer to vector of pointers to threads, needed so caller can join threads later
  *  --> overhead caller should pass the address of an empty vector to this method initially
  *  --> a separate thread should be started for each row inspected by the base case
@@ -469,32 +467,29 @@ void Array::heuristic_all(int *row)
  * returns:
  * - none, but scores will be modified to contain all the rows inspected and their scores
 */
-void Array::heuristic_all_helper(int *row, uint64_t cur_col, std::map<int*, int64_t> *scores,
-    std::vector<std::thread*> *threads)
+void Array::heuristic_all_helper(int *row, uint64_t cur_col, std::vector<std::thread*> *threads)
 {
     // base case: row represents a unique combination and is ready for scoring
     if (cur_col == num_factors) {
+        std::string row_str = std::to_string(row[0]); // string representation of the row
+        for (uint64_t col = 1; col < num_factors; col++)
+            row_str += ' ' + std::to_string(row[col]);
+        //if (!just_switched_heuristics && row_scored_zero.at(row_as_str)) return;
+        if (!(just_switched_heuristics || row_scores[row_str])) return; // skips if score is 0 already
         int *row_copy = new int[num_factors];   // must be deleted by heuristic_all() later
-        for (uint64_t col = 0; col < num_factors; col++) row_copy[col] = row[col];
-        std::thread *new_thread = new std::thread(&Array::heuristic_all_scorer, this, row_copy, scores);
+        for (uint64_t col = 0; col < num_factors; col++)
+            row_copy[col] = row[col];
+        std::thread *new_thread = new std::thread(&Array::heuristic_all_scorer, this, row_copy, row_str);
         threads->push_back(new_thread);
-        //heuristic_all_scorer(row_copy, scores);
         return;
     }
 
     // recursive case: need to introduce another loop for the next factor
-    /*
-    if ((p == all && dont_cares[permutation[cur_col]] == all) ||
-        (p == c_and_l && dont_cares[permutation[cur_col]] == c_and_l) ||
-        (p == c_only && dont_cares[permutation[cur_col]] == c_only)) {
-        heuristic_all_helper(row, cur_col+1, scores);
-        return;
-    }//*/
     for (uint64_t offset = 0; offset < factors[permutation[cur_col]]->level; offset++) {
         int temp = row[permutation[cur_col]];
         row[permutation[cur_col]] = (row[permutation[cur_col]] + static_cast<int>(offset)) %
             static_cast<int>(factors[permutation[cur_col]]->level); // try every value for this factor
-        heuristic_all_helper(row, cur_col+1, scores, threads);
+        heuristic_all_helper(row, cur_col+1, threads);
         row[permutation[cur_col]] = temp;
     }
 }
@@ -504,15 +499,13 @@ void Array::heuristic_all_helper(int *row, uint64_t cur_col, std::map<int*, int6
  * - heuristic_all() should await the termination of all sub threads before inspecting scores
  * 
  * parameters:
- * - row_v: a vector representing the row to be scored
- *  --> cannot be a pointer to the row being modified by heuristic_all_helper() (would result in data races)
- * - scores: pointer to 
+ * - row: integer array representing a row needing scoring
+ * - row_str: string representation of the row
  * 
  * returns:
- * - none, but best_rows will be modified to contain whichever row(s) scored best
- *  --> also, best_score will be modified, but this value will likely not be needed by the caller
+ * - none, but scores may be updates
 */
-void Array::heuristic_all_scorer(int *row, std::map<int*, int64_t> *scores)
+void Array::heuristic_all_scorer(int *row, std::string row_str)
 {
     // current thread will work with unique copies of the data structures being modified
     Array *copy = clone();
@@ -527,14 +520,7 @@ void Array::heuristic_all_scorer(int *row, std::map<int*, int64_t> *scores)
         row_score += 2*weight*(this_s->l_issues - copy_s->l_issues);
         row_score += static_cast<int64_t>(3*weight*(this_s->d_issues - copy_s->d_issues));
     }
-
-    // need to add result to data structure containing all thread's results; use mutex for thread safety
-    scores_mutex.lock();
-    scores->insert({row, row_score});
-    scores_mutex.unlock();
-
     delete copy;
-    // note: do not delete row here, as heuristic_all() will need to reference it
 
     if (debug == d_on) {
         std::stringstream thread_output;
@@ -545,4 +531,22 @@ void Array::heuristic_all_scorer(int *row, std::map<int*, int64_t> *scores)
         printf("%s", thread_output.str().c_str());
         scores_mutex.unlock();
     }
+    delete[] row;
+
+    // need to add result to data structure containing all thread's results; use mutex for thread safety
+    scores_mutex.lock();
+    //scores->insert({row, row_score});
+    row_scores[row_str] = row_score;
+    scores_mutex.unlock();
+
+    /* possibly update row_scored_zero map
+    if (just_switched_heuristics) {
+        scores_mutex.lock();
+        row_scored_zero.insert({row_as_str, row_score == 0});
+        scores_mutex.unlock();
+    } else if (row_score == 0) {
+        scores_mutex.lock();
+        row_scored_zero.at(row_as_str) = true;
+        scores_mutex.unlock();
+    }//*/
 }
