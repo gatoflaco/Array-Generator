@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/29/2022
+Last updated 10/30/2022
 
 |===========================================================================================================|
 |   This header contains classes for managing the array in an automated fashion. The Interaction and T      |
@@ -168,7 +168,10 @@ class Array
         // memoized heuristic_all scores
         std::map<std::string, uint64_t> row_scores;
 
-        // used to help avoid redudant checks for heuristics that do something only on the first call
+        // used to help avoid redundant checks in heuristic_all
+        uint64_t min_positive_score = UINT64_MAX;
+
+        // used to help avoid redundant checks for heuristics that do something only on the first call
         bool just_switched_heuristics = false;
 
         // for dictating order of iteration; should be regularly shuffled

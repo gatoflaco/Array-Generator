@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/29/2022
+Last updated 10/30/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods belonging to the Array class which are declared in array.h.  |
@@ -427,27 +427,27 @@ void Array::heuristic_all(int *row)
 
     // inspect the scores for the best one(s)
     uint64_t best_score = 0;
+    min_positive_score = UINT64_MAX;
     std::vector<std::string> best_rows; // there could be ties for the best
     for (auto &kv : row_scores) {
         if (kv.second >= best_score) {  // it was better or it tied
             if (kv.second > best_score) {   // for an even better choice, can stop tracking the previous best
-                //for (int *r : best_rows) delete[] r;
                 best_score = kv.second;
                 best_rows.clear();
             }
             best_rows.push_back(kv.first);  // whether it was better or only a tie, keep track of this row
-        } //else delete[] kv.first;
+        }
+        if (kv.second > 0 && kv.second < min_positive_score) min_positive_score = kv.second;
     }
+    if (min_positive_score == UINT64_MAX) min_positive_score = 1;   // shouldn't ever happen
 
     // choose the row that scored the best (for ties, choose randomly from among those tied for the best)
     uint64_t choice = static_cast<uint64_t>(rand()) % best_rows.size();  // for breaking ties randomly
     std::stringstream choice_ss = std::stringstream(best_rows.at(choice));
     for (uint64_t col = 0; col < num_factors; col++)
         choice_ss >> row[col];
-        //row[col] = best_rows.at(choice)[col];
     
-    // free memory
-    //for (int *r : best_rows) delete[] r;
+    row_scores[best_rows.at(choice)] = delta == 1 ? 0 : min_positive_score - 1;
 }
 
 /* HELPER METHOD: heuristic_all_helper - performs top-down recursive logic for heuristic_all()
@@ -474,8 +474,8 @@ void Array::heuristic_all_helper(int *row, uint64_t cur_col, std::vector<std::th
         std::string row_str = std::to_string(row[0]); // string representation of the row
         for (uint64_t col = 1; col < num_factors; col++)
             row_str += ' ' + std::to_string(row[col]);
-        //if (!just_switched_heuristics && row_scored_zero.at(row_as_str)) return;
-        if (!(just_switched_heuristics || row_scores[row_str])) return; // skips if score is 0 already
+        if (just_switched_heuristics) row_scores[row_str] += UINT64_MAX;
+        if (row_scores[row_str] < min_positive_score) return;
         int *row_copy = new int[num_factors];   // must be deleted by heuristic_all() later
         for (uint64_t col = 0; col < num_factors; col++)
             row_copy[col] = row[col];
@@ -535,18 +535,6 @@ void Array::heuristic_all_scorer(int *row, std::string row_str)
 
     // need to add result to data structure containing all thread's results; use mutex for thread safety
     scores_mutex.lock();
-    //scores->insert({row, row_score});
     row_scores[row_str] = row_score;
     scores_mutex.unlock();
-
-    /* possibly update row_scored_zero map
-    if (just_switched_heuristics) {
-        scores_mutex.lock();
-        row_scored_zero.insert({row_as_str, row_score == 0});
-        scores_mutex.unlock();
-    } else if (row_score == 0) {
-        scores_mutex.lock();
-        row_scored_zero.at(row_as_str) = true;
-        scores_mutex.unlock();
-    }//*/
 }

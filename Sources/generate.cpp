@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/06/2022
+Last updated 10/30/2022
 
 |===========================================================================================================|
 |   This file contains the main() method which reflects the high level flow of the program. It starts by    |
@@ -33,6 +33,7 @@ Last updated 10/06/2022
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 
 
 // ================================v=v=v== static global variables ==v=v=v================================ //
@@ -47,6 +48,7 @@ static prop_mode pm;    // property mode
 
 // =========================v=v=v== static methods - forward declarations ==v=v=v========================= //
 
+static int print_usage();
 static int print_results(Parser *p, Array *array, bool success);
 static void debug_print(int d, int t, int delta);
 
@@ -65,12 +67,13 @@ static void debug_print(int d, int t, int delta);
 */
 int main(int argc, char *argv[])
 {
+    if (argc < 2 ||  strcmp(argv[1], "--help") == 0) return print_usage();  // user gave no args or --help
     Parser p(argc, argv);           // create Parser object, immediately processes arguments and flags
     dm = p.debug; vm = p.v; om = p.o; pm = p.p; // update flags based on those processed by the Parser
     
 	int status = p.process_input();                 // read in and process the array
+    if (status == -1) return 1;         // exit immediately if there is a basic syntactic or semantic error
     if (dm == d_on) debug_print(p.d, p.t, p.delta); // print status when verbose mode enabled
-    if (status == -1) return 1;        // exit immediately if there is a basic syntactic or semantic error
     
     Array array(&p);    // create Array object that immediately builds appropriate data structures
     if (array.score == 0) {
@@ -90,6 +93,29 @@ int main(int argc, char *argv[])
         array.print_stats();        // report current state of array
     }
     return print_results(&p, &array, (no_change_counter == 0));
+}
+
+/* HELPER METHOD: print_usage - prints info about the usage of the program
+ * 
+ * returns:
+ * - exit code representing the state of the program (0 means the program finished successfully)
+*/
+static int print_usage()
+{
+    printf("usage: ./generate [flags | -] [t | d t | d t δ] [input file] [output file | -]\n");
+    printf("flags (some can be combined):\n");
+    printf("\t-d          : debug mode (prints extra state information while running)\n");
+    printf("\t-h          : halfway mode (prints less output than normal)\n");
+    printf("\t-s          : silent mode (prints no output, cancels other flags)\n");
+    printf("\t-v          : verbose mode (prints more output than normal)\n");
+    printf("arguments (assume order matters):\n");
+    printf("\tt           : strength of interactions, needed for all typed of arrays\n");
+    printf("\td           : size of sets of interactions, needed for locating and detecting arrays\n");
+    printf("\tδ           : separation of interactions from other sets, needed for detecting arrays\n");
+    printf("\tinput file  : file containing array parameter info\n");
+    printf("\toutput file : file in which to print finished array (if not specified, stdout is used)\n");
+    printf("for more details, please visit https://github.com/gatoflaco/Array-Generator\n");
+    return 0;
 }
 
 /* SUB METHOD: print_results - prints the completion status after the array is finished being generated

@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/29/2022
+Last updated 10/30/2022
 
 |===========================================================================================================|
 |   This file contains the meat of the project's logic. The constructor for the Array class takes a pointer |
@@ -351,7 +351,7 @@ void Array::print_stats(bool initial)
         printf("\t- Current coverage score: %lu\n", c_score);
         if (p != c_only) printf("\t- Current location score: %lu\n", l_score);
         if (p == all) printf("\t- Current detection score: %lu\n", d_score);
-        if (!initial) printf("\t- The array is now at %.2f%% completion.\n",
+        if (!initial) printf("\t- The array is now at %.4f%% completion.\n",
             static_cast<float>((total_problems - score))/total_problems*100);
     }
     if (o == normal) printf("Adding row #%lu.\n", num_tests+1);
@@ -401,6 +401,12 @@ void Array::update_array(int *row, bool keep)
         return;
     }
     update_dont_cares();
+    if (heuristic_in_use != all) {
+        std::string row_str = std::to_string(row[0]);   // string representation of the row
+        for (uint64_t col = 1; col < num_factors; col++)
+            row_str += ' ' + std::to_string(row[col]);
+        row_scores[row_str] = delta == 1 ? 1 : UINT64_MAX;  // will allow heuristic_all to skip some work
+    }
     update_heuristic();
 }
 
