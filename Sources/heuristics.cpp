@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/30/2022
+Last updated 11/02/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods belonging to the Array class which are declared in array.h.  |
@@ -20,15 +20,15 @@ Last updated 10/30/2022
 void Array::add_row()
 {
     // choose a new random order for the column iterations this round
-    for (uint64_t size = num_factors; size > 0; size--) {
-        int rand_idx = rand() % static_cast<int>(size);
-        int temp = permutation[size - 1];
+    for (uint16_t size = num_factors; size > 0; size--) {
+        uint16_t rand_idx = rand() % size;
+        uint16_t temp = permutation[size - 1];
         permutation[size - 1] = permutation[rand_idx];
         permutation[rand_idx] = temp;
     }   // at this point, permutation should be shuffled
 
     // choose how to initialize the new row based on current heuristic to be used
-    int *new_row;
+    uint16_t *new_row;
     Interaction *locked_interaction = nullptr;
     T *locked_set = nullptr;
     switch (heuristic_in_use) {
@@ -66,11 +66,11 @@ void Array::add_row()
  * returns:
  * - a pointer to the first element in the array that represents the row
 */
-int *Array::initialize_row_R()
+uint16_t *Array::initialize_row_R()
 {
-    int *new_row = new int[num_factors];
-    for (uint64_t i = 0; i < num_factors; i++)
-        new_row[i] = static_cast<uint64_t>(rand()) % factors[i]->level;
+    uint16_t *new_row = new uint16_t[num_factors];
+    for (uint16_t i = 0; i < num_factors; i++)
+        new_row[i] = rand() % factors[i]->level;
     return new_row;
 }
 
@@ -79,27 +79,25 @@ int *Array::initialize_row_R()
  * returns:
  * - a pointer to the first element in the array that represents the row
 */
-int* Array::initialize_row_S()
+uint16_t* Array::initialize_row_S()
 {
-    int *new_row = new int[num_factors]{0};
+    uint16_t *new_row = new uint16_t[num_factors]{0};
 
     // greedily select the values that appear to need the most attention
-    for (uint64_t col = 0; col < num_factors; col++) {
+    for (uint16_t col = 0; col < num_factors; col++) {
         // check if column is don't care
         if ((p == all && dont_cares[permutation[col]] == all) ||
             (p == c_and_l && dont_cares[permutation[col]] == c_and_l) ||
             (p == c_only && dont_cares[permutation[col]] == c_only)) {
-            new_row[permutation[col]] = static_cast<uint64_t>(rand()) % factors[permutation[col]]->level;
+            new_row[permutation[col]] = rand() % factors[permutation[col]]->level;
             continue;
         }
         // assume 0 is the worst to start, then check if any others are worse
         Single *worst_single = factors[permutation[col]]->singles[0];
-        int worst_score = static_cast<int64_t>(worst_single->c_issues) + worst_single->l_issues + 
-            3*static_cast<int64_t>(worst_single->d_issues);
-        for (uint64_t val = 1; val < factors[permutation[col]]->level; val++) {
+        uint64_t worst_score = worst_single->c_issues/3 + worst_single->l_issues/2 + worst_single->d_issues;
+        for (uint16_t val = 1; val < factors[permutation[col]]->level; val++) {
             Single *cur_single = factors[permutation[col]]->singles[val];
-            int cur_score = static_cast<int64_t>(cur_single->c_issues) + cur_single->l_issues +
-                3*static_cast<int64_t>(cur_single->d_issues);
+            uint64_t cur_score = cur_single->c_issues/3 + cur_single->l_issues/2 + cur_single->d_issues;
             if (cur_score > worst_score || (cur_score == worst_score && rand() % 2 == 0)) {
                 worst_single = cur_single;
                 worst_score = cur_score;
@@ -121,15 +119,15 @@ int* Array::initialize_row_S()
  * returns:
  * - a pointer to the first element in the array that represents the row
 */
-int *Array::initialize_row_T(T **l_set, Interaction **l_interaction)
+uint16_t *Array::initialize_row_T(T **l_set, Interaction **l_interaction)
 {
-    int *new_row = initialize_row_R();
+    uint16_t *new_row = initialize_row_R();
     
-    int64_t worst_count = INT64_MIN;
+    uint64_t worst_count = 0;
     std::vector<T*> worst_sets; // there could be ties for the worst
     for (T *t_set : sets) {
-        if (static_cast<int64_t>(t_set->location_conflicts.size()) >= worst_count) {    // worse or tied
-            if (static_cast<int64_t>(t_set->location_conflicts.size()) > worst_count) { // strictly worse
+        if (t_set->location_conflicts.size() >= worst_count) {      // worse or tied
+            if (t_set->location_conflicts.size() > worst_count) {   // strictly worse
                 worst_count = t_set->location_conflicts.size();
                 worst_sets.clear();
             }
@@ -153,18 +151,18 @@ int *Array::initialize_row_T(T **l_set, Interaction **l_interaction)
  * returns:
  * - a pointer to the first element in the array that represents the row
 */
-int *Array::initialize_row_I(Interaction **locked)
+uint16_t *Array::initialize_row_I(Interaction **locked)
 {
-    int *new_row = initialize_row_R();
+    uint16_t *new_row = initialize_row_R();
     
-    int64_t worst_count = INT64_MIN;
+    uint64_t worst_count = 0;
     std::vector<Interaction*> worst_interactions;   // there could be ties for the worst
     for (Interaction *interaction : interactions) {
-        int64_t cur_count = 0;
+        uint64_t cur_count = 0;
         for (auto &kv : interaction->deltas)
-            if (kv.second < static_cast<int64_t>(delta)) cur_count += delta - kv.second;
-        if (cur_count >= worst_count) { // worse or tied
-            if (cur_count > worst_count) {
+            if (kv.second < delta) cur_count += delta - kv.second;
+        if (cur_count >= worst_count) {     // worse or tied
+            if (cur_count > worst_count) {  // strictly worse
                 worst_count = cur_count;
                 worst_interactions.clear();
             }
@@ -189,13 +187,11 @@ int *Array::initialize_row_I(Interaction **locked)
  * returns:
  * - void, but after the method finishes, the row may be modified in an attempt to satisfy more issues
 */
-void Array::heuristic_c_only(int *row)
+void Array::heuristic_c_only(uint16_t *row)
 {
-    int *problems = new int[num_factors]{0};    // for counting how many "problems" each factor has
-    int max_problems;   // largest value among all in the problems[] array created above
-    int cur_max;    // for comparing to max_problems to see if there is an improvement
+    int32_t *problems = new int32_t[num_factors]{0};    // for counting how many "problems" each factor has
     prop_mode *dont_cares_c = new prop_mode[num_factors];   // local copy of the don't cares
-    for (uint64_t col = 0; col < num_factors; col++) dont_cares_c[col] = dont_cares[col];
+    for (uint16_t col = 0; col < num_factors; col++) dont_cares_c[col] = dont_cares[col];
 
     std::set<Interaction*> row_interactions;
     build_row_interactions(row, &row_interactions, 0, t, "");
@@ -216,8 +212,8 @@ void Array::heuristic_c_only(int *row)
     }
 
     // find out what the worst score is among the factors
-    max_problems = 0;
-    for (uint64_t col = 0; col < num_factors; col++)
+    int32_t max_problems = 0;   // largest value among all in the problems[] array created above
+    for (uint16_t col = 0; col < num_factors; col++)
         if (problems[col] > max_problems) max_problems = problems[col];
     if (max_problems == 0) {    // row is good enough as is
         delete[] problems;
@@ -226,14 +222,13 @@ void Array::heuristic_c_only(int *row)
     }
     
     // else, try altering the value(s) with the most problems (whatever is currently contributing the least)
-    cur_max = max_problems;
-    for (uint64_t col = 0; col < num_factors; col++) {  // go find any factors to change
+    int32_t cur_max = max_problems; // for comparing to max_problems to see if there is an improvement
+    for (uint16_t col = 0; col < num_factors; col++) {  // go find any factors to change
         if (problems[permutation[col]] == max_problems) {   // found a factor to try altering
-            int *temp_problems = new int[num_factors]{0};   // deep copy problems[] because it will be mutated
+            int32_t *temp_problems = new int32_t[num_factors]{0};   // will be mutated by helper
 
-            for (uint64_t i = 1; i < factors[permutation[col]]->level; i++) {   // for every value
-                row[permutation[col]] = (row[permutation[col]] + 1) %
-                    static_cast<int64_t>(factors[permutation[col]]->level); // try that value
+            for (uint16_t i = 1; i < factors[permutation[col]]->level; i++) {   // try every possible value
+                row[permutation[col]] = (row[permutation[col]] + 1) % factors[permutation[col]]->level;
                 std::set<Interaction*> new_interactions;    // get the new Interactions
                 build_row_interactions(row, &new_interactions, 0, t, "");
 
@@ -247,17 +242,16 @@ void Array::heuristic_c_only(int *row)
                 cur_max = max_problems; // else this change was no good, reset and continue
             }
             delete[] temp_problems;
-            row[permutation[col]] = (row[permutation[col]] + 1) % static_cast<int>(factors[col]->level);
+            row[permutation[col]] = (row[permutation[col]] + 1) % factors[col]->level;
         }
     }
 
     // last resort, start looking for *anything* that is missing
-    for (uint64_t col = 0; col < num_factors; col++) {  // for all factors
+    for (uint16_t col = 0; col < num_factors; col++) {  // for all factors
         if (dont_cares_c[permutation[col]] != none) continue;   // no need to check already completed factors
         bool improved = false;
-        for (uint64_t i = 0; i < factors[permutation[col]]->level; i++) {   // for every value
-            row[permutation[col]] = (row[permutation[col]] + 1) %
-                static_cast<int64_t>(factors[permutation[col]]->level); // try that value
+        for (uint16_t i = 0; i < factors[permutation[col]]->level; i++) {   // try every possible value
+            row[permutation[col]] = (row[permutation[col]] + 1) % factors[permutation[col]]->level;
             std::set<Interaction*> new_interactions;    // get the new Interactions
             build_row_interactions(row, &new_interactions, 0, t, "");
 
@@ -265,12 +259,12 @@ void Array::heuristic_c_only(int *row)
             for (Interaction *interaction : new_interactions)
                 if (interaction->rows.size() == 0) {    // the Interaction is not already covered
                     for (Single *s : interaction->singles) dont_cares_c[s->factor] = c_only;
-                    improved = true;
+                    improved = true;    // note: don't break, we want to set as many dont_cares_c as possible
                 }
             if (improved) break;    // keep this factor as this value
         }
-        if (improved) continue;
-        row[permutation[col]] = static_cast<uint64_t>(rand()) % factors[permutation[col]]->level;
+        if (improved) continue; // don't execute the next line
+        row[permutation[col]] = rand() % factors[permutation[col]]->level;  // if not possible to improve
     }
     delete[] problems;
     delete[] dont_cares_c;
@@ -286,14 +280,13 @@ void Array::heuristic_c_only(int *row)
  * returns:
  * - int representing the largest value in the problems array after scoring
 */
-int Array::heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions, int *problems)
+int32_t Array::heuristic_c_helper(uint16_t *row, std::set<Interaction*> *row_interactions, int32_t *problems)
 {
     for (Interaction *i : *row_interactions) {
         if (i->rows.size() != 0) {  // Interaction is already covered
             bool can_skip = false;  // don't account for Interactions involving already-completed factors
             for (Single *s : i->singles)
                 if (s->c_issues == 0) { // one of the Singles involved in the Interaction is completed
-                    // TODO: make this check more than just c_issues?
                     can_skip = true;
                     break;
                 }
@@ -306,8 +299,8 @@ int Array::heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions
     }
 
     // find out what the worst score is among the factors
-    int max_problems = INT32_MIN;   // set max to a huge negative number to start
-    for (uint64_t col = 0; col < num_factors; col++) {
+    int32_t max_problems = INT32_MIN;   // set max to a huge negative number to start
+    for (uint16_t col = 0; col < num_factors; col++) {
         if (factors[col]->singles[row[col]]->c_issues == 0) continue;   // already completed factor
         if (problems[col] > max_problems) max_problems = problems[col];
     }
@@ -326,15 +319,15 @@ int Array::heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions
  * returns:
  * - void, but after the method finishes, the row may be modified in an attempt to satisfy more issues
 */
-void Array::heuristic_l_only(int *row, T* l_set, Interaction *l_interaction)
+void Array::heuristic_l_only(uint16_t *row, T* l_set, Interaction *l_interaction)
 {
     // keep track of which columns should not be modified
     bool *locked_factors = new bool[num_factors]{false};
     for (Single *s : l_interaction->singles) locked_factors[s->factor] = true;
 
     std::map<std::string, uint64_t> scores; // create and initialize a map of every Single to a scoring
-    for (uint64_t col = 0; col < num_factors; col++)
-        for (uint64_t val = 0; val < factors[col]->level; val++)
+    for (uint16_t col = 0; col < num_factors; col++)
+        for (uint16_t val = 0; val < factors[col]->level; val++)
             scores.insert({"f" + std::to_string(col) + "," + std::to_string(val), 0});
     
     for (T *conflict : l_set->location_conflicts)   // for every conflicting T set,
@@ -342,11 +335,11 @@ void Array::heuristic_l_only(int *row, T* l_set, Interaction *l_interaction)
             scores.at(s->to_string())++;    // increase the score of that Single
 
     // a larger value in the scores map means the Single is involved in more location conflicts
-    for (uint64_t col = 0; col < num_factors; col++) {
+    for (uint16_t col = 0; col < num_factors; col++) {
         if (locked_factors[col]) continue;
-        uint64_t best_val = static_cast<uint64_t>(rand()) % factors[col]->level;
+        uint16_t best_val = rand() % factors[col]->level;
         uint64_t best_val_score = UINT64_MAX;
-        for (uint64_t val = 0; val < factors[col]->level; val++) {
+        for (uint16_t val = 0; val < factors[col]->level; val++) {
             uint64_t val_score = scores.at("f" + std::to_string(col) + "," + std::to_string(val));
             if (val_score < best_val_score) {
                 best_val = val;
@@ -369,29 +362,29 @@ void Array::heuristic_l_only(int *row, T* l_set, Interaction *l_interaction)
  * returns:
  * - void, but after the method finishes, the row may be modified in an attempt to satisfy more issues
 */
-void Array::heuristic_d_only(int *row, Interaction *locked)
+void Array::heuristic_d_only(uint16_t *row, Interaction *locked)
 {
     // keep track of which columns should not be modified
     bool *locked_factors = new bool[num_factors]{false};
     for (Single *s : locked->singles) locked_factors[s->factor] = true;
 
     std::map<std::string, uint64_t> scores; // create and initialize a map of every Single to a scoring
-    for (uint64_t col = 0; col < num_factors; col++)
-        for (uint64_t val = 0; val < factors[col]->level; val++)
+    for (uint16_t col = 0; col < num_factors; col++)
+        for (uint16_t val = 0; val < factors[col]->level; val++)
             scores.insert({"f" + std::to_string(col) + "," + std::to_string(val), 0});
     
     for (auto &kv : locked->deltas) {   // for every t set from which the locked interaction needs separation,
-        if (kv.second >= static_cast<int64_t>(delta)) continue; // (skip if separation is already sufficient)
+        if (kv.second >= delta) continue;   // (skip if separation is already sufficient)
         for (Single *s : kv.first->singles)                 // for every Single in that set,
             scores.at(s->to_string()) += delta - kv.second; // increase the score of that Single
     }
 
     // a larger value in the scores map means the Single is involved in more sets that need separation
-    for (uint64_t col = 0; col < num_factors; col++) {
+    for (uint16_t col = 0; col < num_factors; col++) {
         if (locked_factors[col]) continue;
-        uint64_t best_val = static_cast<uint64_t>(rand()) % factors[col]->level;
+        uint16_t best_val = rand() % factors[col]->level;
         uint64_t best_val_score = UINT64_MAX;
-        for (uint64_t val = 0; val < factors[col]->level; val++) {
+        for (uint16_t val = 0; val < factors[col]->level; val++) {
             uint64_t val_score = scores.at("f" + std::to_string(col) + "," + std::to_string(val));
             if (val_score < best_val_score) {
                 best_val = val;
@@ -415,7 +408,7 @@ void Array::heuristic_d_only(int *row, Interaction *locked)
  *  --> note that this does not mean that running this for the whole array will guarantee the smallest array;
  *      this is still a greedy algorithm for the current row, without any lookahead to future rows
 */
-void Array::heuristic_all(int *row)
+void Array::heuristic_all(uint16_t *row)
 {
     // get scores for all relevant possible rows
     std::vector<std::thread*> threads;
@@ -444,10 +437,10 @@ void Array::heuristic_all(int *row)
     // choose the row that scored the best (for ties, choose randomly from among those tied for the best)
     uint64_t choice = static_cast<uint64_t>(rand()) % best_rows.size();  // for breaking ties randomly
     std::stringstream choice_ss = std::stringstream(best_rows.at(choice));
-    for (uint64_t col = 0; col < num_factors; col++)
+    for (uint16_t col = 0; col < num_factors; col++)
         choice_ss >> row[col];
     
-    row_scores[best_rows.at(choice)] = delta == 1 ? 0 : min_positive_score - 1;
+    row_scores[best_rows.at(choice)] = delta <= 1 ? 0 : min_positive_score - 1;
 }
 
 /* HELPER METHOD: heuristic_all_helper - performs top-down recursive logic for heuristic_all()
@@ -467,28 +460,34 @@ void Array::heuristic_all(int *row)
  * returns:
  * - none, but scores will be modified to contain all the rows inspected and their scores
 */
-void Array::heuristic_all_helper(int *row, uint64_t cur_col, std::vector<std::thread*> *threads)
+void Array::heuristic_all_helper(uint16_t *row, uint16_t cur_col, std::vector<std::thread*> *threads)
 {
     // base case: row represents a unique combination and is ready for scoring
     if (cur_col == num_factors) {
         std::string row_str = std::to_string(row[0]); // string representation of the row
-        for (uint64_t col = 1; col < num_factors; col++)
-            row_str += ' ' + std::to_string(row[col]);
+        for (uint16_t col = 1; col < num_factors; col++) row_str += ' ' + std::to_string(row[col]);
         if (just_switched_heuristics) row_scores[row_str] += UINT64_MAX;
-        if (row_scores[row_str] < min_positive_score) return;
-        int *row_copy = new int[num_factors];   // must be deleted by heuristic_all() later
-        for (uint64_t col = 0; col < num_factors; col++)
-            row_copy[col] = row[col];
+        if (row_scores[row_str] < min_positive_score) return;   // can skip scoring this row
+        uint16_t *row_copy = new uint16_t[num_factors]; // must be deleted by thread later
+        for (uint16_t col = 0; col < num_factors; col++) row_copy[col] = row[col];
+        /*if (out of threads) {
+            for (thread *th : *threads) {
+                th->join()
+            }
+        }//*/
         std::thread *new_thread = new std::thread(&Array::heuristic_all_scorer, this, row_copy, row_str);
-        threads->push_back(new_thread);
+        /*if (!new_thread) {
+
+        }//*/
+        threads->push_back(new_thread); // add the thread's reference to the threads vector
         return;
     }
 
     // recursive case: need to introduce another loop for the next factor
-    for (uint64_t offset = 0; offset < factors[permutation[cur_col]]->level; offset++) {
-        int temp = row[permutation[cur_col]];
-        row[permutation[cur_col]] = (row[permutation[cur_col]] + static_cast<int>(offset)) %
-            static_cast<int>(factors[permutation[cur_col]]->level); // try every value for this factor
+    for (uint16_t offset = 0; offset < factors[permutation[cur_col]]->level; offset++) {
+        uint16_t temp = row[permutation[cur_col]];
+        row[permutation[cur_col]] = (row[permutation[cur_col]] + offset) %
+            factors[permutation[cur_col]]->level;   // try every value for this factor
         heuristic_all_helper(row, cur_col+1, threads);
         row[permutation[cur_col]] = temp;
     }
@@ -505,27 +504,27 @@ void Array::heuristic_all_helper(int *row, uint64_t cur_col, std::vector<std::th
  * returns:
  * - none, but scores may be updates
 */
-void Array::heuristic_all_scorer(int *row, std::string row_str)
+void Array::heuristic_all_scorer(uint16_t *row, std::string row_str)
 {
     // current thread will work with unique copies of the data structures being modified
     Array *copy = clone();
     copy->update_array(row, false); // see how all scores, etc., would change
 
     // define the row score to be the combination of net changes below, weighted by importance
-    int64_t row_score = 0; //= prev_score - static_cast<int64_t>(score);
+    uint64_t row_score = 0;
     for (Single *this_s : singles) { // improve the score based on individual Single improvement
         Single *copy_s = copy->single_map.at(this_s->to_string());
-        uint64_t weight = (factors[this_s->factor]->level); // higher level factors hold more weight
-        row_score += static_cast<int64_t>(weight*(this_s->c_issues - copy_s->c_issues));
-        row_score += 2*weight*(this_s->l_issues - copy_s->l_issues);
-        row_score += static_cast<int64_t>(3*weight*(this_s->d_issues - copy_s->d_issues));
+        uint64_t weight = static_cast<uint64_t>(factors[this_s->factor]->level);    // higher level factors hold more weight
+        row_score += (this_s->c_issues - copy_s->c_issues)*weight/3;
+        row_score += (this_s->l_issues - copy_s->l_issues)*weight/2;
+        row_score += (this_s->d_issues - copy_s->d_issues)*weight;
     }
     delete copy;
 
     if (debug == d_on) {
         std::stringstream thread_output;
         thread_output << "==" << std::this_thread::get_id() << "== For row [" << row[0];
-        for (uint64_t col = 1; col < num_factors; col++) thread_output << " " << row[col];
+        for (uint16_t col = 1; col < num_factors; col++) thread_output << " " << row[col];
         thread_output << "], score is " << row_score << std::endl;
         scores_mutex.lock();
         printf("%s", thread_output.str().c_str());

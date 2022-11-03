@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/30/2022
+Last updated 11/02/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods used to process input via an Parser class. Should the input  |
@@ -13,9 +13,9 @@ Last updated 10/30/2022
 #include <algorithm>
 
 // method forward declarations
-bool bad_t(uint64_t t, uint64_t num_cols);
-bool bad_d(uint64_t d, uint64_t t, std::vector<uint64_t> *levels, prop_mode p);
-bool bad_delta(uint64_t d, uint64_t t, uint64_t delta, std::vector<uint64_t> *levels);
+bool bad_t(uint16_t t, uint16_t num_cols);
+bool bad_d(uint16_t d, uint16_t t, std::vector<uint16_t> *levels, prop_mode p);
+bool bad_delta(uint16_t d, uint16_t t, uint16_t delta, std::vector<uint16_t> *levels);
 
 /* CONSTRUCTOR - initializes the object
  * - overloaded: this is the default with no parameters, and should not be used
@@ -30,9 +30,9 @@ Parser::Parser()
 /* CONSTRUCTOR - initializes the object
  * - overloaded: this version can set its fields based on the command line arguments
 */
-Parser::Parser(int argc, char *argv[]) : Parser()
+Parser::Parser(int32_t argc, char *argv[]) : Parser()
 {
-    int itr = 1, num_params = 0;
+    int32_t itr = 1, num_params = 0;
     p = c_only;
     while (itr < argc) {
         std::string arg(argv[itr]);    // cast to std::string
@@ -66,7 +66,7 @@ Parser::Parser(int argc, char *argv[]) : Parser()
             }
         } else {    // command line arguments for specifying d, t, and δ
             try {   // see if it is an int
-                uint64_t param = static_cast<uint64_t>(std::stoi(arg));
+                uint64_t param = static_cast<uint16_t>(std::stoi(arg));
                 if (num_params < 1) {
                     t = param;
                 } else if (num_params < 2) {
@@ -99,7 +99,7 @@ Parser::Parser(int argc, char *argv[]) : Parser()
  * returns:
  * - code representing success/failure
 */
-int Parser::process_input()
+int32_t Parser::process_input()
 {
     if (o != silent) printf("Reading input....\n\n");
     try {
@@ -130,8 +130,8 @@ int Parser::process_input()
     std::getline(in, cur_line);
     try {
         std::istringstream iss(cur_line);
-        uint64_t level;
-        for (uint64_t i = 0; i < num_cols; i++) {
+        uint16_t level;
+        for (uint16_t i = 0; i < num_cols; i++) {
             if (!(iss >> level)) throw 0;   // error when not enough levels given or not int
             levels.push_back(level);
         }
@@ -181,30 +181,23 @@ void Parser::trim(std::string &s) {
  * returns:
  * - void (caller should decide whether to quit or continue)
 */
-void Parser::syntax_error(int lineno, std::string expected, std::string actual, bool verbose)
+void Parser::syntax_error(uint64_t lineno, std::string expected, std::string actual, bool verbose)
 {
-    printf("\t-- ERROR --\n\tInput format violated on line %d. Expected \"%s\" but got \"%s\" instead.\n",
+    printf("\t-- ERROR --\n\tInput format violated on line %lu. Expected \"%s\" but got \"%s\" instead.\n",
         lineno, expected.c_str(), actual.c_str());
     if (verbose) printf("\tFor formatting details, please check the README.\n");
     printf("\n");
 }
 
-/* DECONSTRUCTOR - frees memory
-*/
-Parser::~Parser()
-{
-    for (uint64_t *row : array) delete[] row;
-}
-
 // ==============================   LOCAL HELPER METHODS BELOW THIS POINT   ============================== //
 
-bool bad_t(uint64_t t, uint64_t num_cols)
+bool bad_t(uint16_t t, uint16_t num_cols)
 {
     if (t > num_cols) {
         printf("\t-- ERROR --\n");
         printf("\tImpossible to generate array with higher interaction strength than number of factors.\n");
-        printf("\tstrength          --> %lu\n", t);
-        printf("\tnumber of factors --> %lu\n\n", num_cols);
+        printf("\tstrength          --> %hu\n", t);
+        printf("\tnumber of factors --> %hu\n\n", num_cols);
         return true;
     }
     if (t == 0) {
@@ -214,22 +207,22 @@ bool bad_t(uint64_t t, uint64_t num_cols)
     return false;
 }
 
-bool bad_d(uint64_t d, uint64_t t, std::vector<uint64_t> *levels, prop_mode p)
+bool bad_d(uint16_t d, uint16_t t, std::vector<uint16_t> *levels, prop_mode p)
 {
     if (p == all || p == c_and_l) { // location
         uint64_t count = 0;
         for (uint64_t level : *levels) {
             if (level < d) {
                 printf("\t-- ERROR --\n");
-                printf("\tImpossible to generate (%lu, %lu)-locating array ", d, t);
-                printf("when any factor has less than %lu possible levels.\n\n", d);
+                printf("\tImpossible to generate (%hu, %hu)-locating array ", d, t);
+                printf("when any factor has less than %hu possible levels.\n\n", d);
                 return true;
             }
             if (level == d) {
                 count++;
                 if (count >= 2) {
-                    printf("\t-- ERROR --\n\tImpossible to generate (%lu, %lu)-locating array ", d, t);
-                    printf("when 2 or more factors have exactly %lu possible levels.\n\n", d);
+                    printf("\t-- ERROR --\n\tImpossible to generate (%hu, %hu)-locating array ", d, t);
+                    printf("when 2 or more factors have exactly %hu possible levels.\n\n", d);
                     return true;
                 }
             }
@@ -238,17 +231,17 @@ bool bad_d(uint64_t d, uint64_t t, std::vector<uint64_t> *levels, prop_mode p)
     return false;
 }
 
-bool bad_delta(uint64_t d, uint64_t t, uint64_t delta, std::vector<uint64_t> *levels)
+bool bad_delta(uint16_t d, uint16_t t, uint16_t delta, std::vector<uint16_t> *levels)
 {
     if (delta == 0) {
         printf("\t-- ERROR --\n\tδ cannot be 0.\n\n");
         return true;
     }
-    for (uint64_t level : *levels) {
+    for (uint16_t level : *levels) {
         if (level <= d) {
             printf("\t-- ERROR --\n");
-            printf("\tImpossible to generate (%lu, %lu, %lu)-detecting array ", d, t, delta);
-            printf("when any factor has %lu or less possible levels.\n\n", d);
+            printf("\tImpossible to generate (%hu, %hu, %hu)-detecting array ", d, t, delta);
+            printf("when any factor has %hu or less possible levels.\n\n", d);
             return true;
         }
     }

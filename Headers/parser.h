@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 09/20/2022
+Last updated 11/02/2022
 
 |===========================================================================================================|
 |   This header contains a class used for processing input. Should the input format change, this class can  |
@@ -70,38 +70,55 @@ typedef enum {
 class Parser
 {
     public:
-        std::string out_filename;       // output filename
-        std::ofstream out;              // output file
-        // arguments
-        uint64_t d;     // magnitude of 𝒯 sets of t-way interactions
-        uint64_t t;     // strength of interactions
-        uint64_t delta; // desired separation
+        // output filename
+        std::string out_filename;
 
-        // flags
-        debug_mode debug;   // debug mode, d_off by default
-        verb_mode v;        // verbose mode, v_off by default
-        out_mode o;         // output mode, normal by default
-        prop_mode p;        // properties mode, all by default
+        // output file
+        std::ofstream out;
+        
+        // magnitude of 𝒯 sets of t-way interactions
+        uint16_t d;
 
-        // array stuff
-        uint64_t num_rows = 0;          // rows, or tests, in the array
-        uint64_t num_cols = 0;          // columns, or factors, in the array
-        std::vector<uint64_t> levels;   // levels associated with each factor
-        std::vector<uint64_t*> array;   // the array itself
-        int process_input();            // call this to process standard in
+        // strength of interactions
+        uint16_t t;
 
-        // constructor(s) and deconstructor
-        Parser();                       // default constructor, probably won't be used
-        Parser(int argc, char *argv[]); // constructor to read arguments and flags
-        ~Parser();                      // deconstructor
+        // desired separation
+        uint16_t delta;
+
+        // debug mode, d_off by default
+        debug_mode debug;
+
+        // verbose mode, v_off by default
+        verb_mode v;
+
+        // output mode, normal by default
+        out_mode o;
+
+        // properties mode, all by default
+        prop_mode p;
+
+        // rows, or tests, in the array
+        uint64_t num_rows = 0;
+
+        // columns, or factors, in the array
+        uint16_t num_cols = 0;
+
+        // levels associated with each factor
+        std::vector<uint16_t> levels;
+
+        int32_t process_input();            // call this to process the input file
+        Parser();                           // default constructor, probably won't be used
+        Parser(int32_t argc, char *argv[]); // constructor to read arguments and flags
 
     private:
-        std::string in_filename;        // input filename
-        std::ifstream in;               // input file
-        void trim(std::string &s);
-        void syntax_error(int lineno, std::string expected, std::string actual, bool verbose = true);
-        void semantic_error(int lineno, int row, int col, int level, int value, bool verbose = true);
-        void other_error(int lineno, std::string line, bool verbose = true);
+        // input filename
+        std::string in_filename;
+
+        // input file
+        std::ifstream in;
+
+        void trim(std::string &s);  // trims a string of whitespace on either side
+        void syntax_error(uint64_t lineno, std::string expected, std::string actual, bool verbose = true);
 };
 
 #endif // PARSER

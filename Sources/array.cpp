@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/30/2022
+Last updated 11/02/2022
 
 |===========================================================================================================|
 |   This file contains the meat of the project's logic. The constructor for the Array class takes a pointer |
@@ -25,13 +25,9 @@ Last updated 10/30/2022
 #include <time.h>
 
 // method forward declarations
-static void print_failure(Interaction *interaction);
-static void print_failure(T *t_set_1, T *t_set_2);
-static void print_failure(Interaction *interaction, T *t_set, uint64_t delta, std::set<int> *dif);
-static void print_singles(Factor **factors, uint64_t num_factors);
+static void print_singles(Factor **factors, uint16_t num_factors);
 static void print_interactions(std::vector<Interaction*> interactions);
 static void print_sets(std::vector<T*> sets);
-static void print_debug(Factor **factors, uint64_t num_factors);
 
 /* CONSTRUCTOR - initializes the object
  * - overloaded: this version can set its fields based on a premade vector of Single pointers
@@ -110,17 +106,17 @@ Array::Array(Parser *in) : Array::Array()
     num_tests = in->num_rows;
     num_factors = in->num_cols;
     dont_cares = new prop_mode[num_factors]{none};
-    permutation = new int[num_factors];
-    for (uint64_t col = 0; col < num_factors; col++) permutation[col] = col;
+    permutation = new uint16_t[num_factors];
+    for (uint16_t col = 0; col < num_factors; col++) permutation[col] = col;
     debug = in->debug; v = in->v; o = in->o; p = in->p;
     
     if (o != silent) printf("Building internal data structures....\n\n");
     try {
         // build all Singles, associated with an array of Factors
         factors = new Factor*[num_factors];
-        for (uint64_t i = 0; i < num_factors; i++) {
+        for (uint16_t i = 0; i < num_factors; i++) {
             factors[i] = new Factor(i, in->levels.at(i), new Single*[in->levels.at(i)]);
-            for (uint64_t j = 0; j < factors[i]->level; j++) {
+            for (uint16_t j = 0; j < factors[i]->level; j++) {
                 factors[i]->singles[j] = new Single(i, j);
                 singles.push_back(factors[i]->singles[j]);
                 single_map.insert({factors[i]->singles[j]->to_string(), factors[i]->singles[j]});
@@ -186,8 +182,9 @@ Array::Array(Parser *in) : Array::Array()
  *  --> intended to be used ONLY BY Array::clone()
 */
 Array::Array(uint64_t total_problems_o, uint64_t coverage_problems_o, uint64_t location_problems_o,
-    uint64_t detection_problems_o, std::vector<int*> *rows_o, uint64_t num_tests_o, uint64_t num_factors_o,
-    Factor **factors_o, prop_mode p_o, uint64_t d_o, uint64_t t_o, uint64_t delta_o): Array::Array()
+    uint64_t detection_problems_o, std::vector<uint16_t*> *rows_o, uint64_t num_tests_o,
+    uint16_t num_factors_o, Factor **factors_o, prop_mode p_o, uint16_t d_o, uint16_t t_o, uint16_t delta_o):
+    Array::Array()
 {
     total_problems = total_problems_o;
     coverage_problems = coverage_problems_o;
@@ -196,15 +193,15 @@ Array::Array(uint64_t total_problems_o, uint64_t coverage_problems_o, uint64_t l
     d = d_o; t = t_o; delta = delta_o;
     num_tests = num_tests_o; num_factors = num_factors_o;
     o = silent; p = p_o;
-    for (int *row_o : *rows_o) {
-        int *row = new int[num_factors];
-        for (uint64_t col = 0; col < num_factors; col++) row[col] = row_o[col];
+    for (uint16_t *row_o : *rows_o) {
+        uint16_t *row = new uint16_t[num_factors];
+        for (uint16_t col = 0; col < num_factors; col++) row[col] = row_o[col];
         rows.push_back(row);
     }
     factors = new Factor*[num_factors];
-    for (uint64_t i = 0; i < num_factors; i++) {
+    for (uint16_t i = 0; i < num_factors; i++) {
         factors[i] = new Factor(i, factors_o[i]->level, new Single*[factors_o[i]->level]);
-        for (uint64_t j = 0; j < factors[i]->level; j++) {
+        for (uint16_t j = 0; j < factors[i]->level; j++) {
             factors[i]->singles[j] = new Single(i, j);
             singles.push_back(factors[i]->singles[j]);
             single_map.insert({factors[i]->singles[j]->to_string(), factors[i]->singles[j]});
@@ -231,7 +228,7 @@ Array::Array(uint64_t total_problems_o, uint64_t coverage_problems_o, uint64_t l
  * returns:
  * - void, but after the method finishes, the array's interactions vector will be initialized
 */
-void Array::build_t_way_interactions(uint64_t start, uint64_t t_cur, std::vector<Single*> *singles_so_far)
+void Array::build_t_way_interactions(uint16_t start, uint16_t t_cur, std::vector<Single*> *singles_so_far)
 {
     // base case: interaction is completed and ready to store
     if (t_cur == 0) {
@@ -248,8 +245,9 @@ void Array::build_t_way_interactions(uint64_t start, uint64_t t_cur, std::vector
     }
 
     // recursive case: need to introduce another loop for higher strength
-    for (uint64_t col = start; col < num_factors - t_cur + 1; col++) {
-        for (uint64_t level = 0; level < factors[col]->level; level++) {
+    uint16_t end = num_factors - t_cur + 1;
+    for (uint16_t col = start; col < end; col++) {
+        for (uint16_t level = 0; level < factors[col]->level; level++) {
             singles_so_far->push_back(factors[col]->singles[level]);    // note these are Single *
             build_t_way_interactions(col+1, t_cur-1, singles_so_far);
             singles_so_far->pop_back();
@@ -271,7 +269,7 @@ void Array::build_t_way_interactions(uint64_t start, uint64_t t_cur, std::vector
  * returns:
  * - void, but after the method finishes, the array's sets set will be initialized
 */
-void Array::build_size_d_sets(uint64_t start, uint64_t d_cur, std::vector<Interaction*> *interactions_so_far)
+void Array::build_size_d_sets(uint16_t start, uint16_t d_cur, std::vector<Interaction*> *interactions_so_far)
 {
     // base case: set is completed and ready to store
     if (d_cur == 0) {
@@ -282,7 +280,7 @@ void Array::build_size_d_sets(uint64_t start, uint64_t d_cur, std::vector<Intera
     }
 
     // recursive case: need to introduce another loop for higher magnitude
-    for (uint64_t i = start; i < interactions.size() - d_cur + 1; i++) {
+    for (uint16_t i = start; i < interactions.size() - d_cur + 1; i++) {
         interactions_so_far->push_back(interactions[i]);    // note these are Interaction *
         build_size_d_sets(i+1, d_cur-1, interactions_so_far);
         interactions_so_far->pop_back();
@@ -303,15 +301,16 @@ void Array::build_size_d_sets(uint64_t start, uint64_t d_cur, std::vector<Intera
  * returns:
  * - void, but after the method finishes, the row_interactions set will hold all the interactions in the row
 */
-void Array::build_row_interactions(int *row, std::set<Interaction*> *row_interactions,
-    uint64_t start, uint64_t t_cur, std::string key)
+void Array::build_row_interactions(uint16_t *row, std::set<Interaction*> *row_interactions,
+    uint16_t start, uint16_t t_cur, std::string key)
 {
     if (t_cur == 0) {
         row_interactions->insert(interaction_map.at(key));
         return;
     }
 
-    for (uint64_t col = start; col < num_factors - t_cur + 1; col++) {
+    uint16_t end = num_factors - t_cur + 1;
+    for (uint16_t col = start; col < end; col++) {
         std::string cur = key + "f" + std::to_string(col) + "," + std::to_string(row[col]);
         build_row_interactions(row, row_interactions, col+1, t_cur-1, cur);
     }
@@ -372,12 +371,12 @@ void Array::print_stats(bool initial)
  * returns:
  * - void, but after the method finishes, the array will have a new row appended to its end
 */
-void Array::update_array(int *row, bool keep)
+void Array::update_array(uint16_t *row, bool keep)
 {
     rows.push_back(row);
     if (o == normal && keep) {
         printf("> Pushed row:\t");
-        for (uint64_t i = 0; i < num_factors; i++) printf("%d\t", row[i]);
+        for (uint16_t i = 0; i < num_factors; i++) printf("%hu\t", row[i]);
         printf("\n");
     }
     num_tests++;
@@ -387,7 +386,7 @@ void Array::update_array(int *row, bool keep)
     std::set<T*> row_sets;  // all T sets that occur in this row
     for (Interaction *i : row_interactions) {
         for (Single *s: i->singles) s->rows.insert(num_tests); // add the row to Singles in this Interaction
-        i->rows.insert(num_tests); // add the row to this Interaction itself
+        i->rows.insert(num_tests);          // add the row to this Interaction itself
         for (T *t_set : i->sets) {
             t_set->rows.insert(num_tests);  // add the row to all T sets this Interaction is part of
             row_sets.insert(t_set);         // also add the T set to row_sets
@@ -403,9 +402,9 @@ void Array::update_array(int *row, bool keep)
     update_dont_cares();
     if (heuristic_in_use != all) {
         std::string row_str = std::to_string(row[0]);   // string representation of the row
-        for (uint64_t col = 1; col < num_factors; col++)
+        for (uint16_t col = 1; col < num_factors; col++)
             row_str += ' ' + std::to_string(row[col]);
-        row_scores[row_str] = delta == 1 ? 1 : UINT64_MAX;  // will allow heuristic_all to skip some work
+        row_scores[row_str] = delta <= 1 ? 1 : UINT64_MAX;  // will allow heuristic_all to skip some work
     }
     update_heuristic();
 }
@@ -444,7 +443,7 @@ void Array::update_scores(std::set<Interaction*> *row_interactions, std::set<T*>
             std::set<T*> other_sets = *row_sets;    // will hold all row T sets this Interaction is NOT in
             for (T *t_set : i->sets) other_sets.erase(t_set);
             for (T *t_set : other_sets) {   // for every T set in this row that this Interaction is not in,
-                if (i->deltas.at(t_set) <= static_cast<int64_t>(delta))
+                if (i->deltas.at(t_set) <= delta)
                     for (Single *s: i->singles) {
                         factors[s->factor]->d_issues++;
                         s->d_issues++;  // to balance out a -- later
@@ -454,8 +453,8 @@ void Array::update_scores(std::set<Interaction*> *row_interactions, std::set<T*>
             }
             for (auto &kv : i->deltas) {    // for all T sets,
                 kv.second++;    // increase their separation; offset by the -- earlier for T sets in this row
-                if (kv.second < static_cast<int64_t>(delta)) i->is_detectable = false;    // separation still not high enough
-                if (kv.second <= static_cast<int64_t>(delta)) // detection issue heading towards solved for all Singles involved
+                if (kv.second < delta) i->is_detectable = false;    // separation still not high enough
+                if (kv.second <= delta) // detection issue heading towards solved for all Singles involved
                     for (Single *s: i->singles) {
                         factors[s->factor]->d_issues--;
                         s->d_issues--;
@@ -542,20 +541,20 @@ void Array::update_scores(std::set<Interaction*> *row_interactions, std::set<T*>
 */
 void Array::update_dont_cares()
 {
-    for (uint64_t col = 0; col < num_factors; col++) {
+    for (uint16_t col = 0; col < num_factors; col++) {
         if (dont_cares[col] == none && factors[col]->c_issues == 0) {
             dont_cares[col] = c_only;
-            if (debug == d_on) printf("==%d== All coverage issues associated with factor %lu are solved!\n",
+            if (debug == d_on) printf("==%d== All coverage issues associated with factor %hu are solved\n",
                 getpid(), col);
         }
         if (p != c_only && dont_cares[col] == c_only && factors[col]->l_issues == 0) {
             dont_cares[col] = c_and_l;
-            if (debug == d_on) printf("==%d== All location issues associated with factor %lu are solved!\n",
+            if (debug == d_on) printf("==%d== All location issues associated with factor %hu are solved\n",
                 getpid(), col);
         }
         if (p == all && dont_cares[col] == c_and_l && factors[col]->d_issues == 0) {
             dont_cares[col] = all;
-            if (debug == d_on) printf("==%d== All detection issues associated with factor %lu are solved!\n",
+            if (debug == d_on) printf("==%d== All detection issues associated with factor %hu are solved\n",
                 getpid(), col);
         }
     }
@@ -620,17 +619,15 @@ Array *Array::clone()
         clone_s->d_issues = this_s->d_issues;
     }
     for (Interaction *this_i : interactions) {
-        // DEBUG point
         Interaction *clone_i = clone->interaction_map.at(this_i->to_string());
         clone_i->rows = this_i->rows;
         clone_i->is_covered = this_i->is_covered;
         clone_i->is_detectable = this_i->is_detectable;
         for (auto &kv : this_i->deltas) {
             T *clone_t = clone->t_set_map.at(kv.first->to_string());
-            //clone_i->deltas.at(clone_t) = kv.second;
             clone_i->deltas.insert({clone_t, kv.second});
         }
-    }
+    }   // it hurts my brain so much to try and understand what's happening here lol
     for (T *this_t : sets) {
         T *clone_t = clone->t_set_map.at(this_t->to_string());
         clone_t->rows = this_t->rows;
@@ -652,8 +649,8 @@ Array *Array::clone()
 std::string Array::to_string()
 {
     std::string ret = "";
-    for (int *row : rows) {
-        for (uint64_t i = 0; i < num_factors; i++)
+    for (uint16_t *row : rows) {
+        for (uint16_t i = 0; i < num_factors; i++)
             ret += std::to_string(row[i]) + '\t';
         ret += '\n';
     }
@@ -665,7 +662,7 @@ std::string Array::to_string()
 Array::~Array()
 {
     for (uint64_t i = 0; i < num_tests; i++) delete[] rows[i];
-    for (uint64_t i = 0; i < num_factors; i++) delete factors[i];
+    for (uint16_t i = 0; i < num_factors; i++) delete factors[i];
     delete[] factors;
     for (Interaction *i : interactions) delete i;
     for (T *t_set : sets) delete t_set;
@@ -675,69 +672,15 @@ Array::~Array()
 
 // ==============================   LOCAL HELPER METHODS BELOW THIS POINT   ============================== //
 
-static void print_failure(Interaction *interaction)
+static void print_singles(Factor **factors, uint16_t num_factors)
 {
-    printf("\t-- %lu-WAY INTERACTION NOT PRESENT --\n", interaction->singles.size());
-    std::string output("\t{");
-    for (Single *s : interaction->singles)
-        output += "(f" + std::to_string(s->factor) + ", " + std::to_string(s->value) + "), ";
-    output = output.substr(0, output.size() - 2) + "}\n";
-    std::cout << output << std::endl;
-}
-
-static void print_failure(T *t_set_1, T *t_set_2)
-{
-    printf("\t-- DISTINCT SETS WITH EQUAL ROWS --\n");
-    std::string output("\tSet 1: { {");
-    for (Interaction *i : t_set_1->interactions) {
-        for (Single *s : i->singles)
-            output += "(f" + std::to_string(s->factor) + ", " + std::to_string(s->value) + "), ";
-        output = output.substr(0, output.size() - 2) + "}; ";
-    }
-    output = output.substr(0, output.size() - 2) + " }\n\tSet 2: { {";
-    for (Interaction *i : t_set_2->interactions) {
-        for (Single *s : i->singles)
-            output += "(f" + std::to_string(s->factor) + ", " + std::to_string(s->value) + "), ";
-        output = output.substr(0, output.size() - 2) + "}; ";
-    }
-    output = output.substr(0, output.size() - 2) + " }\n\tRows: { ";
-    for (int row : t_set_1->rows) output += std::to_string(row) + ", ";
-    output = output.substr(0, output.size() - 2) + " }\n";
-    std::cout << output << std::endl;
-}
-
-static void print_failure(Interaction *interaction, T *t_set, uint64_t delta, std::set<int> *dif)
-{
-    printf("\t-- ROW DIFFERENCE LESS THAN %lu --\n", delta);
-    std::string output("\tInt: {");
-    for (Single *s : interaction->singles)
-        output += "(f" + std::to_string(s->factor) + ", " + std::to_string(s->value) + "), ";
-    output = output.substr(0, output.size() - 2) + "}, { ";
-    for (int row : interaction->rows) output += std::to_string(row) + ", ";
-    output = output.substr(0, output.size() - 2) + " }\n\tSet: { {";
-    for (Interaction *i : t_set->interactions) {
-        for (Single *s : i->singles)
-            output += "(f" + std::to_string(s->factor) + ", " + std::to_string(s->value) + "), ";
-        output = output.substr(0, output.size() - 2) + "}; {";
-    }
-    output = output.substr(0, output.size() - 3) + " }, { ";
-    for (int row : t_set->rows) output += std::to_string(row) + ", ";
-    output = output.substr(0, output.size() - 2) + " }\n\tDif: { ";
-    for (int row : *dif) output += std::to_string(row) + ", ";
-    if (dif->size() > 0) output = output.substr(0, output.size() - 2) + " }\n";
-    else output += "}\n";
-    std::cout << output << std::endl;
-}
-
-static void print_singles(Factor **factors, uint64_t num_factors)
-{
-    int pid = getpid();
+    uint32_t pid = getpid();
     printf("\n==%d== Listing all Singles below:\n\n", pid);
-    for (uint64_t col = 0; col < num_factors; col++) {
-        printf("Factor %lu:\n", factors[col]->id);
-        for (uint64_t level = 0; level < factors[col]->level; level++) {
-            printf("\t(f%lu, %lu): {", factors[col]->singles[level]->factor, factors[col]->singles[level]->value);
-            for (int row : factors[col]->singles[level]->rows) printf(" %d", row);
+    for (uint16_t col = 0; col < num_factors; col++) {
+        printf("Factor %hu:\n", factors[col]->id);
+        for (uint16_t level = 0; level < factors[col]->level; level++) {
+            printf("\t(f%hu, %hu): {", col, factors[col]->singles[level]->value);
+            for (uint64_t row : factors[col]->singles[level]->rows) printf(" %lu", row);
             printf(" }\n");
         }
         printf("\n");
@@ -746,41 +689,30 @@ static void print_singles(Factor **factors, uint64_t num_factors)
 
 static void print_interactions(std::vector<Interaction*> interactions)
 {
-    int pid = getpid();
+    uint32_t pid = getpid();
     printf("\n==%d== Listing all Interactions below:\n\n", pid);
-    int i = 0;
+    uint32_t i = 0;
     for (Interaction *interaction : interactions) {
         interaction->id = ++i;
-        printf("Interaction %d:\n\tInt: {", i);
-        for (Single *s : interaction->singles) printf(" (f%lu, %lu)", s->factor, s->value);
+        printf("Interaction %u:\n\tInt: {", i);
+        for (Single *s : interaction->singles) printf(" (f%hu, %hu)", s->factor, s->value);
         printf(" }\n\tRows: {");
-        for (int row : interaction->rows) printf(" %d", row);
+        for (uint64_t row : interaction->rows) printf(" %lu", row);
         printf(" }\n\n");
     }
 }
 
 static void print_sets(std::vector<T*> sets)
 {
-    int pid = getpid();
+    uint32_t pid = getpid();
     printf("\n==%d== Listing all Ts below:\n\n", pid);
-    int i = 0;
+    uint32_t i = 0;
     for (T *t_set : sets) {
         t_set->id = ++i;
-        printf("Set %d:\n\tSet: {", i);
-        for (Interaction *interaction : t_set->interactions) printf(" %d", interaction->id);
+        printf("Set %u:\n\tSet: {", i);
+        for (Interaction *interaction : t_set->interactions) printf(" %u", interaction->id);
         printf(" }\n\tRows: {");
-        for (int row : t_set->rows) printf(" %d", row);
+        for (uint64_t row : t_set->rows) printf(" %lu", row);
         printf(" }\n\n");
-    }
-}
-
-static void print_debug(Factor **factors, uint64_t num_factors)
-{
-    for (uint64_t col = 0; col < num_factors; col++) {
-        for (uint64_t val = 0; val < factors[col]->level; val++) {
-            Single *s = factors[col]->singles[val];
-            printf("DEBUG: for (f%lu, %lu):\n\t%lu c_issues\n\t%ld l_issues\n\t%lu d_issues\n\n",
-                col, val, s->c_issues, s->l_issues, s->d_issues);
-        }
     }
 }

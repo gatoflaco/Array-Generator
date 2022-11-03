@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/30/2022
+Last updated 11/01/2022
 
 |===========================================================================================================|
 |   This file contains the main() method which reflects the high level flow of the program. It starts by    |
@@ -48,9 +48,9 @@ static prop_mode pm;    // property mode
 
 // =========================v=v=v== static methods - forward declarations ==v=v=v========================= //
 
-static int print_usage();
-static int print_results(Parser *p, Array *array, bool success);
-static void debug_print(int d, int t, int delta);
+static int32_t print_usage();
+static int32_t print_results(Parser *p, Array *array, bool success);
+static void debug_print(uint8_t d, uint8_t t, uint8_t delta);
 
 // =========================^=^=^== static methods - forward declarations ==^=^=^========================= //
 
@@ -65,13 +65,13 @@ static void debug_print(int d, int t, int delta);
  * returns:
  * - exit code representing the state of the program (0 means the program finished successfully)
 */
-int main(int argc, char *argv[])
+int32_t main(int32_t argc, char *argv[])
 {
     if (argc < 2 ||  strcmp(argv[1], "--help") == 0) return print_usage();  // user gave no args or --help
     Parser p(argc, argv);           // create Parser object, immediately processes arguments and flags
     dm = p.debug; vm = p.v; om = p.o; pm = p.p; // update flags based on those processed by the Parser
     
-	int status = p.process_input();                 // read in and process the array
+	int32_t status = p.process_input();             // read in and process the array
     if (status == -1) return 1;         // exit immediately if there is a basic syntactic or semantic error
     if (dm == d_on) debug_print(p.d, p.t, p.delta); // print status when verbose mode enabled
     
@@ -100,21 +100,21 @@ int main(int argc, char *argv[])
  * returns:
  * - exit code representing the state of the program (0 means the program finished successfully)
 */
-static int print_usage()
+static int32_t print_usage()
 {
-    printf("usage: ./generate [flags | -] [t | d t | d t δ] [input file] [output file | -]\n");
+    printf("usage: ./generate [flags] (<t> | <d> <t> | <d> <t> <δ>) <input file> [output file]\n");
     printf("flags (some can be combined):\n");
     printf("\t-d          : debug mode (prints extra state information while running)\n");
     printf("\t-h          : halfway mode (prints less output than normal)\n");
     printf("\t-s          : silent mode (prints no output, cancels other flags)\n");
     printf("\t-v          : verbose mode (prints more output than normal)\n");
     printf("arguments (assume order matters):\n");
-    printf("\tt           : strength of interactions, needed for all typed of arrays\n");
+    printf("\tt           : strength of interactions, needed for all types of arrays\n");
     printf("\td           : size of sets of interactions, needed for locating and detecting arrays\n");
     printf("\tδ           : separation of interactions from other sets, needed for detecting arrays\n");
     printf("\tinput file  : file containing array parameter info\n");
     printf("\toutput file : file in which to print finished array (if not specified, stdout is used)\n");
-    printf("for more details, please visit https://github.com/gatoflaco/Array-Generator\n");
+    printf("for more details, please refer to the README, or visit https://github.com/gatoflaco/Array-Generator\n");
     return 0;
 }
 
@@ -129,7 +129,7 @@ static int print_usage()
  * returns:
  * - exit code representing the state of the program (0 means the program finished successfully)
 */
-static int print_results(Parser *p, Array *array, bool success)
+static int32_t print_results(Parser *p, Array *array, bool success)
 {
     if (!success) {
         printf("\nWARNING: It appears impossible to complete array with requested properties.\n");
@@ -177,8 +177,8 @@ static int print_results(Parser *p, Array *array, bool success)
  * returns:
  * - void; simply prints to console
 */
-static void debug_print(int d, int t, int delta) {
-    int pid = getpid();
+static void debug_print(uint8_t d, uint8_t t, uint8_t delta) {
+    int32_t pid = getpid();
     printf("==%d== Debug mode is enabled. Look for liness preceeded by the PID.\n", pid);
     if (vm == v_off) printf("==%d== Verbose mode: disabled\n", pid);
     else if (vm == v_on) printf("==%d== Verbose mode: enabled\n", pid);

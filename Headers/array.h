@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 10/30/2022
+Last updated 11/02/2022
 
 |===========================================================================================================|
 |   This header contains classes for managing the array in an automated fashion. The Interaction and T      |
@@ -24,14 +24,14 @@ class Interaction
 {
     public:
         // used only in verbose mode, to have some id associated with the interaction
-        int id = -1;
+        uint32_t id = 0;
 
         // the actual list of (factor, value) tuples
         std::vector<Single*> singles;
 
         // this tracks the set of tests (represented as row numbers) in which this interaction occurs;
         // this row coverage is vital to analyzing the array's properties
-        std::set<int> rows;
+        std::set<uint64_t> rows;
 
         // easy lookup bool to cut down on redundant checks
         bool is_covered = false;
@@ -43,7 +43,7 @@ class Interaction
         // this tracks the set differences between the set of rows in which this Interaction occurs and the
         // sets of rows in which relevant T sets this Interaction is not part of occur; that is, this is
         // a field to map detection issues to their delta values
-        std::map<T*, int64_t> deltas;
+        std::map<T*, uint16_t> deltas;
 
         // easy lookup bool to cut down on redundant checks
         bool is_detectable = false;
@@ -59,7 +59,7 @@ class T
 {
     public:
         // used only in verbose mode, to have some id associated with the T set
-        int id;
+        uint32_t id = 0;
 
         // for easier access to the singles themselves
         std::vector<Single*> singles;
@@ -69,7 +69,7 @@ class T
 
         // each interaction in a given T set has its own version of this; the ρ associated with a T is simply
         // the union of the ρ's for each interaction in that T
-        std::set<int> rows;
+        std::set<uint64_t> rows;
 
         // this tracks all the T sets which occur in the same set of rows as this instance; when adding a
         // row to the array, each T set occurring in the row must be compared to every other T set to see
@@ -92,13 +92,13 @@ class Array
         uint64_t score;
 
         // this is the size of the sets of t-way interactions
-        uint64_t d;
+        uint16_t d;
 
         // this is the strength of interest
-        uint64_t t;
+        uint16_t t;
 
         // this is the desired separation of the array
-        uint64_t delta;
+        uint16_t delta;
         
         // tracks whether the array is t-covering
         bool is_covering;
@@ -130,12 +130,12 @@ class Array
         void print_stats(bool initial = false); // prints current stats such as score
         void add_row();             // adds a row to the array based on scoring
         std::string to_string();    // returns a string representing all rows
-        Array();    // default constructor, don't use this
-        Array(Parser *in);  // constructor with an initialized Parser object
+        Array();                    // default constructor, don't use this
+        Array(Parser *in);          // constructor with an initialized Parser object
         Array(uint64_t total_problems, uint64_t coverage_problems, uint64_t location_problems,
-            uint64_t detection_problems, std::vector<int*> *rows, uint64_t num_tests, uint64_t num_factors,
-            Factor **factors, prop_mode p, uint64_t d, uint64_t t, uint64_t delta);
-        ~Array();   // deconstructor
+            uint64_t detection_problems, std::vector<uint16_t*> *rows, uint64_t num_tests,
+            uint16_t num_factors, Factor **factors, prop_mode p, uint16_t d, uint16_t t, uint16_t delta);
+        ~Array();                   // deconstructor
 
     private:
         // the array's score starts off as this value
@@ -151,13 +151,13 @@ class Array
         uint64_t detection_problems;
         
         // list of the rows themselves, as a vector of int arrays
-        std::vector<int*> rows;
+        std::vector<uint16_t*> rows;
 
         // field to track the current number of rows
         uint64_t num_tests;
 
         // field to reference the upper bound on iterating through columns
-        uint64_t num_factors;
+        uint16_t num_factors;
 
         // pointer to the start of an array of pointers to Factor objects
         Factor **factors;
@@ -175,7 +175,7 @@ class Array
         bool just_switched_heuristics = false;
 
         // for dictating order of iteration; should be regularly shuffled
-        int *permutation;
+        uint16_t *permutation;
 
         // this makes the program print out data structures and program flow when enabled
         debug_mode debug;
@@ -197,35 +197,34 @@ class Array
 
         // this utility method is called in the constructor to fill out the vector of all interactions
         // almost certainly needs to be recursive in order to handle arbitrary values of t
-        void build_t_way_interactions(uint64_t start, uint64_t t_cur, std::vector<Single*> *singles_so_far);
+        void build_t_way_interactions(uint16_t start, uint16_t t_cur, std::vector<Single*> *singles_so_far);
 
         // after the above method completes, call this one to fill out the set of all size-d sets
         // almost certainly needs to be recursive in order to handle arbitrary values of d
-        void build_size_d_sets(uint64_t start, uint64_t d_cur,
-            std::vector<Interaction*> *interactions_so_far);
+        void build_size_d_sets(uint16_t start, uint16_t d_cur, std::vector<Interaction*> *interactions_so_far);
 
         // this utility method closely mimics the build_t_way_interactions() method, but uses the information
         // from a given row to fill out a set of interactions representing those that appear in the row
-        void build_row_interactions(int *row, std::set<Interaction*> *row_interactions,
-            uint64_t start, uint64_t t_cur, std::string key);
+        void build_row_interactions(uint16_t *row, std::set<Interaction*> *row_interactions,
+            uint16_t start, uint16_t t_cur, std::string key);
 
-        int *initialize_row_R();                                        // returns a randomly generated row
-        int *initialize_row_S();                                        // based on Singles
-        int *initialize_row_T(T **l_set, Interaction **l_interaction);  // based on T sets
-        int *initialize_row_I(Interaction **locked);                    // based on Interactions
+        uint16_t *initialize_row_R();                                       // randomly generated row
+        uint16_t *initialize_row_S();                                       // based on Singles
+        uint16_t *initialize_row_T(T **l_set, Interaction **l_interaction); // based on T sets
+        uint16_t *initialize_row_I(Interaction **locked);                   // based on Interactions
 
-        void heuristic_c_only(int *row);
-        int heuristic_c_helper(int *row, std::set<Interaction*> *row_interactions, int *problems);
+        void heuristic_c_only(uint16_t *row);
+        int32_t heuristic_c_helper(uint16_t *row, std::set<Interaction*> *row_interactions, int32_t *problems);
         
-        void heuristic_l_only(int *row, T *l_set, Interaction *l_interaction);
+        void heuristic_l_only(uint16_t *row, T *l_set, Interaction *l_interaction);
 
-        void heuristic_d_only(int *row, Interaction *locked);
+        void heuristic_d_only(uint16_t *row, Interaction *locked);
 
-        void heuristic_all(int *row);
-        void heuristic_all_helper(int *row, uint64_t cur_col, std::vector<std::thread*> *threads);
-        void heuristic_all_scorer(int *row, std::string row_str);
+        void heuristic_all(uint16_t *row);
+        void heuristic_all_helper(uint16_t *row, uint16_t cur_col, std::vector<std::thread*> *threads);
+        void heuristic_all_scorer(uint16_t *row, std::string row_str);
         
-        void update_array(int *row, bool keep = true);
+        void update_array(uint16_t *row, bool keep = true);
         void update_scores(std::set<Interaction*> *row_interactions, std::set<T*> *row_sets);
         void update_dont_cares();
         void update_heuristic();
