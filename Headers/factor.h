@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 11/02/2022
+Last updated 11/14/2022
 
 |===========================================================================================================|
 |   This header contains classes used for organizing data associated with the Array class. There should be  |
@@ -54,7 +54,7 @@ class Single
         Single(uint64_t f, uint64_t v); // constructor that takes the (factor, value)
 
     private:
-        std::string to_string_internal() const; // returns a string representing the (factor, value)
+        std::string to_string_internal() const;
 };
 
 // think of this class as containing the information associated with a single column in the array

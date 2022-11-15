@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 11/02/2022
+Last updated 11/14/2022
 
 |===========================================================================================================|
 |   This file contains mostly just constructors and deconstructors for the Single and Factor classes. The   |
@@ -20,11 +20,23 @@ Single::Single(uint64_t f, uint64_t v) : factor(f), value(v), str_rep(this->to_s
     // rows will be built later
 }
 
+/* UTILITY METHOD: to_string - gets a string representation of the Single
+ * 
+ * returns:
+ * - a string representing the Single
+ *  --> This is not to be used for printing; rather, it is for mapping unique strings to their Singles
+*/
 std::string Single::to_string() const
 {
     return str_rep;
 }
 
+/* HELPER METHOD: to_string_internal - called by the constructor to build the string representation
+ * - do not call outside of the constructor
+ * 
+ * returns:
+ * - a string representing the Single
+*/
 std::string Single::to_string_internal() const
 {
     return "f" + std::to_string(factor) + "," + std::to_string(value);

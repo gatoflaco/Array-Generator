@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 11/02/2022
+Last updated 11/14/2022
 
 |===========================================================================================================|
 |   This file contains the meat of the project's logic. The constructor for the Array class takes a pointer |
@@ -32,7 +32,7 @@ static void print_sets(std::vector<T*> sets);
 /* CONSTRUCTOR - initializes the object
  * - overloaded: this version can set its fields based on a premade vector of Single pointers
 */
-Interaction::Interaction(std::vector<Single*> *temp)
+Interaction::Interaction(std::vector<Single*> *temp) : str_rep(this->to_string_internal(temp))
 {
     for (uint64_t i = 0; i < temp->size(); i++) singles.push_back(temp->at(i));
 }
@@ -43,17 +43,28 @@ Interaction::Interaction(std::vector<Single*> *temp)
  * - a string representing the Interaction
  *  --> This is not to be used for printing; rather, it is for mapping unique strings to their Interactions
 */
-std::string Interaction::to_string()
+std::string Interaction::to_string() const
+{
+    return str_rep;
+}
+
+/* HELPER METHOD: to_string_internal - called by the constructor to build the string representation
+ * - do not call outside of the constructor
+ * 
+ * returns:
+ * - a string representing the Interaction
+*/
+std::string Interaction::to_string_internal(std::vector<Single*> *temp) const
 {
     std::string ret = "";
-    for (Single *single : singles) ret += single->to_string();
+    for (Single *single : *temp) ret += single->to_string();
     return ret;
 }
 
 /* CONSTRUCTOR - initializes the object
  * - overloaded: this version can set its fields based on a premade vector of Interaction pointers
 */
-T::T(std::vector<Interaction*> *temp)
+T::T(std::vector<Interaction*> *temp) : str_rep(this->to_string_internal(temp))
 {
     for (uint64_t i = 0; i < temp->size(); i++) interactions.push_back(temp->at(i));
 
@@ -70,10 +81,21 @@ T::T(std::vector<Interaction*> *temp)
  * - a string representing the T set
  *  --> This is not to be used for printing; rather, it is for mapping unique strings to their T sets
 */
-std::string T::to_string()
+std::string T::to_string() const
+{
+    return str_rep;
+}
+
+/* HELPER METHOD: to_string_internal - called by the constructor to build the string representation
+ * - do not call outside of the constructor
+ * 
+ * returns:
+ * - a string representing the T set
+*/
+std::string T::to_string_internal(std::vector<Interaction*> *temp) const
 {
     std::string ret = "";
-    for (Interaction *interaction : interactions) ret += interaction->to_string();
+    for (Interaction *interaction : *temp) ret += interaction->to_string();
     return ret;
 }
 

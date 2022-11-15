@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 11/02/2022
+Last updated 11/14/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods used to process input via an Parser class. Should the input  |

@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 11/02/2022
+Last updated 11/14/2022
 
 |===========================================================================================================|
 |   This header contains classes for managing the array in an automated fashion. The Interaction and T      |
@@ -48,8 +48,14 @@ class Interaction
         // easy lookup bool to cut down on redundant checks
         bool is_detectable = false;
 
-        std::string to_string();    // returns a string representing all Singles in the interaction
+        // memoized to_string_internal
+        const std::string str_rep;
+
+        std::string to_string() const;      // returns a string representing all Singles in the interaction
         Interaction(std::vector<Single*> *temp);    // constructor with a premade vector of Single pointers
+    
+    private:
+        std::string to_string_internal(std::vector<Single*> *temp) const;
 };
 
 // I wasn't sure what to name this, except after the formal parameter used in Dr. Colbourn's definitions
@@ -81,8 +87,14 @@ class T
         // easy lookup bool to cut down on redundant checks
         bool is_locatable = false;
 
-        std::string to_string();    // returns a string representing all Interactions in the set
+        // memoized to_string_internal
+        const std::string str_rep;
+
+        std::string to_string() const;      // returns a string representing all Interactions in the set
         T(std::vector<Interaction*> *temp); // constructor with a premade vector of Interaction pointers
+
+    private:
+        std::string to_string_internal(std::vector<Interaction*> *temp) const;
 };
 
 class Array
