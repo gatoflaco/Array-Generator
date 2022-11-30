@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 11/29/2022
+Last updated 11/30/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods belonging to the Array class which are declared in array.h.  |
@@ -101,7 +101,7 @@ uint16_t *Array::initialize_row_R(Interaction **locked, std::vector<Interaction*
     std::vector<Interaction*> *to_use = ties;   // assume ties will hold the worst interactions
     if (!to_use) to_use = &worst_interactions;  // if ties is nullptr, just use local
     for (Interaction *interaction : interactions) {
-        uint64_t cur_count = 0;
+        uint64_t cur_count = 4*(num_tests - interaction->rows.size());  // bias towards picking unsued ones
         for (Single *s : interaction->singles)
             cur_count += s->c_issues + s->l_issues + s->d_issues;
         if (cur_count >= worst_count) {     // worse or tied
@@ -498,9 +498,11 @@ void Array::heuristic_all(uint16_t *row)
             }
             best_rows.push_back(kv.first);  // whether it was better or only a tie, keep track of this row
         }
-        if (kv.second > 0 && kv.second < min_positive_score) min_positive_score = kv.second;
+        if (kv.second < min_positive_score) min_positive_score = kv.second;
     }
-    if (min_positive_score == UINT64_MAX) min_positive_score = 1;   // shouldn't ever happen
+    if (min_positive_score == UINT64_MAX) min_positive_score = 0;   // shouldn't ever happen
+    min_positive_score = (min_positive_score + best_score) / 3; // for next time, skip rows below this value
+    if (min_positive_score == 0) min_positive_score = 1;
 
     // choose the row that scored the best (for ties, choose randomly from among those tied for the best)
     uint64_t choice = static_cast<uint64_t>(rand()) % best_rows.size();  // for breaking ties randomly
