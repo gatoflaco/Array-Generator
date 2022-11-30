@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 11/14/2022
+Last updated 11/29/2022
 
 |===========================================================================================================|
 |   This file contains the meat of the project's logic. The constructor for the Array class takes a pointer |
@@ -379,6 +379,8 @@ void Array::print_stats(bool initial)
     if (v == v_on) {
         if (heuristic_in_use == c_only) printf("\t- Using heuristic_c_only.\n");
         else if (heuristic_in_use == l_only) printf("\t- Using heuristic_l_only.\n");
+        else if (heuristic_in_use == l_and_d) printf("\t- Using heuristic_l_and_d.\n");
+        else if (heuristic_in_use == d_only) printf("\t- Using heuristic_d_only.\n");
         else if (heuristic_in_use == all) printf("\t- Using heuristic_all.\n");
     }
 }
@@ -596,7 +598,8 @@ void Array::update_heuristic()
     // first up, should we use the most in-depth scoring function:
     if (p == c_only) {
         if (heuristic_in_use != all && total_problems < 10000) heuristic_in_use = all;
-        else if (heuristic_in_use == c_only && ratio < 0.40) heuristic_in_use = all;
+        else if (heuristic_in_use == d_only && ratio < 0.20) heuristic_in_use = all;
+        else if (heuristic_in_use == c_only && ratio < 0.40) heuristic_in_use = d_only; // small misnomer
         else if (heuristic_in_use == none) heuristic_in_use = c_only;
         else just_switched_heuristics = false;
         return;
@@ -604,7 +607,8 @@ void Array::update_heuristic()
     
     if (p == c_and_l) {
         if (heuristic_in_use != all && total_problems < 9000) heuristic_in_use = all;
-        else if (heuristic_in_use == l_only && ratio < 0.30) heuristic_in_use = all;
+        else if (heuristic_in_use == d_only && ratio < 0.15) heuristic_in_use = all;
+        else if (heuristic_in_use == l_only && ratio < 0.30) heuristic_in_use = d_only; // small misnomer
         else if (heuristic_in_use == c_only && ratio < 0.80) heuristic_in_use = l_only;
         else if (heuristic_in_use == none) heuristic_in_use = c_only;
         else just_switched_heuristics = false;
@@ -613,8 +617,9 @@ void Array::update_heuristic()
 
     if (p == all) {
         if (heuristic_in_use != all && total_problems < 8000) heuristic_in_use = all;
-        else if (heuristic_in_use == d_only && ratio < 0.20) heuristic_in_use = all;
-        else if (heuristic_in_use == l_only && ratio < 0.60) heuristic_in_use = d_only;
+        else if (heuristic_in_use == d_only && ratio < 0.10) heuristic_in_use = all;
+        else if (heuristic_in_use == l_and_d && ratio < 0.20) heuristic_in_use = d_only;
+        else if (heuristic_in_use == l_only && ratio < 0.60) heuristic_in_use = l_and_d;
         else if (heuristic_in_use == c_only && ratio < 0.85) heuristic_in_use = l_only;
         else if (heuristic_in_use == none) heuristic_in_use = c_only;
         else just_switched_heuristics = false;

@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 11/02/2022
+Last updated 11/29/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods belonging to the Array class which are declared in array.h.  |
@@ -10,6 +10,8 @@ Last updated 11/02/2022
 
 #include "array.h"
 #include <sstream>
+#include <unistd.h>
+#include <algorithm>
 
 /* SUB METHOD: add_row - adds a new row to the array using some predictive and scoring logic
  * - simply an interface for adding a row; method itself simply decides which heuristic to use
@@ -39,13 +41,16 @@ void Array::add_row()
             heuristic_c_only(new_row);
             break;
         case l_only:
-        case l_and_d:
             new_row = initialize_row_T(&locked_set, &locked_interaction);
             heuristic_l_only(new_row, locked_set, locked_interaction);
             break;
-        case d_only:
+        case l_and_d:
             new_row = initialize_row_I(&locked_interaction);
-            heuristic_d_only(new_row, locked_interaction);
+            heuristic_l_and_d(new_row, locked_interaction);
+            break;
+        case d_only:
+            new_row = initialize_row_R(&locked_interaction);
+            heuristic_all(new_row, locked_interaction);
             break;
         case all:
             new_row = initialize_row_R();
@@ -71,6 +76,48 @@ uint16_t *Array::initialize_row_R()
     uint16_t *new_row = new uint16_t[num_factors];
     for (uint16_t i = 0; i < num_factors; i++)
         new_row[i] = rand() % factors[i]->level;
+    return new_row;
+}
+
+/* SUB METHOD: initialize_row_R - creates a randomly generated row
+ * - overloaded: this version chooses a locked Interaction based on Single issues
+ * 
+ * parameters:
+ * - locked: pointer to Interaction* that will drive a scoring heuristic later
+ *  --> should be nullptr when passed in as a parameter; this method will assign the value
+ * - ties: pointer to vector that will containin all Interactions that tie when scored by this method
+ *  --> has a default value of nullptr, which will cause the method to break ties on its own, randomly
+ *  --> caller should pass address of local vector when intending to further analyze ties
+ * 
+ * returns:
+ * - a pointer to the first element in the array that represents the row
+*/
+uint16_t *Array::initialize_row_R(Interaction **locked, std::vector<Interaction*> *ties)
+{
+    uint16_t *new_row = initialize_row_R();
+
+    uint64_t worst_count = 0;
+    std::vector<Interaction*> worst_interactions;   // there could be ties for the worst
+    std::vector<Interaction*> *to_use = ties;   // assume ties will hold the worst interactions
+    if (!to_use) to_use = &worst_interactions;  // if ties is nullptr, just use local
+    for (Interaction *interaction : interactions) {
+        uint64_t cur_count = 0;
+        for (Single *s : interaction->singles)
+            cur_count += s->c_issues + s->l_issues + s->d_issues;
+        if (cur_count >= worst_count) {     // worse or tied
+            if (cur_count > worst_count) {  // strictly worse
+                worst_count = cur_count;
+                to_use->clear();
+            }
+            to_use->push_back(interaction);
+        }
+    }
+    if (ties && to_use->size() > 1) return new_row; // when caller intends to judge ties itself
+
+    // choose the interaction with most Single issues (for ties, choose randomly from among those tied)
+    *locked = to_use->at(static_cast<uint64_t>(rand()) % to_use->size());
+    for (Single *s : (*locked)->singles) new_row[s->factor] = s->value;
+    if (debug == d_on) printf("==%d== Locking interaction %s\n", getpid(), (*locked)->to_string().c_str());
     return new_row;
 }
 
@@ -121,11 +168,20 @@ uint16_t* Array::initialize_row_S()
 */
 uint16_t *Array::initialize_row_T(T **l_set, Interaction **l_interaction)
 {
-    uint16_t *new_row = initialize_row_R();
+    std::vector<Interaction*> ties;
+    uint16_t *new_row = initialize_row_R(l_interaction, &ties);
     
     uint64_t worst_count = 0;
-    std::vector<T*> worst_sets; // there could be ties for the worst
-    for (T *t_set : sets) {
+    std::vector<T*> worst_sets, working_sets;
+    for (T *t_set : sets) { // for all T sets,
+        std::vector<Interaction*> *vec = &t_set->interactions;
+        for (Interaction *i : ties) // for each Interaction in the list of candidates by issues,
+            if (std::find(vec->begin(), vec->end(), i) != vec->end()) { // if this set contains one of those,
+                working_sets.push_back(t_set);  // keep this set in the list of potential choices
+                break;
+            }
+    }
+    for (T *t_set : working_sets) {
         if (t_set->location_conflicts.size() >= worst_count) {      // worse or tied
             if (t_set->location_conflicts.size() > worst_count) {   // strictly worse
                 worst_count = t_set->location_conflicts.size();
@@ -137,8 +193,17 @@ uint16_t *Array::initialize_row_T(T **l_set, Interaction **l_interaction)
 
     // choose the set with most conflicts (for ties, choose randomly from among those tied)
     *l_set = worst_sets.at(static_cast<uint64_t>(rand()) % worst_sets.size());
+    if (ties.size() == 1) {
+        if (debug == d_on) printf("==%d== Locking t_set %s\n", getpid(), (*l_set)->to_string().c_str());
+        return new_row;
+    }
+
     *l_interaction = (*l_set)->interactions.at(static_cast<uint64_t>(rand()) % (*l_set)->interactions.size());
     for (Single *s : (*l_interaction)->singles) new_row[s->factor] = s->value;
+    if (debug == d_on) {
+        printf("==%d== Locking interaction %s\n", getpid(), (*l_interaction)->to_string().c_str());
+        printf("==%d== Locking t_set %s\n", getpid(), (*l_set)->to_string().c_str());
+    }
     return new_row;
 }
 
@@ -153,11 +218,13 @@ uint16_t *Array::initialize_row_T(T **l_set, Interaction **l_interaction)
 */
 uint16_t *Array::initialize_row_I(Interaction **locked)
 {
-    uint16_t *new_row = initialize_row_R();
-    
+    std::vector<Interaction*> ties;
+    uint16_t *new_row = initialize_row_R(locked, &ties);
+    if (ties.size() == 1) return new_row;   // no ties; initialize_row_R already locked an Interaction
+
     uint64_t worst_count = 0;
     std::vector<Interaction*> worst_interactions;   // there could be ties for the worst
-    for (Interaction *interaction : interactions) {
+    for (Interaction *interaction : ties) {
         uint64_t cur_count = 0;
         for (auto &kv : interaction->deltas)
             if (kv.second < delta) cur_count += delta - kv.second;
@@ -173,6 +240,7 @@ uint16_t *Array::initialize_row_I(Interaction **locked)
     // choose the interaction with lowest separation (for ties, choose randomly from among those tied)
     *locked = worst_interactions.at(static_cast<uint64_t>(rand()) % worst_interactions.size());
     for (Single *s : (*locked)->singles) new_row[s->factor] = s->value;
+    if (debug == d_on) printf("==%d== Locking interaction %s\n", getpid(), (*locked)->to_string().c_str());
     return new_row;
 }
 
@@ -351,7 +419,7 @@ void Array::heuristic_l_only(uint16_t *row, T* l_set, Interaction *l_interaction
     delete[] locked_factors;
 }
 
-/* SUB METHOD: heuristic_d_only - middleweight heuristic that only concerns itself with detection
+/* SUB METHOD: heuristic_l_and_d - middleweight heuristic that only concerns itself with detection
  * - in the tradeoff between speed and better row choice, this heuristic is somewhere in the middle
  * - should be used when detection problems are mostly all that remain to be solved
  * 
@@ -362,7 +430,7 @@ void Array::heuristic_l_only(uint16_t *row, T* l_set, Interaction *l_interaction
  * returns:
  * - void, but after the method finishes, the row may be modified in an attempt to satisfy more issues
 */
-void Array::heuristic_d_only(uint16_t *row, Interaction *locked)
+void Array::heuristic_l_and_d(uint16_t *row, Interaction *locked)
 {
     // keep track of which columns should not be modified
     bool *locked_factors = new bool[num_factors]{false};
@@ -443,6 +511,50 @@ void Array::heuristic_all(uint16_t *row)
     row_scores[best_rows.at(choice)] = delta <= 1 ? 0 : min_positive_score - 1;
 }
 
+/* SUB METHOD: heuristic_all - heavyweight heuristic that tries to solve the most problems possible
+ * - overloaded; this version takes a locked Interaction and chooses only from rows containing it
+ *  --> does less work than the original version, but may not find the row that would have scored best
+ * 
+ * parameters:
+ * - row: integer array representing a row up for consideration for appending to the array
+ * - locked: pointer to Interaction whose Singles' columns should not be altered
+ * 
+ * returns:
+ * - none, but the row will be altered such that it solves as many problems singlehandedly as possible
+ *  --> note that this does not mean that running this for the whole array will guarantee the smallest array;
+ *      this is still a greedy algorithm for the current row, without any lookahead to future rows
+*/
+void Array::heuristic_all(uint16_t *row, Interaction *locked)
+{
+    // get scores for all relevant possible rows
+    std::vector<std::thread*> threads;
+    std::map<std::string, uint64_t> local_scores;
+    heuristic_all_helper(row, 0, &threads, locked, &local_scores);
+    for (std::thread *cur_thread : threads) {
+        cur_thread->join();
+        delete cur_thread;
+    }
+
+    // inspect the scores for the best one(s)
+    uint64_t best_score = 0;
+    std::vector<std::string> best_rows; // there could be ties for the best
+    for (auto &kv : local_scores) {
+        if (kv.second >= best_score) {  // it was better or it tied
+            if (kv.second > best_score) {   // for an even better choice, can stop tracking the previous best
+                best_score = kv.second;
+                best_rows.clear();
+            }
+            best_rows.push_back(kv.first);  // whether it was better or only a tie, keep track of this row
+        }
+    }
+
+    // choose the row that scored the best (for ties, choose randomly from among those tied for the best)
+    uint64_t choice = static_cast<uint64_t>(rand()) % best_rows.size();  // for breaking ties randomly
+    std::stringstream choice_ss = std::stringstream(best_rows.at(choice));
+    for (uint16_t col = 0; col < num_factors; col++)
+        choice_ss >> row[col];
+}
+
 /* HELPER METHOD: heuristic_all_helper - performs top-down recursive logic for heuristic_all()
  * - heuristic_all() does the auxilary work to start the recursion, and handle the result
  * - this method uses recursion to form all possible combinations; its base case scores a given combination
@@ -456,39 +568,47 @@ void Array::heuristic_all(uint16_t *row)
  * - threads: pointer to vector of pointers to threads, needed so caller can join threads later
  *  --> overhead caller should pass the address of an empty vector to this method initially
  *  --> a separate thread should be started for each row inspected by the base case
+ * - locked: pointer to Interaction whose Singles' columns should not be altered
+ *  --> has a default value of nullptr, meaning all rows will be scored by default
+ * - local_scores: pointer to map in which scoring resultsshould be stored
+ *  --> has a default value of nullptr; when nullptr, scores are stored into memoized field in Array.h
  * 
  * returns:
  * - none, but scores will be modified to contain all the rows inspected and their scores
 */
-void Array::heuristic_all_helper(uint16_t *row, uint16_t cur_col, std::vector<std::thread*> *threads)
+void Array::heuristic_all_helper(uint16_t *row, uint16_t cur_col, std::vector<std::thread*> *threads,
+    Interaction *locked, std::map<std::string, uint64_t> *local_scores)
 {
     // base case: row represents a unique combination and is ready for scoring
     if (cur_col == num_factors) {
         std::string row_str = std::to_string(row[0]); // string representation of the row
         for (uint16_t col = 1; col < num_factors; col++) row_str += ' ' + std::to_string(row[col]);
-        if (just_switched_heuristics) row_scores[row_str] += UINT64_MAX;
-        if (row_scores[row_str] < min_positive_score) return;   // can skip scoring this row
+        if (just_switched_heuristics && heuristic_in_use == all) row_scores[row_str] += UINT64_MAX;
+        if (heuristic_in_use == all && row_scores[row_str] < min_positive_score) return;
         uint16_t *row_copy = new uint16_t[num_factors]; // must be deleted by thread later
         for (uint16_t col = 0; col < num_factors; col++) row_copy[col] = row[col];
-        /*if (out of threads) {
-            for (thread *th : *threads) {
-                th->join()
-            }
-        }//*/
-        std::thread *new_thread = new std::thread(&Array::heuristic_all_scorer, this, row_copy, row_str);
-        /*if (!new_thread) {
-
-        }//*/
+        std::thread *new_thread = new std::thread(&Array::heuristic_all_scorer, this, row_copy, row_str,
+            local_scores);
+        if (!new_thread) {
+            heuristic_all_scorer(row_copy, row_str, local_scores);
+            return;
+        }
         threads->push_back(new_thread); // add the thread's reference to the threads vector
         return;
     }
 
     // recursive case: need to introduce another loop for the next factor
+    if (locked) // if not nullptr, skip modifying this column if it is locked
+        for (Single *s : locked->singles)
+            if (s->factor == permutation[cur_col]) {
+                heuristic_all_helper(row, cur_col+1, threads, locked, local_scores);
+                return;
+            }
     for (uint16_t offset = 0; offset < factors[permutation[cur_col]]->level; offset++) {
         uint16_t temp = row[permutation[cur_col]];
         row[permutation[cur_col]] = (row[permutation[cur_col]] + offset) %
             factors[permutation[cur_col]]->level;   // try every value for this factor
-        heuristic_all_helper(row, cur_col+1, threads);
+        heuristic_all_helper(row, cur_col+1, threads, locked, local_scores);
         row[permutation[cur_col]] = temp;
     }
 }
@@ -500,11 +620,14 @@ void Array::heuristic_all_helper(uint16_t *row, uint16_t cur_col, std::vector<st
  * parameters:
  * - row: integer array representing a row needing scoring
  * - row_str: string representation of the row
+ * - local_scores: pointer to map in which scoring resultsshould be stored
+ *  --> has a default value of nullptr; when nullptr, scores are stored into memoized field in Array.h
  * 
  * returns:
  * - none, but scores may be updates
 */
-void Array::heuristic_all_scorer(uint16_t *row, std::string row_str)
+void Array::heuristic_all_scorer(uint16_t *row, std::string row_str,
+    std::map<std::string, uint64_t> *local_scores)
 {
     // current thread will work with unique copies of the data structures being modified
     Array *copy = clone();
@@ -533,7 +656,13 @@ void Array::heuristic_all_scorer(uint16_t *row, std::string row_str)
     delete[] row;
 
     // need to add result to data structure containing all thread's results; use mutex for thread safety
-    scores_mutex.lock();
-    row_scores[row_str] = row_score;
-    scores_mutex.unlock();
+    if (local_scores) { // if not nullptr, do not permanently memoize these scores, simply store to local map
+        scores_mutex.lock();
+        (*local_scores)[row_str] = row_score;
+        scores_mutex.unlock();
+    } else {
+        scores_mutex.lock();
+        row_scores[row_str] = row_score;
+        scores_mutex.unlock();
+    }
 }

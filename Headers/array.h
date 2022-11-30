@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 11/14/2022
+Last updated 11/29/2022
 
 |===========================================================================================================|
 |   This header contains classes for managing the array in an automated fashion. The Interaction and T      |
@@ -220,21 +220,25 @@ class Array
         void build_row_interactions(uint16_t *row, std::set<Interaction*> *row_interactions,
             uint16_t start, uint16_t t_cur, std::string key);
 
-        uint16_t *initialize_row_R();                                       // randomly generated row
-        uint16_t *initialize_row_S();                                       // based on Singles
-        uint16_t *initialize_row_T(T **l_set, Interaction **l_interaction); // based on T sets
-        uint16_t *initialize_row_I(Interaction **locked);                   // based on Interactions
+        uint16_t *initialize_row_R();                                           // randomly generated row
+        uint16_t *initialize_row_R(Interaction **locked, std::vector<Interaction*> *ties = nullptr);
+        uint16_t *initialize_row_S();                                           // based on Singles
+        uint16_t *initialize_row_T(T **l_set, Interaction **l_interaction);     // based on T sets
+        uint16_t *initialize_row_I(Interaction **locked);                       // based on Interactions
 
         void heuristic_c_only(uint16_t *row);
         int32_t heuristic_c_helper(uint16_t *row, std::set<Interaction*> *row_interactions, int32_t *problems);
         
         void heuristic_l_only(uint16_t *row, T *l_set, Interaction *l_interaction);
 
-        void heuristic_d_only(uint16_t *row, Interaction *locked);
+        void heuristic_l_and_d(uint16_t *row, Interaction *locked);
 
         void heuristic_all(uint16_t *row);
-        void heuristic_all_helper(uint16_t *row, uint16_t cur_col, std::vector<std::thread*> *threads);
-        void heuristic_all_scorer(uint16_t *row, std::string row_str);
+        void heuristic_all(uint16_t *row, Interaction *locked);
+        void heuristic_all_helper(uint16_t *row, uint16_t cur_col, std::vector<std::thread*> *threads,
+            Interaction *locked = nullptr, std::map<std::string, uint64_t> *local_scores = nullptr);
+        void heuristic_all_scorer(uint16_t *row, std::string row_str,
+            std::map<std::string, uint64_t> *local_scores = nullptr);
         
         void update_array(uint16_t *row, bool keep = true);
         void update_scores(std::set<Interaction*> *row_interactions, std::set<T*> *row_sets);
