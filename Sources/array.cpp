@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 11/29/2022
+Last updated 12/18/2022
 
 |===========================================================================================================|
 |   This file contains the meat of the project's logic. The constructor for the Array class takes a pointer |
@@ -133,6 +133,7 @@ Array::Array(Parser *in) : Array::Array()
     debug = in->debug; v = in->v; o = in->o; p = in->p;
     
     if (o != silent) printf("Building internal data structures....\n\n");
+    if (debug == d_on) printf("==%d== max_threads is %d\n", getpid(), max_threads);
     try {
         // build all Singles, associated with an array of Factors
         factors = new Factor*[num_factors];
@@ -215,25 +216,39 @@ Array::Array(uint64_t total_problems_o, uint64_t coverage_problems_o, uint64_t l
     d = d_o; t = t_o; delta = delta_o;
     num_tests = num_tests_o; num_factors = num_factors_o;
     o = silent; p = p_o;
-    for (uint16_t *row_o : *rows_o) {
-        uint16_t *row = new uint16_t[num_factors];
-        for (uint16_t col = 0; col < num_factors; col++) row[col] = row_o[col];
-        rows.push_back(row);
-    }
-    factors = new Factor*[num_factors];
-    for (uint16_t i = 0; i < num_factors; i++) {
-        factors[i] = new Factor(i, factors_o[i]->level, new Single*[factors_o[i]->level]);
-        for (uint16_t j = 0; j < factors[i]->level; j++) {
-            factors[i]->singles[j] = new Single(i, j);
-            singles.push_back(factors[i]->singles[j]);
-            single_map.insert({factors[i]->singles[j]->to_string(), factors[i]->singles[j]});
+    memory_mutex.lock();
+    try {
+        for (uint16_t *row_o : *rows_o) {
+            uint16_t *row = new uint16_t[num_factors];
+            for (uint16_t col = 0; col < num_factors; col++) row[col] = row_o[col];
+            rows.push_back(row);
         }
+        factors = new Factor*[num_factors];
+        for (uint16_t i = 0; i < num_factors; i++) {
+            factors[i] = new Factor(i, factors_o[i]->level, new Single*[factors_o[i]->level]);
+            for (uint16_t j = 0; j < factors[i]->level; j++) {
+                factors[i]->singles[j] = new Single(i, j);
+                singles.push_back(factors[i]->singles[j]);
+                single_map.insert({factors[i]->singles[j]->to_string(), factors[i]->singles[j]});
+            }
+        }
+        std::vector<Single*> temp_singles;
+        build_t_way_interactions(0, t, &temp_singles);
+        if (p == c_only) return;
+        std::vector<Interaction*> temp_interactions;
+        build_size_d_sets(0, d, &temp_interactions);
+    } catch (const std::bad_alloc &e) { // give up and free memory for now, caller can wait for other threads
+        for (uint64_t i = 0; i < num_tests; i++) delete[] rows[i];
+        for (uint16_t i = 0; i < num_factors; i++) delete factors[i];
+        delete[] factors;
+        for (Interaction *i : interactions) delete i;
+        for (T *t_set : sets) delete t_set;
+        delete[] dont_cares;
+        delete[] permutation;
+        scores_mutex.unlock();
+        throw e;
     }
-    std::vector<Single*> temp_singles;
-    build_t_way_interactions(0, t, &temp_singles);
-    if (p == c_only) return;
-    std::vector<Interaction*> temp_interactions;
-    build_size_d_sets(0, d, &temp_interactions);
+    scores_mutex.unlock();
 }
 
 /* HELPER METHOD: build_t_way_interactions - initializes the interactions vector recursively
@@ -255,6 +270,7 @@ void Array::build_t_way_interactions(uint16_t start, uint16_t t_cur, std::vector
     // base case: interaction is completed and ready to store
     if (t_cur == 0) {
         Interaction *new_interaction = new Interaction(singles_so_far);
+        if (!new_interaction) throw std::bad_alloc();   // will unwind to original caller who should handle
         interactions.push_back(new_interaction);
         interaction_map.insert({new_interaction->to_string(), new_interaction});    // for later accessing
         for (Single *single : new_interaction->singles) {
@@ -296,6 +312,7 @@ void Array::build_size_d_sets(uint16_t start, uint16_t d_cur, std::vector<Intera
     // base case: set is completed and ready to store
     if (d_cur == 0) {
         T *new_set = new T(interactions_so_far);
+        if (!new_set) throw std::bad_alloc();   // will unwind to original caller who should handle
         sets.push_back(new_set);
         t_set_map.insert({new_set->to_string(), new_set});  // for later accessing
         return;
@@ -630,8 +647,13 @@ void Array::update_heuristic()
 Array *Array::clone()
 {
     // instantiate with private fields, copy public fields manually
-    Array *clone = new Array(total_problems, coverage_problems, location_problems, detection_problems,
-        &rows, num_tests, num_factors, factors, p, d, t, delta);
+    Array *clone;
+    try {
+        clone = new Array(total_problems, coverage_problems, location_problems, detection_problems,
+            &rows, num_tests, num_factors, factors, p, d, t, delta);
+    } catch (const std::bad_alloc &e) { // when there isn't enough memory to create a clone
+        return nullptr;
+    }
     clone->score = score;
     clone->is_covering = is_covering;
     clone->is_locating = is_locating;
@@ -666,6 +688,22 @@ Array *Array::clone()
     }
 
     return clone;
+}
+
+/* UTILITY METHOD: report_out_of_memory - prints an error message and sets out_of_memory to true
+ * 
+ * returns:
+ * - void, but after the method finishes, the out_of_memory field will be switched on
+ *  --> note that it should never be reset to false after calling this method, and caller should
+ *      attempt to exit gracefully as quickly as possible
+*/
+void Array::report_out_of_memory()
+{
+    printf("\n\t-- ERROR --\n");
+    printf("\tOut of memory.\n");
+    printf("\tThe problem size is too large for the current environment.\n");
+    printf("\tYou may be able to succeed using an environment with more RAM.\n\n");
+    out_of_memory = true;
 }
 
 /* UTILITY METHOD: to_string - gets a string representation of the array

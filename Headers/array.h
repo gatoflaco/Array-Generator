@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 11/29/2022
+Last updated 12/18/2022
 
 |===========================================================================================================|
 |   This header contains classes for managing the array in an automated fashion. The Interaction and T      |
@@ -121,6 +121,9 @@ class Array
         // tracks whether the array is (d, t, δ)-detecting
         bool is_detecting;
 
+        // used to catch failure states due to memory limitations
+        bool out_of_memory = false;
+
         // list of all individual Single (factor, value) pairs
         std::vector<Single*> singles;
 
@@ -204,8 +207,14 @@ class Array
         // this keeps track of what heuristic the program is currently using
         prop_mode heuristic_in_use;
 
-        // needed by heuristic_all_scorer to update scores in threads safely
+        // needed by heuristic_all_scorer() to update scores in threads safely
         std::mutex scores_mutex;
+
+        // needed by clone() to ensure threads don't get bottlenecked by memory limitations
+        std::mutex memory_mutex;
+
+        // upper bound on number of threads allowed
+        const uint32_t max_threads = std::thread::hardware_concurrency();
 
         // this utility method is called in the constructor to fill out the vector of all interactions
         // almost certainly needs to be recursive in order to handle arbitrary values of t
@@ -233,8 +242,8 @@ class Array
 
         void heuristic_l_and_d(uint16_t *row, Interaction *locked);
 
-        void heuristic_all(uint16_t *row);
-        void heuristic_all(uint16_t *row, Interaction *locked);
+        bool heuristic_all(uint16_t *row);
+        bool heuristic_all(uint16_t *row, Interaction *locked);
         void heuristic_all_helper(uint16_t *row, uint16_t cur_col, std::vector<std::thread*> *threads,
             Interaction *locked = nullptr, std::map<std::string, uint64_t> *local_scores = nullptr);
         void heuristic_all_scorer(uint16_t *row, std::string row_str,
@@ -246,4 +255,8 @@ class Array
         void update_heuristic();
 
         Array *clone(); // for getting a copy of this, including deep copying of object references
+
+        void report_out_of_memory();    // sets out_of_memory to true with a message
+
+        bool probe_memory_for_threads();    // checks if there is enough memory for heuristic_all()
 };

@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 11/30/2022
+Last updated 12/18/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods belonging to the Array class which are declared in array.h.  |
@@ -50,11 +50,19 @@ void Array::add_row()
             break;
         case d_only:
             new_row = initialize_row_R(&locked_interaction);
-            heuristic_all(new_row, locked_interaction);
+            if (!heuristic_all(new_row, locked_interaction)) {
+                report_out_of_memory();
+                //if (some flag) don't actually stop
+                return;
+            }
             break;
         case all:
             new_row = initialize_row_R();
-            heuristic_all(new_row);
+            if (!heuristic_all(new_row)) {
+                report_out_of_memory();
+                // if (some flag) don't actually stop
+                return;
+            }
             break;
         case none:
         default:
@@ -472,12 +480,16 @@ void Array::heuristic_l_and_d(uint16_t *row, Interaction *locked)
  * - row: integer array representing a row up for consideration for appending to the array
  * 
  * returns:
- * - none, but the row will be altered such that it solves as many problems singlehandedly as possible
+ * - bool representing whether the method succeeded
+ * - additionally, the row will be altered such that it solves as many problems singlehandedly as possible
  *  --> note that this does not mean that running this for the whole array will guarantee the smallest array;
  *      this is still a greedy algorithm for the current row, without any lookahead to future rows
 */
-void Array::heuristic_all(uint16_t *row)
+bool Array::heuristic_all(uint16_t *row)
 {
+    // check if there is even enough memory to use this heuristic
+    if (!probe_memory_for_threads()) return false;
+
     // get scores for all relevant possible rows
     std::vector<std::thread*> threads;
     heuristic_all_helper(row, 0, &threads);
@@ -511,6 +523,7 @@ void Array::heuristic_all(uint16_t *row)
         choice_ss >> row[col];
     
     row_scores[best_rows.at(choice)] = delta <= 1 ? 0 : min_positive_score - 1;
+    return true;
 }
 
 /* SUB METHOD: heuristic_all - heavyweight heuristic that tries to solve the most problems possible
@@ -522,12 +535,13 @@ void Array::heuristic_all(uint16_t *row)
  * - locked: pointer to Interaction whose Singles' columns should not be altered
  * 
  * returns:
- * - none, but the row will be altered such that it solves as many problems singlehandedly as possible
- *  --> note that this does not mean that running this for the whole array will guarantee the smallest array;
- *      this is still a greedy algorithm for the current row, without any lookahead to future rows
+ * - bool representing whether the method succeeded
 */
-void Array::heuristic_all(uint16_t *row, Interaction *locked)
+bool Array::heuristic_all(uint16_t *row, Interaction *locked)
 {
+    // check if there is even enough memory to use this heuristic
+    if (!probe_memory_for_threads()) return false;
+
     // get scores for all relevant possible rows
     std::vector<std::thread*> threads;
     std::map<std::string, uint64_t> local_scores;
@@ -555,6 +569,7 @@ void Array::heuristic_all(uint16_t *row, Interaction *locked)
     std::stringstream choice_ss = std::stringstream(best_rows.at(choice));
     for (uint16_t col = 0; col < num_factors; col++)
         choice_ss >> row[col];
+    return true;
 }
 
 /* HELPER METHOD: heuristic_all_helper - performs top-down recursive logic for heuristic_all()
@@ -576,7 +591,7 @@ void Array::heuristic_all(uint16_t *row, Interaction *locked)
  *  --> has a default value of nullptr; when nullptr, scores are stored into memoized field in Array.h
  * 
  * returns:
- * - none, but scores will be modified to contain all the rows inspected and their scores
+ * - void, but scores will be modified to contain all the rows inspected and their scores
 */
 void Array::heuristic_all_helper(uint16_t *row, uint16_t cur_col, std::vector<std::thread*> *threads,
     Interaction *locked, std::map<std::string, uint64_t> *local_scores)
@@ -589,12 +604,23 @@ void Array::heuristic_all_helper(uint16_t *row, uint16_t cur_col, std::vector<st
         if (heuristic_in_use == all && row_scores[row_str] < min_positive_score) return;
         uint16_t *row_copy = new uint16_t[num_factors]; // must be deleted by thread later
         for (uint16_t col = 0; col < num_factors; col++) row_copy[col] = row[col];
-        std::thread *new_thread = new std::thread(&Array::heuristic_all_scorer, this, row_copy, row_str,
-            local_scores);
-        if (!new_thread) {
-            heuristic_all_scorer(row_copy, row_str, local_scores);
-            return;
+        if (threads->size() == max_threads) {
+            for (std::thread *cur_thread : *threads) {
+                cur_thread->join();
+                delete cur_thread;
+            }
+            threads->clear();
         }
+        std::thread *new_thread = new std::thread(&Array::heuristic_all_scorer, this, row_copy, row_str, local_scores);
+        if (!new_thread) {
+            for (std::thread *cur_thread : *threads) {
+                cur_thread->join();
+                delete cur_thread;
+            }
+            threads->clear();
+            new_thread = new std::thread(&Array::heuristic_all_scorer, this, row_copy, row_str, local_scores);
+        }
+        
         threads->push_back(new_thread); // add the thread's reference to the threads vector
         return;
     }
@@ -621,18 +647,23 @@ void Array::heuristic_all_helper(uint16_t *row, uint16_t cur_col, std::vector<st
  * 
  * parameters:
  * - row: integer array representing a row needing scoring
+ *  --> pass nullptr when probing whether there is enough memory to start threads
  * - row_str: string representation of the row
+ *  --> pass "dummy" when probing whether there is enough memory to start threads
  * - local_scores: pointer to map in which scoring resultsshould be stored
  *  --> has a default value of nullptr; when nullptr, scores are stored into memoized field in Array.h
  * 
  * returns:
- * - none, but scores may be updates
+ * - void, but scores may be updates
 */
 void Array::heuristic_all_scorer(uint16_t *row, std::string row_str,
     std::map<std::string, uint64_t> *local_scores)
 {
+    if (row_str.compare("dummy") == 0) return;  // see method header for explanation
+
     // current thread will work with unique copies of the data structures being modified
-    Array *copy = clone();
+    Array *copy = nullptr;
+    while (!copy) copy = clone();   // if out of memory, try waiting for other threads to finish
     copy->update_array(row, false); // see how all scores, etc., would change
 
     // define the row score to be the combination of net changes below, weighted by importance
@@ -667,4 +698,46 @@ void Array::heuristic_all_scorer(uint16_t *row, std::string row_str,
         row_scores[row_str] = row_score;
         scores_mutex.unlock();
     }
+}
+
+/* UTILITY METHOD: probe_memory_for_threads - checks if there is enough memory for heuristic_all() to execute
+ * 
+ * returns:
+ * - bool representing whether there is enough memory that heuristic_all() could work
+*/
+bool Array::probe_memory_for_threads()
+{
+    Array *copy = clone();  // this operation will have to be performed by at least one thread at a time
+    if (!copy) return false;
+
+    uint16_t *row_copy = new uint16_t[num_factors]; // same as above
+    if (!row_copy) {
+        delete copy;
+        return false;
+    }
+
+    // also need to check if there is enough memory for at least one thread that would be using a copy
+    std::vector<std::thread*> threads;
+    for (uint32_t count = 0; count < max_threads; count++) {
+        std::thread *temp = new std::thread(&Array::heuristic_all_scorer, this, nullptr, "dummy", nullptr);
+        if (!temp) {
+            delete copy;
+            delete[] row_copy;
+            for (std::thread *thread : threads) {
+                thread->join();
+                delete thread;
+            }
+            return false;
+        }
+        threads.push_back(temp);
+    }
+
+    // if made it to this point, success
+    delete copy;
+    delete[] row_copy;
+    for (std::thread *thread : threads) {
+        thread->join();
+        delete thread;
+    }
+    return true;
 }

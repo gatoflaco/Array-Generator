@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 11/01/2022
+Last updated 12/13/2022
 
 |===========================================================================================================|
 |   This file contains the main() method which reflects the high level flow of the program. It starts by    |
@@ -87,12 +87,13 @@ int32_t main(int32_t argc, char *argv[])
     while (array.score > 0) {       // add rows until the array is complete
         prev_score = array.score;   // needed for catching impossible scenarios
         array.add_row();            // add another row
+        if (array.out_of_memory) break;
         if (array.score == prev_score) no_change_counter++;
         else no_change_counter = 0;
         if (no_change_counter > 10) break;
         array.print_stats();        // report current state of array
     }
-    return print_results(&p, &array, (no_change_counter == 0));
+    return print_results(&p, &array, (no_change_counter == 0 || array.out_of_memory));
 }
 
 /* HELPER METHOD: print_usage - prints info about the usage of the program
@@ -133,7 +134,7 @@ static int32_t print_results(Parser *p, Array *array, bool success)
 {
     if (!success) {
         printf("\nWARNING: It appears impossible to complete array with requested properties.\n");
-        if (vm == v_off) printf("\tTry rerunning in verbose mode for details (by including -v flag).\n");
+        if (vm == v_off) printf("\tTry rerunning with the -v and -d flags for more details.\n");
         printf("\nCancelling array generation....\n");
     }
 
