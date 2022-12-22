@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 12/13/2022
+Last updated 12/22/2022
 
 |===========================================================================================================|
 |   This file contains the main() method which reflects the high level flow of the program. It starts by    |
@@ -67,7 +67,7 @@ static void debug_print(uint8_t d, uint8_t t, uint8_t delta);
 */
 int32_t main(int32_t argc, char *argv[])
 {
-    if (argc < 2 ||  strcmp(argv[1], "--help") == 0) return print_usage();  // user gave no args or --help
+    if (argc < 2 || strcmp(argv[1], "--help") == 0) return print_usage();  // user gave no args or --help
     Parser p(argc, argv);           // create Parser object, immediately processes arguments and flags
     dm = p.debug; vm = p.v; om = p.o; pm = p.p; // update flags based on those processed by the Parser
     
@@ -80,8 +80,10 @@ int32_t main(int32_t argc, char *argv[])
         printf("Nothing to do.\n\n");
         return 0;
     }
+    for (uint16_t *row : p.array) array.add_row(row);   // add any partial array rows, if given
 
     array.print_stats(true);        // report initial state of array
+    if (array.score == 0) return 0; // when the partial array already solved all problems
     uint64_t prev_score;            // for comparing to current score to see if nothing is changing
     uint8_t no_change_counter = 0;  // need this to stop an infinite loop if the array cannot be completed
     while (array.score > 0) {       // add rows until the array is complete
@@ -104,11 +106,13 @@ int32_t main(int32_t argc, char *argv[])
 static int32_t print_usage()
 {
     printf("usage: ./generate [flags] (<t> | <d> <t> | <d> <t> <δ>) <input file> [output file]\n");
-    printf("flags (some can be combined):\n");
+    printf("flags (single hyphens can be combined):\n");
     printf("\t-d          : debug mode (prints extra state information while running)\n");
     printf("\t-h          : halfway mode (prints less output than normal)\n");
-    printf("\t-s          : silent mode (prints no output, cancels other flags)\n");
+    printf("\t-s          : silent mode (prints no output, cancels other output flags)\n");
     printf("\t-v          : verbose mode (prints more output than normal)\n");
+    printf("\t--partial   : use partially complete array; a filepath must follow this flag\n");
+    printf("\t--help      : print help message (what you are seeing here)\n");
     printf("arguments (assume order matters):\n");
     printf("\tt           : strength of interactions, needed for all types of arrays\n");
     printf("\td           : size of sets of interactions, needed for locating and detecting arrays\n");

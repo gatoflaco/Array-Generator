@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 11/14/2022
+Last updated 12/22/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods used to process input via an Parser class. Should the input  |
@@ -34,8 +34,21 @@ Parser::Parser(int32_t argc, char *argv[]) : Parser()
 {
     int32_t itr = 1, num_params = 0;
     p = c_only;
+    bool multichar = false;
     while (itr < argc) {
         std::string arg(argv[itr]);    // cast to std::string
+        if (multichar) {
+            if (partial_filename.empty()) partial_filename = arg;
+            else printf("NOTE: --partial specified more than once, ignoring <%s>\n", arg.c_str());
+            multichar = false;
+            itr++;
+            continue;
+        }
+        if (arg.compare("--partial") == 0) {
+            multichar = true;
+            itr++;
+            continue;   // partial is the only multichar option here
+        }
         if (arg.at(0) == '-') { // flags
             for (char c : arg.substr(1, arg.length() - 1)) {
                 switch(c) {
@@ -145,6 +158,60 @@ int32_t Parser::process_input()
     if (bad_t(t, num_cols)) return -1;
     if (p != c_only && bad_d(d, t, &levels, p)) return -1;
     if (p == all && bad_delta(d, t, delta, &levels)) return -1;
+    if (partial_filename.empty()) return 0;
+
+    // partial array
+    try {
+        partial.open(partial_filename.c_str(), std::ifstream::in);
+        if (!partial.is_open()) throw 0;
+    } catch ( ... ) {
+        printf("\t-- ERROR --\n\tUnable to open file with path name <%s>.\n", partial_filename.c_str());
+        printf("\tFor usage details, rerun with --help or consult the README.\n");
+        printf("\n");
+        return -1;
+    }
+    uint16_t *row;
+    uint64_t i = 0;
+    while (std::getline(partial, cur_line)) {
+        i++;
+        try {
+            std::istringstream iss(cur_line);
+            for (uint16_t j = 0; j < num_cols; j++) {
+                int32_t next_val;
+                if (!(iss >> next_val)) throw 0;
+                if (next_val < 0) {
+                    partial.close();
+                    semantic_error(i, i, j+1, levels.at(j), 0, next_val, false);
+                    return -1;
+                }
+            }
+        } catch (...) {
+            partial.close();
+            other_error(i, cur_line);
+            return -1;
+        }
+        try {
+            row = new uint16_t[num_cols];
+            std::istringstream iss(cur_line);
+            for (uint16_t j = 0; j < num_cols; j++) {
+                if (!(iss >> row[j])) throw 0;
+                if (row[j] >= levels.at(j)) {   // error when array value out of range
+                    partial.close();
+                    semantic_error(i, i, j+1, levels.at(j), row[j], 0, false);
+                    delete[] row;
+                    return -1;
+                }
+            }
+        } catch (...) {
+            partial.close();
+            other_error(i, cur_line);
+            delete[] row;
+            return -1;
+        }
+        array.push_back(row);
+        num_rows++;
+    }
+    partial.close();
     return 0;
 }
 
@@ -187,6 +254,59 @@ void Parser::syntax_error(uint64_t lineno, std::string expected, std::string act
         lineno, expected.c_str(), actual.c_str());
     if (verbose) printf("\tFor formatting details, please check the README.\n");
     printf("\n");
+}
+
+/* HELPER METHOD: semantic_error - prints an error message regarding array format
+ * 
+ * parameters:
+ * - lineno: line number on which the array format was violated
+ * - row: row number of the array in which the array format was violated
+ * - col: column number of the array in which the array format was violated
+ * - level: factor level corresponding to the column in which the array format was violated
+ * - value: the array value which violated expected format
+ * - neg_value: only used when the error was due to a negative value, which is not allowed (0 by default)
+ * - verbose: whether to print extra error output (true by default)
+ * 
+ * returns:
+ * - void (caller should decide whether to quit or continue)
+*/
+void Parser::semantic_error(uint64_t lineno, uint64_t row, uint16_t col, uint16_t level, uint16_t value,
+    int32_t neg_value, bool verbose)
+{
+    printf("\t-- ERROR --\n\tArray format violated at row %lu, column %hu, on line %lu of %s.\n", row, col,
+        lineno, partial_filename.c_str());
+    if (neg_value != 0)
+        printf("\tArray values should not be negative. Value in array was %d.\n", neg_value);
+    else
+        printf("\tLevel for that factor was given as %hu, but value in array was %hu which is too large.\n",
+            level, value);
+    if (verbose) printf("\tFor formatting details, please check the README.\n");
+    printf("\n");
+}
+
+/* HELPER METHOD: other_error - prints a general error message
+ *
+ * parameters:
+ * - lineno: line number on which the error occurred
+ * - line: the entire line which caused the error
+ * - verbose: whether to print extra error output (true by default)
+ * 
+ * returns:
+ * - void (caller should decide whether to quit or continue)
+*/
+void Parser::other_error(uint64_t lineno, std::string line, bool verbose)
+{
+    printf("\t-- ERROR --\n\tError with line %lu in %s: \"%s\".\n", lineno, partial_filename.c_str(),
+        line.c_str());
+    if (verbose) printf("\tFor formatting details, please check the README.\n");
+    printf("\n");
+}
+
+/* DECONSTRUCTOR - frees memory
+*/
+Parser::~Parser()
+{
+    for (uint16_t *row : array) delete[] row;
 }
 
 // ==============================   LOCAL HELPER METHODS BELOW THIS POINT   ============================== //

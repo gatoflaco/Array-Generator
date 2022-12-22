@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 12/18/2022
+Last updated 12/22/2022
 
 |===========================================================================================================|
 |   This file contains the meat of the project's logic. The constructor for the Array class takes a pointer |
@@ -125,14 +125,14 @@ Array::Array(Parser *in) : Array::Array()
 {
     srand(time(nullptr));   // seed rand() using current time
     d = in->d; t = in->t; delta = in->delta;
-    num_tests = in->num_rows;
+    num_tests = 0;  // previously in->num_rows, but generation always starts from 0 rows
     num_factors = in->num_cols;
     dont_cares = new prop_mode[num_factors]{none};
     permutation = new uint16_t[num_factors];
     for (uint16_t col = 0; col < num_factors; col++) permutation[col] = col;
     debug = in->debug; v = in->v; o = in->o; p = in->p;
     
-    if (o != silent) printf("Building internal data structures....\n\n");
+    if (o != silent) printf("Building internal data structures....\n");
     if (debug == d_on) printf("==%d== max_threads is %d\n", getpid(), max_threads);
     try {
         // build all Singles, associated with an array of Factors
@@ -368,8 +368,13 @@ void Array::print_stats(bool initial)
 {
     if (o != silent) {
         if (initial) {
-            if (o == normal) printf("There are %lu total problems to solve.\n", total_problems);
-            else printf("There are %lu total problems to solve, adding row #%lu.\n", score, num_tests+1);
+            if (score == 0) {
+                printf("\nThe partial array already meets all requirements, no rows need to be added.\n");
+                return;
+            }
+            printf("\nThere are %lu total problems to solve.\n", total_problems);
+            if (o == normal) printf("\nArray score is currently %lu.\n", score);
+            else printf("\nArray score is currently %lu, adding row #%lu.\n", score, num_tests+1);
         } else {
             if (score == 0) {
                 printf("\nCompleted array with %lu rows.\n\n", num_tests);
@@ -614,31 +619,46 @@ void Array::update_heuristic()
 
     // first up, should we use the most in-depth scoring function:
     if (p == c_only) {
-        if (heuristic_in_use != all && total_problems < 10000) heuristic_in_use = all;
-        else if (heuristic_in_use == d_only && ratio < 0.20) heuristic_in_use = all;
-        else if (heuristic_in_use == c_only && ratio < 0.40) heuristic_in_use = d_only; // small misnomer
-        else if (heuristic_in_use == none) heuristic_in_use = c_only;
+        if (heuristic_in_use != all && total_problems < 20000)
+            heuristic_in_use = all;
+        else if (heuristic_in_use == d_only && ratio < 0.20 && score < 100000)
+            heuristic_in_use = all;
+        else if (heuristic_in_use == c_only && ratio < 0.40 && score < 500000)
+            heuristic_in_use = d_only;  // small misnomer
+        else if (heuristic_in_use == none)
+            heuristic_in_use = c_only;
         else just_switched_heuristics = false;
         return;
     }
     
     if (p == c_and_l) {
-        if (heuristic_in_use != all && total_problems < 9000) heuristic_in_use = all;
-        else if (heuristic_in_use == d_only && ratio < 0.15) heuristic_in_use = all;
-        else if (heuristic_in_use == l_only && ratio < 0.30) heuristic_in_use = d_only; // small misnomer
-        else if (heuristic_in_use == c_only && ratio < 0.80) heuristic_in_use = l_only;
-        else if (heuristic_in_use == none) heuristic_in_use = c_only;
+        if (heuristic_in_use != all && total_problems < 15000)
+            heuristic_in_use = all;
+        else if (heuristic_in_use == d_only && ratio < 0.15 && score < 75000)
+            heuristic_in_use = all;
+        else if (heuristic_in_use == l_only && ratio < 0.30 && score < 250000)
+            heuristic_in_use = d_only;  // small misnomer
+        else if (heuristic_in_use == c_only && ratio < 0.80 && score < 750000)
+            heuristic_in_use = l_only;
+        else if (heuristic_in_use == none)
+            heuristic_in_use = c_only;
         else just_switched_heuristics = false;
         return;
     }
 
     if (p == all) {
-        if (heuristic_in_use != all && total_problems < 8000) heuristic_in_use = all;
-        else if (heuristic_in_use == d_only && ratio < 0.10) heuristic_in_use = all;
-        else if (heuristic_in_use == l_and_d && ratio < 0.20) heuristic_in_use = d_only;
-        else if (heuristic_in_use == l_only && ratio < 0.60) heuristic_in_use = l_and_d;
-        else if (heuristic_in_use == c_only && ratio < 0.85) heuristic_in_use = l_only;
-        else if (heuristic_in_use == none) heuristic_in_use = c_only;
+        if (heuristic_in_use != all && total_problems < 10000)
+            heuristic_in_use = all;
+        else if (heuristic_in_use == d_only && ratio < 0.10 && score < 50000)
+            heuristic_in_use = all;
+        else if (heuristic_in_use == l_and_d && ratio < 0.20 && score < 100000)
+            heuristic_in_use = d_only;
+        else if (heuristic_in_use == l_only && ratio < 0.60 && score < 500000)
+            heuristic_in_use = l_and_d;
+        else if (heuristic_in_use == c_only && ratio < 0.85 && score < 1000000)
+            heuristic_in_use = l_only;
+        else if (heuristic_in_use == none)
+            heuristic_in_use = c_only;
         else just_switched_heuristics = false;
         return;
     }

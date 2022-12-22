@@ -143,10 +143,11 @@ class Array
         std::map<std::string, T*> t_set_map;
 
         void print_stats(bool initial = false); // prints current stats such as score
-        void add_row();             // adds a row to the array based on scoring
-        std::string to_string();    // returns a string representing all rows
-        Array();                    // default constructor, don't use this
-        Array(Parser *in);          // constructor with an initialized Parser object
+        void add_row();                         // adds a row to the array based on scoring
+        void add_row(uint16_t *row);            // adds a row to the array given as a parameter
+        std::string to_string();                // returns a string representing all rows
+        Array();                                // default constructor, don't use this
+        Array(Parser *in);                      // constructor with an initialized Parser object
         Array(uint64_t total_problems, uint64_t coverage_problems, uint64_t location_problems,
             uint64_t detection_problems, std::vector<uint16_t*> *rows, uint64_t num_tests,
             uint16_t num_factors, Factor **factors, prop_mode p, uint16_t d, uint16_t t, uint16_t delta);

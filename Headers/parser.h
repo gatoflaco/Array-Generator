@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 11/02/2022
+Last updated 12/22/2022
 
 |===========================================================================================================|
 |   This header contains a class used for processing input. Should the input format change, this class can  |
@@ -106,9 +106,13 @@ class Parser
         // levels associated with each factor
         std::vector<uint16_t> levels;
 
+        // the array itself, only used when the --partial flag is given
+        std::vector<uint16_t*> array;
+
         int32_t process_input();            // call this to process the input file
         Parser();                           // default constructor, probably won't be used
         Parser(int32_t argc, char *argv[]); // constructor to read arguments and flags
+        ~Parser();                      // deconstructor
 
     private:
         // input filename
@@ -117,8 +121,17 @@ class Parser
         // input file
         std::ifstream in;
 
+        // partial filename
+        std::string partial_filename;
+
+        // partial array file
+        std::ifstream partial;
+
         void trim(std::string &s);  // trims a string of whitespace on either side
         void syntax_error(uint64_t lineno, std::string expected, std::string actual, bool verbose = true);
+        void semantic_error(uint64_t lineno, uint64_t row, uint16_t col, uint16_t level, uint16_t value,
+            int32_t neg_value = 0, bool verbose = true);
+        void other_error(uint64_t lineno, std::string line, bool verbose = true);
 };
 
 #endif // PARSER

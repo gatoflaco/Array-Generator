@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 12/18/2022
+Last updated 12/22/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods belonging to the Array class which are declared in array.h.  |
@@ -71,6 +71,22 @@ void Array::add_row()
     }   // at this point, new row should be initialized with values
     
     // tweak the row based on the current heuristic and then add to the array
+    update_array(new_row);
+}
+
+/* SUB METHOD: add_row - adds a new row to the array
+ * * - overloaded: this version takes an existing row and adds it
+ * 
+ * parameters:
+ * - row: pointer to start of array representing new row to be added
+ * 
+ * returns:
+ * - void, but after the method finishes, the array will have a new row appended to its end
+*/
+void Array::add_row(uint16_t *row)
+{
+    uint16_t *new_row = new uint16_t[num_factors];
+    for (uint16_t idx = 0; idx < num_factors; idx++) new_row[idx] = row[idx];
     update_array(new_row);
 }
 

@@ -19,7 +19,7 @@ The purpose of this program is to generate test suites of enumerated 2-dimension
 
 ## Usage
 ```
-./generate [d|] [t|] [δ|] [-[flags*]|] <input_filepath> [<output_filepath>|]
+./generate [d|] [t|] [δ|] [-[flags*]|] [--multichar_flags]* <input_filepath> [<output_filepath>|]
 ```
 Example:
 ```
@@ -57,6 +57,8 @@ Reading input....
 Building internal data structures....
 
 There are x_0 total problems to solve.
+
+Array score is currently x_0.
 Adding row #1.
 > Pushed row: v_11 v_12 ... v_1C
 
@@ -82,12 +84,13 @@ Comleted array with n rows.
 The program may be invoked with a number of additional command line arguments and flags to alter its behavior. This is different from I/O redirection. Refer to the [usage](#usage) section for an example of what it looks like. This section describes the details:
 - Despite the simplified visual in the usage section, the filepaths, [command line arguments](#command-line-arguments), and [flags](#flags) may actually come in any order, so long as the input file is given somewhere before any potential output file. Flags are distingushed by a hyphen character (-).
 - The command line arguments should *not* have leading hyphens and are simply delimited by whitespace. The relative order of these arguments **actually matters**. While flags can be mixed in anywhere between the arguments, the arguments are interpreted like this: the first integer encountered is assumed to be t. If a second integer is encountered, it is assumed to be t with the previous t assumed to instead be d. If a third is encountered, it is assumed to be δ. This means that in order to specify d, you must also specify t, and in order to specify δ, you must also specify both d and t.
-- The flags are demarcated by a leading hyphen. Flags may use separate hyphens or share a single one. To "share" a single hyphen, additional flags beyond the first must succeed each other directly, i.e., without any whitespace. If whitespace is used between flags, a hyphen must be prepended for each of the whitespace-separated groups of flags.
+- The single char flags are demarcated by a leading hyphen. These flags may use separate hyphens or share a single one. To "share" a single hyphen, additional flags beyond the first must succeed each other directly, i.e., without any whitespace. If whitespace is used between flags, a hyphen must be prepended for each of the whitespace-separated groups of flags.
+- The multi char flags are demarcated by two leading hyphens. These flags may *not* share hyphens; that is, they *must* be separated by whitespace.
 - If the program cannot interpret a command line argument, it will ignore it and continue, possibly using default values/behaviors.
 ### Command Line Arguments
 d: an integer bounded between 1 and t, inclusive
 - Represents the magnitude of sets of interactions used; these sets are used in comparisons necessary to analyzing the locating and detecting properties of arrays.
-- If not given, desired property is assumed to be t-covering
+- If not given, desired property is assumed to be t-covering.
 
 t: an integer bounded between 1 and the number of factors, inclusive
 - Represents how many (factor, value) tuples are included in an interaction; 1-way interactions by definition are just single (factor, value) tuples.
@@ -115,6 +118,15 @@ s: silent
 - Does not produce any output, except for the finished array when no output file was specified.
 - Mutually exclusive with the h flag; if both are specified, the last one seen takes priority.
 - Higher priority than the d and v flags; if d and/or v is specified along with s, both d and v will be disabled.
+### Multichar Flags
+partial <partial_filepath>:
+- Provides the program with a partial array to start; it is possible for the partial array to already satisfy all properties, in which case the program generates no additional rows.
+- The format of partial array input file should follow the same conventions as the output array produced by this program.
+- Note that the partial_filename argument must follow directly after the --partial argument, separated by whitespace.
+
+help:
+- Prints out simple explanation of usage.
+- When the executable is run with no additional arguments, program defaults to this behavior.
 
 ## Details and Definitions
 The program begins by interpreting command line arguments and flags to set state variables, then getting input from the specified input file. It passes all of this info to an Array object constructor, which sets up a lot of internal vectors and sets for organizing data and tracking scores, etc. When this is done, the main program adds the first row, which is completely randomly generated within the constraints provided. After the first row, the program then enters a loop in which it calls a method that adds a row based on scoring heuristics. It does this until the array is completed with the requested properties. After every row added, even the first, the array object updates its internal data structures. This is important for making scoring decisions in the heuristics that decide what rows to add, and for tracking the overall progress of the array generation. An overall score based on the total "problems" to solve determines when the array is completed; the number starts off large and decreases as problems are solved. When the overall score is 0, all problems are solved and the array is completed with the requested properties.
