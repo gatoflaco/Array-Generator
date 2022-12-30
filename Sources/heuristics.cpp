@@ -88,6 +88,7 @@ void Array::add_row(uint16_t *row)
     uint16_t *new_row = new uint16_t[num_factors];
     for (uint16_t idx = 0; idx < num_factors; idx++) new_row[idx] = row[idx];
     update_array(new_row);
+    just_switched_heuristics = true;    // keeps heuristic_all from breaking if called right away
 }
 
 /* SUB METHOD: initialize_row_R - creates a randomly generated row
