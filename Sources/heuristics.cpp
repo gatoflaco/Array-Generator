@@ -1,5 +1,5 @@
 /* Array-Generator by Isaac Jung
-Last updated 12/23/2022
+Last updated 12/30/2022
 
 |===========================================================================================================|
 |   This file contains definitions for methods belonging to the Array class which are declared in array.h.  |
@@ -529,7 +529,6 @@ bool Array::heuristic_all(uint16_t *row)
         if (kv.second < min_positive_score) min_positive_score = kv.second;
     }
     if (min_positive_score == UINT64_MAX) min_positive_score = 0;   // shouldn't ever happen
-    min_positive_score = (min_positive_score + best_score)/2;   // for next time, skip rows below this value
     if (min_positive_score == 0) min_positive_score = 1;
 
     // choose the row that scored the best (for ties, choose randomly from among those tied for the best)
